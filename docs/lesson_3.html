@@ -4184,8 +4184,8 @@ nice chart!</p>
 <pre class="r"><code>example %&gt;% 
   paste(collapse = &quot;\n&quot;) %&gt;% 
   mermaid()</code></pre>
-<div id="htmlwidget-b23a7c1cd429cebddc2a" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-b23a7c1cd429cebddc2a">{"x":{"diagram":"graph LR\na[Tim]\nz[Coffee]\nsubgraph Process\nb[Froth Milk]\nc[Brew Coffee]\nd[Pour in Milk]\nend\na-->b\nb-->c\nc-->d\nd-->z"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-50597c14c6ec0b41ca79" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-50597c14c6ec0b41ca79">{"x":{"diagram":"graph LR\na[Tim]\nz[Coffee]\nsubgraph Process\nb[Froth Milk]\nc[Brew Coffee]\nd[Pour in Milk]\nend\na-->b\nb-->c\nc-->d\nd-->z"},"evals":[],"jsHooks":[]}</script>
 <p>Whohoo! You made your first <code>mermaid</code> plot!</p>
 </div>
 </div>
@@ -4323,8 +4323,8 @@ ties  &lt;- paste(
   paste(collapse = &quot;\n &quot;) %&gt;%
   # And visualize it!
   mermaid()</code></pre>
-<div id="htmlwidget-6b9048648800d18795e6" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-6b9048648800d18795e6">{"x":{"diagram":"graph LR\n subgraph People\nw1(Worker 1)\nw2(Worker 2)\nw3(Worker 3)\nend\n subgraph Events\n freezer[Freeze<br>Ice Cream]\n loading[Load<br>onto Truck]\n transport[Transport<br>to Store]\n end\n w1 --> freezer\n w2 --> loading\n w3 --> transport\n freezer --> w2\n loading --> w3"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-dc97d8f8f3807f5f85d5" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-dc97d8f8f3807f5f85d5">{"x":{"diagram":"graph LR\n subgraph People\nw1(Worker 1)\nw2(Worker 2)\nw3(Worker 3)\nend\n subgraph Events\n freezer[Freeze<br>Ice Cream]\n loading[Load<br>onto Truck]\n transport[Transport<br>to Store]\n end\n w1 --> freezer\n w2 --> loading\n w3 --> transport\n freezer --> w2\n loading --> w3"},"evals":[],"jsHooks":[]}</script>
 <div id="diagram-failures" class="section level3">
 <h3>Diagram Failures</h3>
 <p>Now, we could imagine that there are several potential failure modes
@@ -4376,8 +4376,8 @@ could lead to these failures.</p>
   paste(collapse = &quot;\n &quot;) %&gt;%
   # And visualize it!
   mermaid()</code></pre>
-<div id="htmlwidget-00c5a3d0e1f6cb781997" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
-<script type="application/json" data-for="htmlwidget-00c5a3d0e1f6cb781997">{"x":{"diagram":"graph LR\n subgraph People\nw1(Worker 1)\nw2(Worker 2)\nw3(Worker 3)\nend\n subgraph Events\n freezer[Freeze<br>Ice Cream]\n loading[Load<br>onto Truck]\n transport[Transport<br>to Store]\n end\n w1 --> freezer\n w2 --> loading\n w3 --> transport\n freezer --> w2\n loading --> w3\n subgraph Failures\n fail_break[freezer breaks]\n fail_time[left out too long]\n fail_eat[worker eats it]\n end\n freezer --> fail_break\n loading --> fail_time\n loading --> fail_eat\n transport --> fail_time\n transport --> fail_eat"},"evals":[],"jsHooks":[]}</script>
+<div id="htmlwidget-95191bbcbcf7a89e240c" style="width:768px;height:480px;" class="DiagrammeR html-widget"></div>
+<script type="application/json" data-for="htmlwidget-95191bbcbcf7a89e240c">{"x":{"diagram":"graph LR\n subgraph People\nw1(Worker 1)\nw2(Worker 2)\nw3(Worker 3)\nend\n subgraph Events\n freezer[Freeze<br>Ice Cream]\n loading[Load<br>onto Truck]\n transport[Transport<br>to Store]\n end\n w1 --> freezer\n w2 --> loading\n w3 --> transport\n freezer --> w2\n loading --> w3\n subgraph Failures\n fail_break[freezer breaks]\n fail_time[left out too long]\n fail_eat[worker eats it]\n end\n freezer --> fail_break\n loading --> fail_time\n loading --> fail_eat\n transport --> fail_time\n transport --> fail_eat"},"evals":[],"jsHooks":[]}</script>
 <p>There’s so much you can do with <code>mermaid</code>, but for now,
 this will do.</p>
 </div>

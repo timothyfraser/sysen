@@ -8,10 +8,12 @@ install.packages(
     "viridis",
     "ggtext",
     "shadowtext",
+    "DiagrammeR",
     
     # Statistical packages
     "mtvnorm",
     "PearsonDS",
+    "moments",
     "texreg"))
 
 # Install extra packages for visualization and workshop development
@@ -23,7 +25,8 @@ install.packages(
     "knitr",
     "kableExtra",
     "rmdformats",
-    "secret")
+    "cyphr",
+    "credentials")
 )
 
 # Install more packages
