@@ -1,1 +1,1 @@
-"pablo the penguin pick a patch of piping hot peppers"
+"pablo the penguin picked a patch of piping hot peppers"
