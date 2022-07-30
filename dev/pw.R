@@ -1,1 +1,0 @@
-"pablo the penguin picked a partial patch of piping hot peppers"
