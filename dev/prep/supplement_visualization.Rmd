@@ -1,0 +1,344 @@
+---
+title: "Lesson 1B: Visualization in R"
+subtitle: "R Companion Code"
+author: "Timothy Fraser"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::downcute:
+    self_contained: true
+    default_style: "light"
+    downcute_theme: "default"
+---
+
+```{r setup, include=FALSE}
+## Global options
+knitr::opts_chunk$set(cache = FALSE, message = FALSE, warning = FALSE)
+```
+
+Visualization is a key part of statistical analyses, especially in systems engineering! Visuals themselves are often the analysis themselves! In this tutorial, we're going to learn how to visualize data in the ```ggplot2``` package.
+
+Please follow along using the code below!
+
+
+## 0 Loading Packages
+
+Finally, let's load our packages with ```library()```.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(gapminder)
+```
+
+
+If you haven't installed a package before, you might get a 
+
+```{r}
+# If you 
+# install.packages(c("ggplot2", "dplyr", "gapminder"))
+library(gapminder)
+```
+
+#############################################
+### 1: Load Packages
+#############################################
+
+# Data viz and data manipulation packages
+library(ggplot2)
+library(dplyr)
+# Data sources
+library(gapminder) 
+
+# Notes:
+
+# a) SAVE YOUR SCRIPT.
+
+# b) Always comment your code (what I'm doing now),
+
+# c) use lots of spaces, and keep it clean.
+
+
+#############################################
+### 2: Gapminder data
+#############################################
+
+# Hans Rosling made a dataset that examines 
+# change in life expectancy over time for 
+# most countries in the world. 
+# It is contained in the gapminder package.
+
+# Let's view it. (see console below)
+gapminder
+# Each row is a country-year,
+# marking the life expectancy, population, and gross domestic product (GDP) per capita.
+# Only can see some of it, right?
+
+
+# Let's check out what vectors are in this dataframe, using the glimpse function.
+# (Remember, a vector is a column in a spreadsheet;
+# a data.frame is a spreadsheet.)
+glimpse(gapminder)
+# Nice, we can see things more concisely.
+
+# Our data has six variables. Great!
+
+
+
+#############################################
+### 3: Your first scatterplot
+#############################################
+
+# Using the gapminder data
+# map a series of vectors to become aesthetic features in the visualization (point, colors, fills, etc.)
+ggplot(data = gapminder, mapping = aes(
+  # Let's make the x-axis gross-domestic product per capita (wealth per person)
+  x = year, 
+  # Let's make the y-axis country life expectancy
+  y = lifeExp))
+
+# Huh! We made an empty graph. Cool.
+
+# That's because ggplot needs helper functions to add aesthetic features to the graph.
+# For example, adding + geom_point() will overlay a scatterplot.
+
+# Make a scatterplot
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp)) + # same as above, except "+"
+  geom_point()
+
+
+# Learning Check 1:
+# What kind of relationship does this graph show?
+# Why might it matter to policymakers?
+
+
+
+
+# Learning Check 2:
+# What happens when you add the "alpha" below, and change its value?
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp)) +
+  geom_point(alpha = 0.2)
+
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point(alpha = 0.5)
+
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point(alpha = 1)
+
+
+# Learning Check 3:
+# We can make it more visually appealing. 
+# What happens when we do each of the following?
+
+# If you want to make it a single color, 
+# where do you need to write `color = ...`?
+
+# If you want to make it multiple colors according to a vector, 
+# where do you need to write `color = `?
+
+# Version 1
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp)) + 
+  geom_point(alpha = 0.5, color = "steelblue")
+
+# Version 2
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp, 
+                                       color = continent)) +
+  geom_point(alpha = 0.5)
+
+
+
+#############################################
+### 4. Improving our Visualizations
+#############################################
+
+# Learning Check 4:
+# Let's make this visualization much more readable by adding labels
+ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp, 
+                                       color = continent)) +
+  geom_point(alpha = 0.5) +
+  # Add labels!
+  labs(x = "GDP per capita (USD)", # label for x-values
+       y = "Life Expectancy (years)", # label for y-values
+       color = "Continent", # label for colors
+       title = "Does Wealth affect Health?", # overall title
+       subtitle = "Global Health Trends by Continent", # subtitle!
+       caption = "Points display individual country-year observations.") # caption
+
+# We can actually save visualizations as objects too, which can make things faster.
+# Let's save our visual as 'myviz'
+myviz <- ggplot(data = gapminder, mapping = aes(x = gdpPercap, y = lifeExp, 
+                                                color = continent)) + 
+  geom_point(alpha = 0.5) +
+  labs(x = "GDP per capita (USD)", 
+       y = "Life Expectancy (years)",
+       color = "Continent", 
+       title = "Does Wealth affect Health?", # overall title
+       subtitle = "Global Health Trends by Continent", # subtitle!
+       caption = "Points display individual country-year observations.") # caption
+
+# Now run myviz - what happens?
+myviz
+
+
+# Learning Check 5:
+# We can do better, adding things onto our myviz object! Try changing themes. What happens below?
+
+# Version theme_bw
+myviz +
+  # How about this theme?
+  theme_bw()
+
+
+# Version theme_dark
+myviz +
+  # How about this theme?
+  theme_dark()
+
+# Version theme_classic
+myviz +
+  # How about this theme?
+  theme_classic()
+
+# I personally really like the default theme or theme_bw.
+
+
+
+
+#############################################
+### 5: Visualize diamonds data
+#############################################
+
+# Let's use the diamonds dataset, which comes with the ggplot2 package
+# This is a dataset of over 50,000 diamond sales. 
+
+diamonds
+
+# We can use this visualization to check whether the 
+# cut of diamonds really has any relationship with price.
+
+glimpse(diamonds)
+
+# Looks like the cut is an ordinal variable, while price is numeric.
+# A boxplot might be helpful!
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, group = cut)) +
+  # notice how we added group = cut, to tell it to use 5 different boxes, one per cut?
+  geom_boxplot()
+
+# Huh. How odd. 
+# Looks like the cut of diamonds has very little impact 
+# on what price they are sold at! 
+# We can see lots of outliers at the top - really expensive diamonds for that cut.
+
+
+
+
+
+
+# Learning Check 6: 
+# Let's make this visualization more visually appealing.
+# What changed in the code to make these two different visual effects?
+# Hint: fill.
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, 
+                                      group = cut)) +
+  geom_boxplot(fill = "steelblue")
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, 
+                                      group = cut, fill = cut)) +
+  geom_boxplot()
+
+
+
+# Learning Check 7:
+
+# Sometimes, the names of categories won't fit well. We can try the following.
+# What did we do?
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, 
+                                      group = cut, fill = cut)) +
+  geom_boxplot() + 
+  coord_flip()
+
+
+
+
+# Learning Check 8:
+
+# Sometimes, the legend doesn't fit well. We can try this.
+# What happens when you change legend.position from 
+# "right" to "bottom" to "left" to "top?
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price,
+                                      group = cut, fill = cut)) +
+  geom_boxplot() + coord_flip() +
+  theme(legend.position = "bottom")
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price,
+                                      group = cut, fill = cut)) +
+  geom_boxplot() + coord_flip() +
+  theme(legend.position = "right")
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, 
+                                      group = cut, fill = cut)) +
+  geom_boxplot() + coord_flip() +
+  theme(legend.position = "left")
+
+ggplot(data = diamonds, mapping = aes(x = cut, y = price, 
+                                      group = cut, fill = cut)) +
+  geom_boxplot() + coord_flip() +
+  theme(legend.position = "top")
+
+
+#############################################
+# 6: Visualizing Distributions
+#############################################
+
+
+# Different geom functions use colors in different ways, but this is a good example.
+
+# For example, this is a histogram. 
+# It visualizes the approximate distribution of a set of values.
+# We can see how frequently diamonds are sold for certain prices versus others.
+ggplot(data = diamonds, mapping = aes(x = price, group = cut, fill = cut)) +
+  geom_histogram(color = "white") + # notice new function here
+  labs(x = "Price (USD)",
+       y = "Frequency of Price (Count)",
+       title = "US Diamond Sales")
+
+
+
+# Learning Check 9:
+
+# Are most diamonds cheap or expensive?
+# What type of distribution is this? 
+# a) Normal?
+# b) Uniform?
+# c) Left Skewed?
+# d) Right Skewed?
+
+
+# Learning Check 10:
+
+# Let's try a bar plot:
+# What did we do in this code? Please describe in a paragraph.
+ggplot(data = diamonds, mapping = aes(x = cut)) +
+  geom_bar() +
+  labs(x = "Cut of Diamonds over 0.25 carats", 
+       y = "# of Diamonds")
+
+
+#############################################
+# 7: Breaking up a visual
+#############################################
+
+# Finally, we might want to break up our visual into multiple parts, using facet_wrap.
+
+# Learning Check 11:
+
+# What changed in the code below, and what did it result in?
+ggplot(data = diamonds, mapping = aes(x = price, fill = cut)) +
+  geom_histogram(color = "white") + 
+  facet_wrap(~cut) + # must be categorical variable
+  labs(x = "Price (USD)",
+       y = "Frequency of Price (Count)",
+       title = "US Diamond Sales")
+
+

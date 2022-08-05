@@ -646,24 +646,37 @@ mysample <- bind_rows(
   tibble(value = rgamma(1000, shape = 1, scale = 1 / 0.5), type = "Gamma"),
   tibble(value = rexp(1000, rate = 1 / 0.5), type = "Exponential"),
   tibble(value = rweibull(1000, shape = 1, scale = 1), type = "Weibull"),
-  tibble(value = rbinom(1000, size = 1, prob = 0.5), type = "Binomial")
+  tibble(value = rbinom(1000, size = 1, prob = 0.5), type = "Binomial"),
+  tibble(value = runif(1000, min = 0, max = 1), type = "Uniform")
 ) %>%
-  mutate(type = factor(type, levels = c("Normal",  "Poisson","Gamma", "Exponential", "Weibull", "Binomial"))) %>%
+  mutate(type = factor(type, levels = c("Normal",  "Poisson","Gamma", "Exponential", "Weibull", "Binomial", "Uniform"))) %>%
   group_by(type) %>%
   mutate(value = scale(value))
 
-
 data.frame(
-  Distributions = c("Normal", "Poisson", "Gamma", "Exponential", "Weibull", "Binomial"),
-  Span = c("-Inf to +Inf",  "0, 1, 2, 3...", "0.1, 2.5, 5.5, +Inf", "same", "same", "0 vs. 1"),
-  `Function` = c("rnorm()", "rpois()", "rgamma()", "rexp()", "rweibull()", "rbinom()"),
-  Parameters = c("mean, sd", "lambda (mean)", "shape, rate", "rate", "shape, scale",  "probability"),
-  Example = "") %>% 
-  kable() %>%
+  Distributions = c("Normal", "Poisson", "Gamma", "Exponential", "Weibull", "Binomial", "Uniform"),
+  Span = c("-Inf to +Inf",  "0, 1, 2, 3...", "0.1, 2.5, 5.5, +Inf", "same", "same", "0 vs. 1", "min to max"),
+  `Function` = c("`rnorm()`", "`rpois()`", "`rgamma()`", "`rexp()`", "`rweibull()`", "`rbinom()`", "`runif()`"),
+  Parameters = c("mean, sd", "lambda (mean)", "shape, rate", "rate", "shape, scale",  "probability", "min, max"),
+  Example = "",
+  Resources = c(
+    "[Wiki](https://en.wikipedia.org/wiki/normal_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Poisson_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Gamma_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Exponential_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Weibull_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Binomial_distribution)",
+    "[Wiki](https://en.wikipedia.org/wiki/Continuous_uniform_distribution)")
+  ) %>% 
+  kable(caption = "Table 2: Example Distributions") %>%
   kable_classic(full_width = FALSE, lightable_options = c("striped", "condensed")) %>%
   column_spec(5, image = spec_hist(split(mysample$value, mysample$type)))
 
 ```
+
+*Note:* Wikipedia is actually a pretty fantastic source on distributions.
+
+<br>
 
 To determine what kind of distribution our vector has, we can visually compare it using **simulation**. We can compare our real observed distribution against random distributions to determine whether our data matches the shape of a normal vs. poisson distribution, for example.
 
@@ -820,7 +833,7 @@ myweibull %>% hist()
 
 ## Binomial Distribution
 
-Finally, the binomial distribution is a bit of a special case, in that it's mostly only helpful for binary variables (with values 0 and 1). But let's try an example anyways. ```rbinom()``` randomly draws ```n``` simulated values from a set of provided values at a given probability (```prob```). It's usually used for drawing binary variables (0 and 1); a coin flip would have ```prob = 0.5```, or a 50-50 chance. (This time we can't use ```fitdistr()```.)
+Next, the binomial distribution is a bit of a special case, in that it's mostly only helpful for binary variables (with values 0 and 1). But let's try an example anyways. ```rbinom()``` randomly draws ```n``` simulated values from a set of provided values at a given probability (```prob```). It's usually used for drawing binary variables (0 and 1); a coin flip would have ```prob = 0.5```, or a 50-50 chance. (This time we can't use ```fitdistr()```.)
 
 ```{r}
 rbinom(n = 10, size = 1, prob = 0.5)
@@ -839,10 +852,24 @@ mybinom %>% hist()
 ```
 
 
+## Uniform Distribution
+
+Finally, the uniform distribution is also a special case. The frequency of values in a uniform distribution is *more-or-less* **uniform**. It also *only spans the length of a specified interval* $a \to b$. A common range is `a = 0` to `b = 1`. So, the frequency of `1.5` in that interval would be... *zero*.
+
+```{r}
+# Simulate a uniform distribution ranging from 0 to 1
+myunif <- runif(n = 1000, min = 0, max = 1)
+# View histogram!
+myunif %>% hist(xlim = c(-0.5,1.5))
+```
+
+
+<br>
+<br>
 
 # 5. Comparing Distributions
 
-Finally, we're going to want to outfit those vectors in nice data.frames (skipping ```rbinom()```), and stack them into 1 data.frame to visualize. We can do this using the ```bind_rows()``` function from the ```dplyr``` package.
+Finally, we're going to want to outfit those vectors in nice data.frames (skipping ```rbinom()``` and `runif()`), and stack them into 1 data.frame to visualize. We can do this using the ```bind_rows()``` function from the ```dplyr``` package.
 
 ```{r}
 # Using bind_rows(),

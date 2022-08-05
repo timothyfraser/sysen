@@ -59,12 +59,13 @@ Please open up your RStudio.Cloud project. Start a new R script (File >> New >> 
 
 ## 0.1 Load Packages
 
-In this tutorial, we're going to use more of the `dplyr` and `ggplot2` packages, plus the `broom` package.
+In this tutorial, we're going to use more of the `dplyr` and `ggplot2` packages, plus the `broom` package and `mosaicCalc` package.
 
 ```{r}
 library(dplyr)
 library(ggplot2)
 library(broom)
+library(mosaicCalc)
 ```
 
 ## 0.2 Key Functions
@@ -909,7 +910,108 @@ pobs <- obs %>% density() %>% tidy() %>%
 
 ```{r}
 # Clear unnecessary data.
-remove(obs, stat, mypd, mycd, p, viz_cd)
+remove(stat, mycd, p, viz_cd)
+```
+
+## 2.5 Using Calculus!
+
+Above we took a **computational-approach** to the CDF, using `R` to number-crunch the CDF. To summarize:
+
+1. We took a vector of empirical data `obs`, 
+
+2. We estimated the probability density function (PDF) using `density()`
+
+3. We calculated the cumulative probability distribution ourselves
+
+4. We connected-the-dots of our CDF into a function with `approxfun()`.
+
+We did this because we started with empirical data, where *where the density function is unknown!*
+
+But *sometimes*, we do know the density function, perhaps because systems engineers have modeled it for decades! In these cases, we could alternatively use calculus in `R` to obtain the CDF and make probabilistic assessments. Here's how!
+
+```{r, eval = FALSE, include = FALSE}
+# This polynomial does a solid job, predicting ~89% of the variation in the PDF
+# Let's use this for an example.
+dobs <- obs %>% density() %>% tidy()
+
+m <- dobs %>%
+  lm(formula = y ~ poly(x, 2, raw = TRUE) )
+# See! Great fit!
+m %>% broom::glance()
+
+tibble(
+  x = dobs$x,
+  y = dobs$y,
+  yhat = m$model$y,
+  yhat2 = dobs$x %>% pdf()
+) %>%
+  ggplot(mapping = aes(x = x)) +
+  geom_line(mapping = aes(y = y, color = "Observed")) +
+  #geom_line(mapping = aes(y = yhat, color = "Polynomial")) +
+  geom_line(mapping = aes(y = yhat2, color = "Approx Polynomial"))
+```
+
+For example, this equation does a pretty okay job of approximating the shape of our distribution in `obs`.
+
+$$ f(x) = \frac{-2}{10^7} + \frac{25x}{10^8} - \frac{45x^2}{10^{12}} $$
+We can write that up in a `function`, which we will call `pdf`. For every `x` value we supply, it will compute that equation to predict that value's relative refequency/probability. 
+
+```{r}
+# Write out our nice polynomial function
+pdf = function(x){
+  -2/10^7 + 25/10^8*x + -45/10^12*x^2
+}
+# Check it!
+c(2000, 3000) %>% pdf()
+```
+
+The figure below demonstrates that it approximates the true density relatively closely.
+
+```{r}
+# We're going to add another column to our mypd dataset,
+mypd <- mypd %>%
+  # approximating the probability of each cost with our new pdf()
+  mutate(prob_cost_i2 = pdf(cost))
+
+ggplot() +
+  geom_line(data = mypd, mapping = aes(x = cost, y = prob_cost_i, color = "from raw data")) +
+  geom_line(data = mypd, mapping = aes(x = cost, y = prob_cost_i2, color = "from function")) +
+  theme_classic() +
+  labs(x = "Cost", y = "Probability", color = "Type")
+```
+
+So how do we generate the cumulative density function? The `mosaicCalc` package can help us with its functions `D()` and `antiD()`. 
+
+- `D()` computes the derivative of a function (Eg. CDF -> PDF) 
+- `antiD()` computes its integral (Eg. PDF -> CDF)
+
+```{r}
+# Compute the anti-derivative (integral) of the function pdf(x), solving for ~ x.
+cdf <- antiD(formula = pdf(x) ~ x)
+# It works just the same as our other functions
+obs %>% head() %>% cdf()
+# (Note: Our function is not a perfect fit for the data, so probabilities exceed 1!)
+
+# Let's compare our cdf() function made with calculus with pobs(), our computationally-generated CDF function. 
+obs %>% head() %>% pobs()
+
+# Pretty similar results. The differences are due the fact that our original function is just an approximation, rather than dobs(), which is a perfect fit for our densities.
+```
+And we can also take the derivative of our `cdf()` function with `D()` to get back our `pdf()`, which we'll call `pdf2()`.
+
+```{r}
+pdf2 <- D(formula = cdf(x) ~ x)
+# Let's compare results....
+# Our original pdf...
+obs %>% head() %>% pdf()
+# Our pdf dervied from cdf...
+obs %>% head() %>% pdf2()
+# They're the same!
+```
+Tada! You can do calculus in `R`!
+
+```{r}
+remove(mypd, pdf, pdf2, cdf, obs)
 ```
 
 <br>
@@ -1010,7 +1112,6 @@ ggplot() +
 
 <br>
 <br>
-
 
 # 3. Hypothetical Probability Functions
 

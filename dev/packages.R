@@ -25,7 +25,7 @@ install.packages(
     "knitr",
     "kableExtra",
     "rmdformats",
-    "cyphr",
+    "fidelius",
     "credentials")
 )
 
