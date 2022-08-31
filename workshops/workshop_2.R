@@ -4,7 +4,6 @@
 # Load packages!
 library(dplyr)
 library(ggplot2)
-library(MASS) # for fitting distributions
 # New package!
 library(readr) # for reading in csv files!
 
