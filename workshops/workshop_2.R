@@ -16,7 +16,7 @@ la <- read_csv("workshops/la_parishes.csv")
 # parish: name of each county (called a "parish" in Louisiana)
 # code: unique ID 5-digit code for each county
 # coastal: (0 or 1) is parish located on coastline?
-# pc_damaged: % buildings damaged by hurricane
+# pc_damage: % buildings damaged by hurricane
 # pc_severe: % buildings SEVERELY damaged by hurricane
 # pc_poverty: % residents below poverty line
 # pc_nonwhite: % nonwhite residents (communities of color)
