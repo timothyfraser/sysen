@@ -2285,20 +2285,7 @@ those differences. Finally, to measure it in a consistent unit
 comparable across distributions, we divide by the standard deviation
 taken to the 4th power; the powers in the numerator and denominator then
 more-or-less cancel each other out.</p>
-<pre class="r"><code>moments::skewness(sw)</code></pre>
-<pre><code>## [1] 0.02565935</code></pre>
-<pre class="r"><code># 0.2565
-x &lt;- sw
 
-sum(   (x - mean(x))^3  ) / ((length(x) - 1) *sd(x)^3)</code></pre>
-<pre><code>## [1] 0.0243426</code></pre>
-<pre class="r"><code>a &lt;- sum(  (x - mean(x))^3 ) / length(x)
-
-b &lt;- (sum( (x - mean(x))^2 ) / length(x))^(3/2)
-
-a/b</code></pre>
-<pre><code>## [1] 0.02565935</code></pre>
-<pre class="r"><code># 0.256</code></pre>
 <pre class="r"><code># Get the differences again
 diff &lt;- sw - mean(sw)
 
@@ -2606,7 +2593,7 @@ shape, scale
 Binomial
 </td>
 <td style="text-align:left;">
-0 vs. 1
+0 vs. 1
 </td>
 <td style="text-align:left;">
 <code>rbinom()</code>
@@ -2681,7 +2668,7 @@ distributions.</p>
 <p>To determine what kind of distribution our vector has, we can
 visually compare it using <strong>simulation</strong>. We can compare
 our real observed distribution against random distributions to determine
-whether our data matches the shape of a normal vs. poisson distribution,
+whether our data matches the shape of a normal vs. poisson distribution,
 for example.</p>
 <p>To do so, let’s get some statistics from our data to help us
 visualize what a distribution with those traits would look like. As our
