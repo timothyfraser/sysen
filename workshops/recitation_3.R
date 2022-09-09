@@ -1,3 +1,73 @@
+# Find the prob that someone visits more than 5 stalls
+
+# Normal Distribution
+
+# rnorm()
+
+# mean
+# sd 
+
+# Simulated 5 points on the distribution
+rnorm(n = 5, mean = 5.5, sd = 2.5)
+
+# Cumulative Prob
+x <- pnorm(5, mean = 5.5, sd = 2.5)
+
+# More than 5?
+1 - x
+
+
+
+obs <- c(1, 5, 3, 4, 3, 2, 3)
+
+library(dplyr)
+library(broom)
+library(ggplot2)
+
+dat <- obs %>% density() %>% tidy()
+
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+  geom_area()
+
+ggplot(data = dat, mapping = aes(x = x, y = y)) +
+  geom_area(fill = "steelblue") +
+  geom_line(color = "pink", size = 10)
+
+
+dobs <- dat %>% approxfun()
+
+dobs(3)
+dobs(0)
+
+c(0,1,2,3,4,5,6) %>% dobs()
+
+0:6 %>% dobs()
+
+dat  %>%
+  mutate(ycum = cumsum(y),
+         p = ycum / sum(y))
+
+pobs <- dat %>%
+  mutate(y = cumsum(y) / sum(y)) %>%
+  approxfun()
+
+0:5%>% pobs()
+
+dat %>%
+  mutate(y = cumsum(y) / sum(y)) %>%
+  ggplot(mapping = aes(x = x , y =y)) +
+  geom_area()
+
+
+# How to check colors
+colors
+
+
+
+
+
+
+
 # Questions for Recitation 3
 
 
@@ -17,7 +87,6 @@
 
 
 # What is the probability it costs between $45 and $55?
-
 
 
 
