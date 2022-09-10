@@ -5,7 +5,7 @@
 
 # Exercise 1: Class teaches Dr. Fraser to analyze PDFs and CDFs
 
-# Q1: Find the prob that someone visits more than 5 stalls
+# Exercises 1.1: Find the prob that someone visits more than 5 stalls
 
 # Class told Dr. Fraser we need....
 # Probability Density Function...
@@ -29,7 +29,7 @@ x
 1 - x
 
 
-# Q2. How to make an empirical probability density function?
+# Exercises 1.2. How to make an empirical probability density function?
 # Eg. get the exact PDF for a real observed vector of data
 
 # Let's load our vector
@@ -98,30 +98,35 @@ colors
 
 
 
-
-# Questions for Recitation 3
-
+# Practice Questions for Recitation 3
 
 # The cost of a component varies depending on market conditions.
 # Over the last year, analysts report is cost on average $50, 
 # with a standard deviation of $5.
 
-# What is the probability the component will cost exactly $60?
+# Q1. What is the probability the component will cost exactly $60?
+
+dnorm(60, mean = 50, sd = 5)
+
+# Q2. What is the probability the component costs less than $60?
+pnorm(60, mean = 50, sd = 5)
 
 
-# What is the probability the component costs less than $60?
+# Q3. What is the probability that the component costs more than $60?
+1 - pnorm(60, mean = 50, sd = 5)
+
+# Q4. What price is greater than 75% of all sales?
+qnorm(0.75, mean = 50, sd = 5)
 
 
-# What is the probability that the component costs more than $60?
-
-# What price is greater than 75% of all sales?
-
-
-# What is the probability it costs between $45 and $55?
+# Q5. What is the probability it costs between $45 and $55?
+pnorm(55, mean = 50, sd = 5) - pnorm(45, mean = 50, sd = 5)
 
 
 
-# Q2. You're developing a new medical device for measuring blood sugar. You might test "High" (T = 1) vs. "Fine" (0), and you might *actually* be "High" (R = 1) or "Fine" (0) 
+# Q6. You're developing a new medical device for measuring blood sugar. You might test "High" (T = 1) vs. "Fine" (0), and you might *actually* be "High" (R = 1) or "Fine" (0) 
+
+# Challenge: for those interested in trying out Bayes Rule.
 
 # Given that you tested "High", what's the probability that your blood sugar is *actually* "High"?
 # Fortunately, you collected the crosstable.
