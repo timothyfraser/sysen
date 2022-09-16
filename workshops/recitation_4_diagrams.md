@@ -70,33 +70,17 @@ graph TD
 
 s["Supplier<hr>&lambda; = 1/1000"]
     
-s---la
-s---lb
+s---l0
 
 subgraph "Libaries"
-    la["Library A<hr>&lambda; = 1/200"]
-    lb["Library B<hr>&lambda; = 1/300"]
+    l0((" "))
+    l0---la
+    l0---lb
     
-la---naa
-lb---nba
-
-subgraph nb["Neighborhood B"]
-    nba((" "))
-    nbz((" "))
-    r6["P6<hr>&lambda; = 1/100"]; r7["P7<hr>&lambda; = 1/100"];
-    r8["P8<hr>&lambda; = 1/100"]; r9["P9<hr>&lambda; = 1/100"]; r10["P10<hr>&lambda; = 1/100"];
-    nba --- r6
-    nba --- r7
-    nba --- r8
-    nba --- r9
-    nba --- r10
-    r6 --- nbz
-    r7 --- nbz
-    r8 --- nbz
-    r9 --- nbz
-    r10 --- nbz
-end
-
+    subgraph "Library A"
+    la["Library A<hr>&lambda; = 1/200"]
+    la---naa
+    
 subgraph na["Neighborhood A"]
     naa((" "))
     naz((" "))
@@ -113,7 +97,34 @@ subgraph na["Neighborhood A"]
     r4 --- naz
     r5 --- naz
 end
+    end
 
+    subgraph "Library B"
+    lb["Library B<hr>&lambda; = 1/300"]
+    lb---nba
+    subgraph nb["Neighborhood B"]
+    nba((" "))
+    nbz((" "))
+    r6["P6<hr>&lambda; = 1/100"]; r7["P7<hr>&lambda; = 1/100"];
+    r8["P8<hr>&lambda; = 1/100"]; r9["P9<hr>&lambda; = 1/100"]; r10["P10<hr>&lambda; = 1/100"];
+    nba --- r6
+    nba --- r7
+    nba --- r8
+    nba --- r9
+    nba --- r10
+    r6 --- nbz
+    r7 --- nbz
+    r8 --- nbz
+    r9 --- nbz
+    r10 --- nbz
+end
+    end
+
+
+
+lz((" "))
+naz---lz
+nbz---lz
 end
 
 ```
