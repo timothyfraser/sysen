@@ -15,8 +15,36 @@ See the diagram saved in workshop_4_diagram.png
 
 Calculate probability that the overall system remains reliable.
 
-How would the probability change if you added additional components? Add 5 more components to this system, each with a reliability rate of 0.80.
+```mermaid
+graph LR
+    
+a["A<hr>&lambda; = 0.99"]
+b["B<hr>&lambda; = 0.95"]
+c["C<hr>&lambda; = 0.90"]
 
+subgraph "Wiring"
+    wa((" "))
+w1["W1<hr>&lambda; = 0.93"]
+w2["W2<hr>&lambda; = 0.93"]
+w3["W3<hr>&lambda; = 0.93"]
+w4["W4<hr>&lambda; = 0.93"]
+wz((" "))
+end
+
+a---b---wa
+wa---w1
+wa---w2
+wa---w3
+wa---w4
+w1---wz
+w2---wz
+w3---wz
+w4---wz
+wz---c
+
+```
+How would the probability change if you added additional components? Add 5 more components to this system, each with a reliability rate of 0.80.  
+  
 </details>
 
 
@@ -41,11 +69,14 @@ A New York City library system wants to better understand its vulnerability to b
 graph TD
 
 s["Supplier<hr>&lambda; = 1/1000"]
-la["Library A<hr>&lambda; = 1/200"]
-lb["Library B<hr>&lambda; = 1/300"]
-
+    
 s---la
 s---lb
+
+subgraph "Libaries"
+    la["Library A<hr>&lambda; = 1/200"]
+    lb["Library B<hr>&lambda; = 1/300"]
+    
 la---naa
 lb---nba
 
@@ -82,6 +113,9 @@ subgraph na["Neighborhood A"]
     r4 --- naz
     r5 --- naz
 end
+
+end
+
 ```
 
 </details>
