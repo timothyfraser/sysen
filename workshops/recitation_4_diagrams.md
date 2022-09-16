@@ -4,6 +4,8 @@
 
 ### Q5. Library System
 
+<details><summary>Click here to view prompt</summary>
+    
 A New York City library system wants to better understand its vulnerability to book loss. They randomly sampled 5 residents from Neighborhood A, B, C, and D, for a total of 20 residents.
 
 -  Residents from neighborhood A use Library A
@@ -63,5 +65,14 @@ subgraph na["Neighborhood A"]
     r5 --- naz
 end
 ```
+
+</details>
+
+
+### Q6. Insulin Pump
+
+
+
+
 
 
