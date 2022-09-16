@@ -24,7 +24,7 @@ How would the probability change if you added additional components? Add 5 more 
 
 <details><summary>Click here to view prompt</summary>
     
-A New York City library system wants to better understand its vulnerability to book loss. They randomly sampled 5 residents from Neighborhood A, B, C, and D, for a total of 20 residents.
+A New York City library system wants to better understand its vulnerability to book loss. They randomly sampled 5 residents from Neighborhood A and B for a total of 10 residents.
 
 -  Residents from neighborhood A use Library A
 -  Residents from neighborhood B use Library B
