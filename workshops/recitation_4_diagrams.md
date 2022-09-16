@@ -1,8 +1,26 @@
 # Recitation 4 
 ## Diagrams
 
+### Electrical Wiring
 
-### Q5. Library System
+<details><summary>Click here to view prompt</summary>
+    
+Nintendo's joystick contains several parts, each with a unique probability of reliability.
+See the diagram saved in workshop_4_diagram.png
+
+- Each wiring unit W1-W4 gets the reliability rate 0.93..
+- Part A has a reliability rate of 0.99.
+- Part B has a reliability rate of 0.95.
+- Part C has a reliability rate of 0.90.
+
+Calculate probability that the overall system remains reliable.
+
+How would the probability change if you added additional components? Add 5 more components to this system, each with a reliability rate of 0.80.
+
+</details>
+
+
+### Library System
 
 <details><summary>Click here to view prompt</summary>
     
