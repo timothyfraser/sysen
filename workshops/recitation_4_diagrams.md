@@ -47,6 +47,25 @@ How would the probability change if you added additional components? Add 5 more 
   
 </details>
 
+<details><summary>Check Wiring Solutions</summary>
+
+```r
+# Write reliability function
+r = function(t, lambda){  exp(-t*lambda)  }
+
+# Get probability of reliability 
+r_a = r(t = 1, lambda = 0.99)
+r_b = r(t = 1, lambda = 0.95)
+r_c = r(t = 1, lambda = 0.90)
+r_w = r(t = 1, lambda = 0.93)
+    
+# Calculate wiring parallel system reliability
+r_wiring = 1 - (1 - r_w)^4
+
+# Calculate overall series system reliability
+r_a * r_b * r_wiring * r_c
+```
+</details>
 
 ### Library System
 
