@@ -87,10 +87,6 @@ end
 </details>
 
 
-### Q6. Insulin Pump
-
-
-
 
 
 
