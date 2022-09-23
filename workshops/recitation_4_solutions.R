@@ -136,7 +136,22 @@ ggplot() +
 
 # Libraries
 
+r_people_A = 1 - F(t, lambda = 1/100)^5
+r_people_B = 1 - F(t, lambda = 1/100)^5
+
+
+r_A = [ R(t, lambda = 1/300)  *  [  1 - F(t, lambda = 1/100)^5  ]
+r_B = [ R(t, lambda = 1/200)  *  [  1 - F(t, lambda = 1/100)^5  ]
+
+                     
+r_parallel = 1 - ((1 - R(A))*(1 - R(B)) )
+
+r_supplier = r(t, lambda = 1/1000)
+
+r_supplier * r_parallel_neighborhoods
+
 
 # Electrical Wiring
 
+# R(0.99)   * R(0.95)   * [1 - F(0.93)^4   ]  * R(0.90)
 
