@@ -7,7 +7,7 @@
 
         <meta name="author" content="Timothy Fraser" />
     
-        <meta name="date" content="2022-09-27" />
+        <meta name="date" content="2022-09-28" />
     
     <title>Workshop 6: Useful Life Distributions (Weibull, Gamma, &amp; Lognormal)</title>
 
@@ -1515,6 +1515,8 @@ Prism.languages.r={comment:/#.*/,string:{pattern:/(['"])(?:\\.|(?!\1)[^\\\r\n])*
             the Hood</a></li>
             <li><a href="#multi-parameter-optimization" id="toc-multi-parameter-optimization">Multi-parameter
             optimization</a></li>
+            <li><a href="#mle-with-censored-data" id="toc-mle-with-censored-data">MLE with Censored
+            Data</a></li>
             </ul></li>
             <li><a href="#lc-1" id="toc-lc-1">LC 1</a>
             <ul>
@@ -1569,6 +1571,7 @@ Prism.languages.r={comment:/#.*/,string:{pattern:/(['"])(?:\\.|(?!\1)[^\\\r\n])*
             <ul>
             <li><a href="#ft-or-dt-pdf-1" id="toc-ft-or-dt-pdf-1"><span class="math inline">\(f(t)\)</span> or <code>d(t)</code>
             (PDF)</a></li>
+            <li><a href="#phi" id="toc-phi"><span class="math inline">\(\Phi\)</span></a></li>
             <li><a href="#key-functions" id="toc-key-functions">Key
             Functions</a></li>
             <li><a href="#mttf-and-variance-2" id="toc-mttf-and-variance-2">MTTF and Variance</a></li>
@@ -1602,7 +1605,7 @@ Gamma, &amp; Lognormal)</h1>
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Timothy Fraser
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-09-27</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-09-28</p>
            
 
    
@@ -1846,13 +1849,167 @@ optim(par = c(90, 15), data = crops$days, fn = ll, control = list(fnscale = -1))
 ## NULL</code></pre>
 <p>That was ridiculously easy! Let’s compare to their known values:</p>
 <pre class="r"><code>crops %&gt;%
-  summarize(mean = mean(days), sd = sd(days))</code></pre>
+  summarize(mu = mean(days), 
+            sigma = sd(days))</code></pre>
 <pre><code>## # A tibble: 1 × 2
-##    mean    sd
+##      mu sigma
 ##   &lt;dbl&gt; &lt;dbl&gt;
 ## 1  69.6  48.0</code></pre>
 <p>Almost spot on! Pretty good for an estimation technique!</p>
 <p><br> <br></p>
+</div>
+<div id="mle-with-censored-data" class="section level2">
+<h2>MLE with Censored Data</h2>
+<p>But what do we do if we need to estimate parameters with MLE, but our
+data is censored (eg. time censored, or cross-tabulated?) Well,
+fortunately, same general rules apply!</p>
+<p><span class="math display">\[ LIK = k \times ( \Pi_{i = 1}^{r}{f(t_i)
+\ }  \times [1 - F(T_{max})]^{n-r} )  \approx \prod_{i=1}^{r}{ f(t_i) }
+\times R(T_{max})^{n-r} \]</span></p>
+<p>We can re-write the likelihood function as the joint probability of
+each time to failure <span class="math inline">\(f(t_i)\)</span> for
+<span class="math inline">\(r\)</span> total failures that <em>did</em>
+occur, times the cumulative probability that they <em>did not fail</em>
+by the end of the study period <span class="math inline">\(T_{max}\)</span> for <span class="math inline">\(n
+- r\)</span> potential failures that did <em>not</em> occur.</p>
+<p>Just like when estimating lambda though, we know that there’s room
+for error, so we can calculate a <span class="math inline">\(k\)</span>
+factor like before to upweight or downweight our likelihood statistic,
+giving us upper and lower confidence intervals. Most often, we are
+looking for the precise estimate of parameters, not upper and lower
+confidence intervals for them, so in those cases, <span class="math inline">\(k\)</span> can be omitted, simplifying down to the
+right-side equation above.</p>
+<p>Let’s try a few applications of this formula below.</p>
+<p><br></p>
+<div id="time-censored-data" class="section level3">
+<h3>Time Censored Data</h3>
+<p>Suppose we actually had <span class="math inline">\(n = 75\)</span>
+crops, but we only ever saw <span class="math inline">\(r = 50\)</span>
+of them fail, and we stopped recording after <code>200</code> days. How
+would we estimate the maximum likelihood to get our parameter of
+interest <span class="math inline">\(\lambda\)</span>?</p>
+<p>First, let’s write our functions.</p>
+<pre class="r"><code># Let&#39;s write a basic pdf function &#39;d&#39; and cdf function &#39;f&#39;
+d = function(t, lambda){ lambda * exp(-t*lambda) }
+f = function(t, lambda){ 1 - exp(-t*lambda)}</code></pre>
+<p>Now, using our observed (but incomplete data in <code>crops</code>),
+let’s calculate the log-likelihood if <span class="math inline">\(\lambda = 0.01\)</span>.</p>
+<pre class="r"><code>crops %&gt;%
+  summarize(
+    # Get total failures observed
+    r = n(),
+    # Get total sample size,
+    n = 75,
+    # Get last timestep
+    tmax = 200,
+    # Take the product of the PDF at each timestep
+    prob_d = d(t = days, lambda = 0.01) %&gt;% prod(),
+    # Get probability of survival by the last time step,
+    # for as many observations as did not fail
+    prob_r = (1 - f(t = tmax, lambda = 0.01))^(n - r),
+    # Get likelihood
+    lik = prob_d * prob_r,
+    # Get loglikelihood
+    loglik = log(lik))</code></pre>
+<pre><code>## # A tibble: 1 × 7
+##       r     n  tmax    prob_d   prob_r       lik loglik
+##   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;     &lt;dbl&gt;    &lt;dbl&gt;     &lt;dbl&gt;  &lt;dbl&gt;
+## 1    50    75   200 7.55e-116 1.93e-22 1.46e-137  -315.</code></pre>
+<p>Great! Let’s formalize that in a function, for any value of <span class="math inline">\(\lambda\)</span>.</p>
+<pre class="r"><code># We&#39;ll write a log-likelihood function &#39;ll&#39;
+# that takes a data input and a single numeric parameter par
+ll = function(data, par){
+  output &lt;- data %&gt;%
+    summarize(
+      r = n(),
+      n = 75,
+      tmax = 200,
+      prob_d = d(t = days, lambda = par) %&gt;% prod(),
+      prob_r = (1 - f(t = tmax, lambda = par))^(n - r),
+      loglik = log(prob_d * prob_r))
+  # Return the output
+  output$loglik
+}
+
+# Last, we can run &#39;optim&#39; to get the MLE, with a starter guess of lambda at 0.05
+optim(par = c(0.01), data = crops, fn = ll, control = list(fnscale = -1))</code></pre>
+<pre><code>## $par
+## [1] 0.005898438
+## 
+## $value
+## [1] -306.6839
+## 
+## $counts
+## function gradient 
+##       22       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p><br> <br></p>
+</div>
+<div id="cross-tabulated-time-censored-data" class="section level3">
+<h3>Cross-Tabulated, Time-Censored Data</h3>
+<p>Alternatively, what if our data were not only time-censored, but had
+been cross-tabulated!? The <code>crosstab</code> data.frame below
+encodes days to failure for our <code>crops</code>, tallied up in 40 day
+intervals, supposing a total sample of <code>75</code> sampled crops
+evaluated for <code>200 days</code>. We can still estimate parameters
+with MLE using the formula above!</p>
+<pre class="r"><code>crosstab &lt;- data.frame(
+  label = c(&quot;[0,40]&quot;, &quot;(40,80]&quot;, &quot;(80,120]&quot;, &quot;(120,160]&quot;, &quot;(160,200]&quot;),
+  t = c(20, 60, 100, 140, 180),
+  count = c(18, 14, 10, 5, 3))</code></pre>
+<p>We can write our log-likelihood function <em>very</em> similarly to
+above. The main change is that we add up the <code>count</code>s to get
+<code>r</code>, the total observed failures. To estimate our
+probabilities, we just use the interval midpoints as our days to failure
+<code>t</code>.</p>
+<pre class="r"><code>ll = function(data, par){
+  output &lt;- data %&gt;%
+    summarize(
+      # Get total failures observed (sum of all tallies)
+      r = sum(count),
+      # Get total sample size,
+      n = 75,
+      # Get last timestep
+      tmax = 200,
+      # Take the product of the PDF at each timestep
+      prob_d = d(t = t, lambda = par) %&gt;% prod(),
+      # Get probability of survival by the last time step,
+      # for as many n-r observations that did not fail
+      prob_r = (1 - f(t = tmax, lambda = par))^(n - r),
+      # Get log-likelihood
+      loglik = log(prob_d * prob_r))
+  # Return the output
+  output$loglik
+}
+
+# Last, we can run &#39;optim&#39; to get the MLE, with a starter guess of lambda at 0.05
+optim(par = c(0.01), data = crosstab, fn = ll, control = list(fnscale = -1))</code></pre>
+<pre><code>## $par
+## [1] 0.0009082031
+## 
+## $value
+## [1] -40.01533
+## 
+## $counts
+## function gradient 
+##       32       NA 
+## 
+## $convergence
+## [1] 0
+## 
+## $message
+## NULL</code></pre>
+<p>The estimate provided is a little smaller than the one above, but
+it’s still in a fairly similar ballpark. When working with
+cross-tabulations but estimating complex parameters, this estimation
+strategy can be a life-saver (literally).</p>
+<p><br> <br></p>
+</div>
 </div>
 </div>
 <div id="lc-1" class="section level1 tabset tabset-pills">
@@ -2400,32 +2557,89 @@ distribution is quite similar. Here, <span class="math inline">\(t\)</span> beco
 parameter here than the standard deviation as we usually think of
 it.</p>
 <p><span class="math display">\[ f(t) = \frac{1}{\sigma t \sqrt{2\pi}}
-\times e^{-(1/2\sigma^2) \times (log(t) - log(T_{50} ))^2}\]</span></p>
+\times e^{-(1/2\sigma^2) \times (log(t) - log(T_{50} ))^2}\]</span> <br>
+<br></p>
+</div>
+<div id="phi" class="section level2">
+<h2><span class="math inline">\(\Phi\)</span></h2>
+<p>Interestingly, the CDF of the log-normal relies on the CDF of the
+normal distribution, sometimes written as <span class="math inline">\(\Phi\)</span>. Both distributions’ CDFs are
+written below.</p>
+<p><span class="math display">\[ Normal \ F(t) = \Phi ( \frac{t - \mu}{
+\sigma } )  \]</span></p>
+<p><span class="math display">\[ Log-Normal \ \ F(t) = \Phi (\frac{log(t
+/ T_{50})}{\sigma}) \]</span></p>
+<p>We can write the <em>normal distribution’s</em> CDF, <span class="math inline">\(\Phi\)</span>, as the cumulative probability of a
+lifespan <span class="math inline">\(t\)</span> that is <span class="math inline">\(\frac{t - \mu}{\sigma}\)</span> standard
+deviations away from the mean. In the log-normal CDF, we transform our
+value <span class="math inline">\(t\)</span> into a point measured in
+standard deviations from the mean. These points are called
+<strong>z-scores.</strong></p>
+<p>We can feed that value to <code>pnorm()</code> to find out the
+cumulative probability of reaching that point on a normal distribution,
+with a mean of 0 and a standard deviation of 1.</p>
+<pre class="r"><code># Suppose...
+t = 50
+t50 = 100
+sigma = 2
+# Get the cumulative probability of failure at time t
+p &lt;- pnorm( log(t/t50) / sigma )
+# Check it!
+p</code></pre>
+<pre><code>## [1] 0.3644558</code></pre>
+<p>Similarly, if we have a cumulative probability like <code>p</code>,
+we can solve for the z-score that made it using <code>qnorm()</code>.
+<code>qnorm()</code> is sometimes referred to as inverse-phi (<span class="math inline">\(\Phi^{-1}\)</span>).</p>
+<pre class="r"><code># Get the z-score for F(t) = 0.36!
+z &lt;- qnorm(p)
+# Check it!
+z</code></pre>
+<pre><code>## [1] -0.3465736</code></pre>
+<p>Now that we know the z-score, we can easily solve for <code>t</code>,
+<code>t50</code>, or <code>sigma</code> with algebra if we know the
+other parameters, since <span class="math inline">\(z =
+\frac{log(t/T_{50})}{\sigma}\)</span>!</p>
+<p>To get <code>t</code>…</p>
+<pre class="r"><code># t = exp(z * sigma) * t50
+exp(z * sigma) * t50 </code></pre>
+<pre><code>## [1] 50</code></pre>
+<p>To get <code>t50</code>…</p>
+<pre class="r"><code># t50 = t / exp(z * sigma)
+t / exp(z * sigma)</code></pre>
+<pre><code>## [1] 100</code></pre>
+<p>To get <code>sigma</code>…</p>
+<pre class="r"><code># sigma = log(t/t50) / z
+log(t/t50) / z</code></pre>
+<pre><code>## [1] 2</code></pre>
+<p>Pretty quick, right?</p>
 <p><br> <br></p>
 </div>
 <div id="key-functions" class="section level2">
 <h2>Key Functions</h2>
-<p>This one’s prety messy, so to avoid parenthesis errors, we’re just
-going to jump straight to using the <code>dlnorm()</code> function,
-which contains 2 parameters, <code>meanlog</code> and
-<code>sdlog</code>.</p>
+<p>This one’s pretty messy. (One can use the <code>dlnorm()</code>
+function, but it contains 2 parameters, <code>meanlog</code> and
+<code>sdlog</code>, which are <em>NOT</em> <span class="math inline">\(T_{50}\)</span> (median) and <span class="math inline">\(\sigma\)</span> (shape). For six-sigma, it tends
+to be more helpful for us to write the log-normal functions in terms of
+<span class="math inline">\(T_{50}\)</span> and <span class="math inline">\(\sigma\)</span> instead.)</p>
 <pre class="r"><code># Write the pdf of the log-normal, f(t) or d(t)!
-d = function(t, mu, sigma){ dlnorm(t, meanlog = mu, sdlog = sigma)  }
+d = function(t, t50, sigma){ 1 / (sigma * t * sqrt(2*pi)) * exp( -(1/ 2 * sigma^2 )*(log(t) - log(t50))^2) } 
 
 # Write the failure function of the log-normal F(t)!
-f = function(t, mu, sigma){ plnorm(t, meanlog = mu, sdlog = sigma) }
+f = function(t, t50, sigma){  pnorm( log(t / t50) / sigma ) }
+# Or with mosaicCalc via derivation...
+# dc = D(f(t,t50, sigma)~t)
 
 # Write the reliability function R(t)!
-r = function(t, mu, sigma){ 1 - plnorm(t, meanlog = mu, sdlog = sigma) }
+r = function(t, t50, sigma){ 1 - pnorm( log(t / t50) / sigma ) }
 
 # Write the failure rate z(t)!
-z = function(t, mu, sigma){  d(t, mu, sigma) / r(t, mu, sigma)  }
+z = function(t, t50, sigma){  d(t, t50, sigma) / r(t, t50, sigma)  }
 
 # Write the accumulative hazard function H(t)!
-h = function(t, mu, sigma){ -log(r(t, mu, sigma))  }
+h = function(t, t50, sigma){ -log(r(t, t50, sigma))  }
 
 # Write the average failure rate function AFR(t)
-afr = function(t1, t2, mu, sigma){ (h(t2) - h(t1) ) / (t2 - t1)  }</code></pre>
+afr = function(t1, t2, t50, sigma){ (h(t2) - h(t1) ) / (t2 - t1)  }</code></pre>
 <p>Wow! That was surprisingly easy! In this way, as we pick up more and
 more distributions in this course, our tools for generating failure and
 reliability functions get easier and easier too!</p>
@@ -2454,23 +2668,20 @@ variance = function(mu, sigma){  mu * exp(sigma^2) * (exp(sigma^2) - 1)  }</code
 <p>A crop tends to grow to a median height of 2 feet tall. We know from
 past data that this crop has a lognormal distribution, with a shape
 parameter <span class="math inline">\(\sigma\)</span> of about 0.2 feet.
-Market standards prefer crops between 1 and 8 feet tall. Given these
+Market standards prefer crops between 1.5 and 8 feet tall. Given these
 standards, what percentage of crops are not eligible for market?</p>
 </div>
 <div id="answer-4" class="section level2">
 <h2>Answer</h2>
 <pre class="r"><code># Get percent under 1.5 feet
-below &lt;- plnorm(1, meanlog = 2, sdlog = 0.2)
+below &lt;- f(1.5, t50 = 2, sigma = 0.2)
 
-# Get percentage over 6 feet
-above &lt;- 1 - plnorm(8, meanlog = 2, sdlog = 0.2)
+# Get percentage over 8 feet
+above &lt;- 1 - f(8, t50 = 2, sigma = 0.2)
 
 # Get total percentage outside of these bounds
 below + above</code></pre>
-<pre><code>## [1] 0.3456071</code></pre>
-<pre class="r"><code># As a visual example...
-rlnorm(1000, meanlog = 2, sdlog = 0.2) %&gt;% hist()</code></pre>
-<p><img src="data:image/png;base64,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AHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAACApwgAAHiKAADbsOb+++/fmPQkAAsIALANz4nIe0lPArCAAADbQADgKgIAbAMBgKsIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKcIAAB4igAAgKf+H6Xv39S1ZiPCAAAAAElFTkSuQmCC" width="768" /></p>
+<pre><code>## [1] 0.07515883</code></pre>
 </div>
 <div id="section-4" class="section level2">
 <h2></h2>
@@ -2482,8 +2693,9 @@ rlnorm(1000, meanlog = 2, sdlog = 0.2) %&gt;% hist()</code></pre>
 <div id="question-5" class="section level2">
 <h2>Question</h2>
 <p>A log normal distribution has a median time to failure equal to
-50,000 hours and shape parameter <span class="math inline">\(\sigma\)</span> equal to 0.8. What is the mean
-time to failure and true standard deviation in this distribution?</p>
+<code>50,000</code> hours and shape parameter <span class="math inline">\(\sigma\)</span> equal to <code>0.8</code>. What is
+the mean time to failure and true standard deviation in this
+distribution?</p>
 </div>
 <div id="answer-5" class="section level2">
 <h2>Answer</h2>
