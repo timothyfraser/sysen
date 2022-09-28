@@ -282,6 +282,8 @@ t / ( (-log(1 - f))^(1/m)  )
 # A coffee company produces milk frothers! 
 # These electronics have a median lifespan of about 500 hours, 
 # and 20% were observed to fail after 200 hours.
+# Suppose they have a log-normal distribution.
+
 # (1) Find the shape parameter for this distribution, and
 # (2) Calculate the probability of failure after 800 hours.
 # (3) Calculate the standard deviation of product lifespans.
