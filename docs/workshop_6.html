@@ -7,7 +7,7 @@
 
         <meta name="author" content="Timothy Fraser" />
     
-        <meta name="date" content="2022-09-28" />
+        <meta name="date" content="2022-10-02" />
     
     <title>Workshop 6: Useful Life Distributions (Weibull, Gamma, &amp; Lognormal)</title>
 
@@ -1605,7 +1605,7 @@ Gamma, &amp; Lognormal)</h1>
       <p class="authors">
            <span class="glyphicon glyphicon-user"></span> Timothy Fraser
       </p>
-         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-09-28</p>
+         <p class="date"><span class="glyphicon glyphicon-calendar"></span> 2022-10-02</p>
            
 
    
@@ -1976,8 +1976,8 @@ probabilities, we just use the interval midpoints as our days to failure
       n = 75,
       # Get last timestep
       tmax = 200,
-      # Take the product of the PDF at each timestep
-      prob_d = d(t = t, lambda = par) %&gt;% prod(),
+      # Get PDF at each timestep; take product for each failure observed
+      prob_d = d(t = t, lambda = par)^count %&gt;% prod(),
       # Get probability of survival by the last time step,
       # for as many n-r observations that did not fail
       prob_r = (1 - f(t = tmax, lambda = par))^(n - r),
@@ -1990,22 +1990,22 @@ probabilities, we just use the interval midpoints as our days to failure
 # Last, we can run &#39;optim&#39; to get the MLE, with a starter guess of lambda at 0.05
 optim(par = c(0.01), data = crosstab, fn = ll, control = list(fnscale = -1))</code></pre>
 <pre><code>## $par
-## [1] 0.0009082031
+## [1] 0.005925781
 ## 
 ## $value
-## [1] -40.01533
+## [1] -306.4357
 ## 
 ## $counts
 ## function gradient 
-##       32       NA 
+##       24       NA 
 ## 
 ## $convergence
 ## [1] 0
 ## 
 ## $message
 ## NULL</code></pre>
-<p>The estimate provided is a little smaller than the one above, but
-it’s still in a fairly similar ballpark. When working with
+<p>The estimate provided is a little different than the one above, but
+it’s still in a very similar ballpark. When working with
 cross-tabulations but estimating complex parameters, this estimation
 strategy can be a life-saver (literally).</p>
 <p><br> <br></p>
