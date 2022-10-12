@@ -1589,7 +1589,7 @@ test run? (4 points)</p></li>
 <em>60% confidence?</em> (4 points)</p></li>
 <li><p>What is the minimum test time with no failure allowed and with
 <em>75% confidence?</em> (4 points)</p></li>
-<li><p>Compare your answers from Question 3a-d. In 2-3 sentences, please
+<li><p>Compare your answers from Question 2a-d. In 2-3 sentences, please
 explain what they tell us about how we should plan this experiment? (4
 points)</p></li>
 </ol>
@@ -1706,9 +1706,10 @@ the mean time to failure, and a 60%, two-sided confidence interval for
 <span class="math inline">\(\hat{\lambda}\)</span>, using the
 appropriate formula. (5 points)</p></li>
 <li><p>Can a Weibull distribution model this data better? Repeat your
-chi-squared test after the 40th failure, comparing the chi-squared
-statistic given a shape parameter of 0.5, 0.7, 0.9, 1.1, 1.3, and 1.5.
-Which of these distributions best fits the data? (5 points)</p></li>
+chi-squared test on your data that was censored after the 40th failure,
+and compare the chi-squared statistic given a shape parameter of 0.5,
+0.7, 0.9, 1.1, 1.3, and 1.5. Which of these distributions best fits the
+data? (5 points)</p></li>
 </ol>
 <ul>
 <li><p><em>Note: It may help you to write a <code>chisq_test()</code>
@@ -1794,10 +1795,12 @@ and <code>m</code>, compared to the true values of
 </div>
 <div id="q9.-lognormal-distributions-20-points" class="section level1">
 <h1>Q9. Lognormal Distributions (20 points)</h1>
-<p>According to the CDF of the lognormal distribution $F(t) = () $, any
-variable among <span class="math inline">\(F(t), t, T_{50},
-\sigma\)</span> can be solved for when the values of all the other 3 are
-known. Given that the population distribution is normal…</p>
+<p>The CDF of the lognormal distribution is written as follows:</p>
+<p><span class="math display">\[ F(t) = \Phi ( \frac{ln(t / T_{50} ) }{
+\sigma} ) \]</span></p>
+<p>Thanks to the CDF, we know that any variable among <span class="math inline">\(F(t), t, T_{50}, \sigma\)</span> can be solved for
+when the values of all the other 3 are known. Given that the population
+distribution is normal…</p>
 <ol style="list-style-type: lower-alpha">
 <li><p>Find the median life <span class="math inline">\(T_{50}\)</span>
 necessary if <code>10%</code> of failures occur within
