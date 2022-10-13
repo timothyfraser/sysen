@@ -1,0 +1,20 @@
+id,event,type,label
+1,T,top,Explosion
+2,G1,and,Conditions for Explosion
+3,G2,or,Ignition Source
+4,A,not,Open Flame
+5,G5,or,Electrostatic Discharge (ESD)
+6,B,not,Dry Air
+7,C,not,Repetitive Friction of Parts
+8,G6,and,Decrease in Temperature
+9,D,not,Change in Weather
+10,E,not,Insulation Wears Down
+11,G3,or,Fuel Leak
+12,G4,and,Valve Malfunction
+13,F,not,Debris in Valve
+14,G,not,Sensor Failure
+15,H,not,Internal Fire
+16,G7,or,Pipe / Joint Failure
+17,I,not,Grade Incorrect
+18,J,not,Pipe / Joint Wears Down
+19,K,not,Exposure to Air
