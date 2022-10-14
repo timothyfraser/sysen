@@ -14,7 +14,5 @@ id,event,type,label
 13,F,not,Debris in Valve
 14,G,not,Sensor Failure
 15,H,not,Internal Fire
-16,G7,or,Pipe / Joint Failure
-17,I,not,Grade Incorrect
-18,J,not,Pipe / Joint Wears Down
-19,K,not,Exposure to Air
+16,I,not,Pipe / Joint Failure
+17,K,not,Exposure to Air
