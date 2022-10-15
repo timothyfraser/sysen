@@ -5,14 +5,9 @@ id,event,type,label
 4,A,not,Open Flame
 5,G5,or,Electrostatic Discharge (ESD)
 6,B,not,Dry Air
-7,C,not,Repetitive Friction of Parts
-8,G6,and,Decrease in Temperature
-9,D,not,Change in Weather
-10,E,not,Insulation Wears Down
-11,G3,or,Fuel Leak
-12,G4,and,Valve Malfunction
-13,F,not,Debris in Valve
-14,G,not,Sensor Failure
-15,H,not,Internal Fire
-16,I,not,Pipe / Joint Failure
-17,K,not,Exposure to Air
+7,C,not,Decrease in Temperature
+8,G3,or,Fuel Leak
+9,G4,and,Valve Malfunction
+10,D,not,Debris in Valve
+11,E,not,Sensor Failure
+12,F,not,Exposure to Air
