@@ -21,7 +21,6 @@ Our course relies on these main R packages. Running into questions? Check out th
 
 | Package     | Purpose            | Cheatsheet                                                | Documentation                                            |
 |-------------|--------------------|-------------|-------------|
-| DBI         | database interface | [Cheatsheet](https://github.com/timothyfraser/sts?tab=readme-ov-file#using-databases-in-r)                                            | [Documentation](https://dbi.r-dbi.org/articles/spec.html) |
 | rstudio     | rstudio interface  | [Cheatsheet](https://rstudio.github.io/cheatsheets/html/rstudio-ide.html) | [Cheatsheet](https://rstudio.github.io/cheatsheets/rstudio-ide.pdf) |
 | dplyr       | data wrangling     | [Cheatsheet](https://rstudio.github.io/cheatsheets/data-transformation.pdf) | [Documentation](https://dplyr.tidyverse.org/)             |
 | ggplot2     | data viz           | [Cheatsheet](https://rstudio.github.io/cheatsheets/data-visualization.pdf) | [Documentation](https://ggplot2.tidyverse.org/)           |
