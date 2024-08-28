@@ -2,6 +2,23 @@
 # !pip install scipy
 from scipy.stats import norm, expon, gamma, weibull_min, poisson, uniform, binom
 
+# Simple visualization #############################
+
+# Want to make a quick histogram?
+def hist(x):
+  """
+  Make a quick histogram, in syntax matching the method in R.
+  
+  Parameters:
+    x: a pandas Series of values to be turned into a histogram
+    
+  Returns: 
+    figure: a ggplot figure object.
+  """
+  from plotnine import ggplot, geom_histogram, aes
+  output = ggplot(aes(x = x)) + geom_histogram()
+  return output
+
 # Skewness & Kurtosis ##############################
 def skewness(x):
     from pandas import Series
@@ -23,6 +40,31 @@ def kurtosis(x):
 
 
 # Probability Distribution Functions ####################
+
+
+# We can build ourself the PDF of our lifetime distribution here
+def density(x):
+  from scipy.stats import gaussian_kde as density
+  output = density(x)
+  return output
+
+def tidy_density(model, n = 1000):
+  # Estimate density using a Gaussian KDE
+  from numpy import linspace
+  from pandas import Series, DataFrame
+  # Get linerange
+  values = linspace(start = model.dataset.min(), stop = model.dataset.max(), num = n)
+  # Get density values
+  densities = model(values)
+  # Create a tidy dataframe of x and density values
+  output = DataFrame({'x': Series(values), 'y': Series(densities) })
+  return output 
+
+## Euler's number
+def exp(x = 1):
+  from numpy import exp
+  output = exp(x)
+  return output
 
 ## Normal Distribution ##########################
 def dnorm(x, mean=0, sd=1):
@@ -137,25 +179,25 @@ def rgamma(n, shape = 2, rate = 1):
 def dpois(x, mu = 1):
     from scipy.stats import poisson
     from pandas import Series
-    output = poisson.pmf(x, mu=1)
+    output = poisson.pmf(x, mu=mu)
     output = Series(output)
     return output
 def ppois(x, mu = 1):
     from scipy.stats import poisson
     from pandas import Series
-    output = poisson.cdf(x, mu=1)
+    output = poisson.cdf(x, mu=mu)
     output = Series(output)
     return output
 def qpois(x, mu = 1):
     from scipy.stats import poisson
     from pandas import Series
-    output = poisson.ppf(x, mu=1)
+    output = poisson.ppf(x, mu=mu)
     output = Series(output)
     return output
 def rpois(n, mu = 1):
     from scipy.stats import poisson
     from pandas import Series
-    output = poisson.rvs(mu = 1, size = n)
+    output = poisson.rvs(mu = mu, size = n)
     output = Series(output)
     return output
 
