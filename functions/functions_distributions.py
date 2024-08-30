@@ -41,6 +41,37 @@ def kurtosis(x):
 
 # Probability Distribution Functions ####################
 
+# Sequence function, matching syntax of R
+def seq(from_, to, length_out=None, by=None):
+    import pandas as pd
+    
+    if length_out is not None and by is not None:
+        raise ValueError("Only one of `length_out` or `by` should be provided.")
+    
+    # Generate sequence based on `length_out`
+    if length_out is not None:
+        if length_out < 1:
+            raise ValueError("`length_out` must be at least 1.")
+        # Use pandas' `pd.Series` and `linspace` to generate the sequence
+        sequence = pd.Series(pd.Series(range(length_out)).apply(lambda x: from_ + (to - from_) * x / (length_out - 1)))
+    
+    # Generate sequence based on `by`
+    elif by is not None:
+        if by == 0:
+            raise ValueError("`by` must be non-zero.")
+        # Use pandas' `pd.Series` and `range` to generate the sequence
+        sequence = pd.Series(range(int((to - from_) / by) + 1)).apply(lambda x: from_ + x * by)
+    
+    else:
+        raise ValueError("Either `length_out` or `by` must be provided.")
+    
+    return sequence
+
+# It works!
+# seq(0,1,length_out = 10)
+# seq(-3,1,by = 0.1)
+
+
 
 # We can build ourself the PDF of our lifetime distribution here
 def density(x):
@@ -59,6 +90,13 @@ def tidy_density(model, n = 1000):
   # Create a tidy dataframe of x and density values
   output = DataFrame({'x': Series(values), 'y': Series(densities) })
   return output 
+
+def approxfun(data):
+  # Approximate a data.frame of x and y data into a function
+  from scipy.interpolate import interp1d
+  output = interp1d(data.x, data.y, kind='linear', fill_value='extrapolate')
+  return output
+
 
 ## Euler's number
 def exp(x = 1):
