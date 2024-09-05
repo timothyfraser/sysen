@@ -91,12 +91,11 @@ def tidy_density(model, n = 1000):
   output = DataFrame({'x': Series(values), 'y': Series(densities) })
   return output 
 
-def approxfun(data):
+def approxfun(data, fill_value='extrapolate',bounds_error=False):
   # Approximate a data.frame of x and y data into a function
   from scipy.interpolate import interp1d
-  output = interp1d(data.x, data.y, kind='linear', fill_value='extrapolate')
+  output = interp1d(data.x, data.y, kind='linear', fill_value=fill_value, bounds_error = bounds_error)
   return output
-
 
 ## Euler's number
 def exp(x = 1):
