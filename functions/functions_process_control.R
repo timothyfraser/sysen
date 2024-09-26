@@ -37,6 +37,8 @@ set_theme = function(){
   )
   
 }
+# Example
+# set_theme()
 
 #' @name describe
 #' @title Describe a vector `x`
@@ -67,6 +69,8 @@ describe = function(x){
 
 # example 
 # describe(x = rnorm(1000,0,1))
+
+
 
 
 #' @name ggprocess
@@ -114,6 +118,7 @@ ggprocess = function(x, y, xlab = "Subgroup", ylab = "Metric"){
 
 # Example
 # water = read_csv("workshops/onsen.csv")
+# water
 # ggprocess(x = water$time, y = water$temp, xlab = "Subgroup", ylab = "Metric")
 
 
@@ -122,7 +127,14 @@ ggprocess = function(x, y, xlab = "Subgroup", ylab = "Metric"){
 #' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
 get_stat_s = function(x,y){
+
+  # Testing values  
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp;
   
+  # Make a data.frame
+  data = tibble(x=x,y=y)
+
   # Calculate sigma t direct
   sigma_t = sd(y)
   
@@ -141,7 +153,9 @@ get_stat_s = function(x,y){
       # within-group sample size
       nw = n(),
       # within-group degrees of freedom
-      df = nw - 1) %>%
+      df = nw - 1)
+  
+  output = output %>%
     ungroup() %>%
     # to get between group estimates...
     mutate(
@@ -150,13 +164,14 @@ get_stat_s = function(x,y){
       # How to get sigma-short!
       #   we're trying to pool the standard deviation from all these different subgroups
       #   to approximate the average standard deviation
-      sigma_s = sqrt(sum(df * s^2) / sum(df) ),
-      #    sigma_s = sqrt(mean(s^2))
+      # sigma_s = sqrt(sum(df * s^2) / sum(df) ),
+      sigma_s = sqrt(mean(s^2)),
       sigma_t = sigma_t,
       se = sigma_s / sqrt(nw),
       upper = mean(xbar) + 3*se,
       lower = mean(xbar) - 3*se
     )
+  
   return(output)
 }
 # Example
@@ -170,6 +185,10 @@ get_stat_s = function(x,y){
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
 get_stat_t = function(x,y){
   
+  # Testing values  
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp;
+
   # Make a data.frame
   data = tibble(x = x, y = y)
   
@@ -243,12 +262,280 @@ get_labels = function(data){
 # get_labels(data = stat_s)
 
 
-#' @name ggavgsd
-#' @title Average and Standard Deviation Control Chart
+# How do we approximate sigma-short?
+dn = function(n = 12, reps = 1e4){
+  # For 10,0000 reps
+  tibble(rep = 1:reps) %>%
+    # For each rep,
+    group_by(rep) %>%
+    # Simulate the ranges of n values
+    summarize(r = rnorm(n = n, mean = 0, sd = 1) %>% range() %>% diff() %>% abs()) %>%
+    ungroup() %>%
+    # And calculate...
+    summarize(
+      # Mean range
+      d2 = mean(r),
+      # standard deviation of ranges
+      d3 = sd(r),
+      # and constants for obtaining lower and upper ci for rbar
+      D3 = 1 - 3*(d3/d2), # sometimes written D3
+      D4 = 1 + 3*(d3/d2), # sometimes written D4
+      # Sometimes D3 goes negative; we need to bound it at zero
+      D3 = if_else(D3 < 0, true = 0, false = D3) ) %>%
+    return()
+}
+
+
+#dn(n = 12)
+
+
+#Let's write a function bn() to calculate our B3 and B4 statistics for any subgroup size n
+bn = function(n, reps = 1e4){
+  tibble(rep = 1:reps) %>%
+    group_by(rep) %>%
+    summarize(s = rnorm(n, mean = 0, sd = 1) %>% sd()) %>%
+    summarize(b2 = mean(s), 
+              b3 = sd(s),
+              C4 = b2, # this is sometimes called C4
+              A3 = 3 / (b2 * sqrt( n  )),
+              B3 = 1 - 3 * b3/b2,
+              B4 = 1 + 3 * b3/b2,
+              # bound B3 at 0, since we can't have a standard deviation below 0
+              B3 = if_else(B3 < 0, true = 0, false = B3)) %>%
+    return()
+}
+
+# For a subgroup of size 12
+# stat = bn(n = 12)
+# # Statistic of interest
+# sbar = 2.5 
+# # Lower Control Limit
+# sbar * stat$B3
+# # Upper control limit
+# sbar * stat$B4
+
+
+#' @name limits_avg
+#' @title Get Upper and Lower Control Limits for an Averages Chart, using Control Constants
 #' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
-ggavgsd = function(x,y, xlab = "Time (Subgroups)", ylab = "Average"){
+#' @note Dependency: `bn()` function
+limits_avg = function(x,y){
+  # Testing values  
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp;
+
+  # Make a data.frame
+  data = tibble(x=x,y=y)
   
+  # Get within-group stats
+  stat_s = data %>%
+    group_by(x) %>%
+    summarize(xbar = mean(y),
+              s = sd(y),
+              nw = n(),
+              df = nw - 1) %>%
+    ungroup()
+  
+  # For each different subgroup sample size, calculate control constant A3
+  constants = stat_s %>%
+    select(nw) %>%
+    distinct() %>%
+    group_by(nw) %>%
+    summarize(A3 =  bn(n = nw, reps = 1e4)$A3   ) %>%
+    ungroup()
+
+  # Join in the control constants
+  stat_s = stat_s %>% 
+    left_join(by = "nw", y = constants)
+  
+  # Add in sbar  and xbbar
+  stat_s = stat_s %>%
+    mutate(sbar = sqrt(sum(df * s^2) / sum(df) ),
+           xbbar = mean(xbar))
+  
+  # Calculate upper and lower control limits
+  stat_s = stat_s %>%
+    mutate(lower = xbbar + A3 * sbar,
+           upper = xbbar - A3 * sbar)
+
+
+  return(stat_s)  
+}
+# # Example
+# water = read_csv("workshops/onsen.csv")
+# # You could use the standard error...
+# get_stat_s(x = water$time, y = water$temp)
+# # Or you could use the control constants to approximate the 3 sigma range.
+# limits_avg(x = water$time, y = water$temp)
+
+
+
+
+
+#' @name limits_s
+#' @title Get Upper and Lower Control Limits for a Standard Deviation Chart, using Control Constants
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `bn()` function
+limits_s = function(x,y){
+  # Testing values  
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp;
+  
+  # Make a data.frame
+  data = tibble(x=x,y=y)
+  
+  # Get within-group stats
+  stat_s = data %>%
+    group_by(x) %>%
+    summarize(s = sd(y),
+              nw = n(),
+              df = nw - 1) %>%
+    ungroup()
+  
+  # For each different subgroup sample size, calculate control constants
+  constants = stat_s %>%
+    select(nw) %>%
+    distinct() %>%
+    group_by(nw) %>%
+    summarize( bn(n = nw, reps = 1e4) ) %>%
+    ungroup()
+  
+  # Join in the control constants
+  stat_s = stat_s %>% 
+    left_join(by = "nw", y = constants)
+  
+  # Add in sbar
+  stat_s = stat_s %>%
+    mutate(sbar = sqrt(sum(df * s^2) / sum(df) ) )
+  
+  # Calculate upper and lower control limits
+  stat_s = stat_s %>%
+    mutate(lower = B3 * sbar,
+           upper = B4 * sbar)
+  
+  
+  return(stat_s)  
+}
+# # Example
+# water = read_csv("workshops/onsen.csv")
+# # You can use the control constants to approximate the 3 sigma range.
+# limits_s(x = water$time, y = water$temp)
+
+
+
+#' @name limits_r
+#' @title Get Upper and Lower Control Limits for a Range Chart, using Control Constants
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `dn()` function
+limits_r = function(x,y){
+  # Testing values  
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp;
+  
+  # Make a data.frame
+  data = tibble(x=x,y=y)
+  
+  # Get within-group stats
+  stat_s = data %>%
+    group_by(x) %>%
+    summarize(r = max(y) - min(y),
+              nw = n(),
+              df = nw - 1) %>%
+    ungroup()
+  
+  # For each different subgroup sample size, calculate control constants
+  constants = stat_s %>%
+    select(nw) %>%
+    distinct() %>%
+    group_by(nw) %>%
+    summarize( dn(n = nw, reps = 1e4) ) %>%
+    ungroup()
+  
+  # Join in the control constants
+  stat_s = stat_s %>% 
+    left_join(by = "nw", y = constants)
+  
+  # Add in rbar
+  stat_s = stat_s %>%
+    mutate(rbar = mean(r) )
+
+  # Calculate upper and lower control limits
+  stat_s = stat_s %>%
+    mutate(lower = D3 * rbar,
+           upper = D4 * rbar)
+  
+  return(stat_s)  
+}
+# # Example
+# water = read_csv("workshops/onsen.csv")
+# # You can use the control constants to approximate the 3 sigma range.
+# limits_r(x = water$time, y = water$temp)
+
+
+
+#' @name limits_mr
+#' @title Get Upper and Lower Control Limits for a Moving Range Chart, using Control Constants
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `dn()` function
+limits_mr = function(x,y){
+  # Testing values  
+  # Suppose we sample just the first out of each our months.
+  # water = read_csv("workshops/onsen.csv") %>% filter(id %in% c(1, 21, 41, 61, 81, 101, 121, 141))
+  # x = water$time; y = water$temp;
+  
+  # Make a data.frame
+  data = tibble(x=x,y=y)
+  
+  # Convert our original dataset into a set of moving ranges
+  data2 = data %>%
+    reframe(
+      x = x[-1],
+      # get moving range
+      mr = y %>% diff() %>% abs()
+    )
+  
+  # Estimate d2 when subgroup size n = 1
+  d2 = rnorm(n = 10000, mean = 0, sd = 1) %>% diff() %>% abs() %>% mean()
+  
+  stat = data2 %>%
+    # Get average moving range
+    mutate(
+      mrbar = mean(mr),
+      # Get d2 constant
+      d2 = d2,
+      # approximate sigma s
+      sigma_s = mrbar / d2,
+      # Our subgroup size was 1, right?
+      n = 1,
+      # so this means sigma_s just equals the standard error here
+      se = sigma_s / sqrt(n),
+      # compute upper 3-se bound
+      upper = mrbar + 3 * se,
+      # and lower ALWAYS equals 0 for moving range
+      lower = 0)
+  
+  return(stat)  
+}
+# Example
+# You can use the control constants to approximate the 3 sigma range.
+# water = read_csv("workshops/onsen.csv") %>% filter(id %in% c(1, 21, 41, 61, 81, 101, 121, 141))
+# limits_mr(x = water$time, y = water$temp)
+
+
+#' @name ggxbar
+#' @title Average Control Chart with ggplot
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `get_stat_t()`, `get_stat_s()`, `get_labels()` functions
+ggxbar = function(x,y, xlab = "Time (Subgroups)", ylab = "Average"){
+  
+  # Testing values 
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp; xlab = "Time (Subgroups)"; ylab = "Average"
   data = tibble(x = x, y = y)
   
   # Get statistics for each subgroup
@@ -280,68 +567,171 @@ ggavgsd = function(x,y, xlab = "Time (Subgroups)", ylab = "Average"){
       mapping = aes(x = x, y = value, label = text),
       hjust = 1 # horizontally justify the labels
     ) +
-    labs(x = xlab, y = ylab, subtitle = "Average and Standard Deviation Charts")
+    labs(x = xlab, y = ylab, subtitle = "Average Chart")
+
+  return(gg)
+}
+
+
+# Example
+# water = read_csv("workshops/onsen.csv")
+# ggxbar(x = water$time, y = water$ph, xlab = "Time (Subgroups)", ylab = "Average pH")
+
+
+#' @name ggs
+#' @title Standard Deviation Chart with ggplot
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `limits_s()`, `get_stat_t()`, `bn()` functions
+ggs = function(x,y, xlab = "Time (Subgroups)", ylab = "Standard Deviation"){
+  
+  # Testing values 
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp; xlab = "Time (Subgroups)"; ylab = "Standard Deviation"
+
+  # Make data.frame of input vectors
+  data = tibble(x = x, y = y)
+  
+  # Get subgroup statistics, with UCL and LCL for standard deviation
+  stat_s = limits_s(x = data$x, y = data$y)
+
+  # Get overall (total) statistics
+  stat_t = get_stat_t(x = data$x, y = data$y)
+
+  # Get labels
+  labels = stat_s %>%
+    reframe(
+      x = c(max(x), max(x), max(x)),
+      type = c("sbar", "upper", "lower"),
+      name = c("sbar", "+3 s", "-3 s"),
+      value = c(mean(sbar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
+  
+  # Make visual
+  gg = ggplot() +
+    geom_hline(data = stat_t, mapping = aes(yintercept = sbar), color = "lightgrey") +
+    geom_ribbon(data = stat_s, mapping = aes(x = x, ymin = lower, ymax = upper),
+                fill = "steelblue", alpha = 0.2) +
+    geom_line(data = stat_s, mapping = aes(x = x, y = s), linewidth = 1) +
+    geom_point(data = stat_s, mapping = aes(x = x, y = s), size = 5) +
+    geom_label(data = labels, mapping = aes(x = x, y = value, label = text),
+               hjust = 1) + # horizontally justify labels
+    labs(x = xlab, y = ylab, subtitle = "Standard Deviation Chart")
+  
+  return(gg)
+}
+# water = read_csv("workshops/onsen.csv");
+# ggs(x = water$time, y = water$temp, xlab = "Time (Subgroups)", ylab = "Standard Deviation")
+
+
+
+
+#' @name ggr
+#' @title Range Chart with ggplot
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `limits_r()`, `dn()`, `get_stat_t()` functions
+ggr = function(x,y, xlab = "Time (Subgroups)", ylab = "Range"){
+  
+  # Testing values 
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp; xlab = "Time (Subgroups)"; ylab = "Range"
+  
+  # Make data.frame of input vectors
+  data = tibble(x = x, y = y)
+  
+  # Get subgroup statistics, with UCL and LCL for standard deviation
+  stat_s = limits_r(x = data$x, y = data$y)
+  
+  # Get overall (total) statistics
+  stat_t = get_stat_t(x = data$x, y = data$y)
+  
+  # Get labels
+  labels = stat_s %>%
+    reframe(
+      x = c(max(x), max(x), max(x)),
+      type = c("rbar", "upper", "lower"),
+      name = c("rbar", "+3 s", "-3 s"),
+      value = c(mean(rbar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
+  
+  # Make visual
+  gg = ggplot() +
+    geom_hline(data = stat_t, mapping = aes(yintercept = rbar), color = "lightgrey") +
+    geom_ribbon(data = stat_s, mapping = aes(x = x, ymin = lower, ymax = upper),
+                fill = "steelblue", alpha = 0.2) +
+    geom_line(data = stat_s, mapping = aes(x = x, y = r), linewidth = 1) +
+    geom_point(data = stat_s, mapping = aes(x = x, y = r), size = 5) +
+    geom_label(data = labels, mapping = aes(x = x, y = value, label = text),
+               hjust = 1) + # horizontally justify labels
+    labs(x = xlab, y = ylab, subtitle = "Range Chart")
+  
   
   return(gg)
 }
 
 # Example
-# water = read_csv("workshops/onsen.csv")
-# ggavgsd(x = water$time, y = water$temp, xlab = "Time (Subgroups)", ylab = "Average Temperature")
+# water = read_csv("workshops/onsen.csv");
+# ggr(x = water$time, y = water$temp, xlab = "Time (Subgroups)", ylab = "Range")
 
-
-
-
-
-
-# How do we approximate sigma-short?
-dn = function(n = 12, reps = 1e4){
-  # For 10,0000 reps
-  tibble(rep = 1:reps) %>%
-    # For each rep,
-    group_by(rep) %>%
-    # Simulate the ranges of n values
-    summarize(r = rnorm(n = n, mean = 0, sd = 1) %>% range() %>% diff() %>% abs()) %>%
-    ungroup() %>%
-    # And calculate...
-    summarize(
-      # Mean range
-      d2 = mean(r),
-      # standard deviation of ranges
-      d3 = sd(r),
-      # and constants for obtaining lower and upper ci for rbar
-      D3 = 1 - 3*(d3/d2), # sometimes written D3
-      D4 = 1 + 3*(d3/d2), # sometimes written D4
-      # Sometimes D3 goes negative; we need to bound it at zero
-      D3 = if_else(D3 < 0, true = 0, false = D3) ) %>%
-    return()
+#' @name ggmr
+#' @title Range Chart with ggplot
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @note Dependency: `limits_mr()`, `dn()` functions
+ggmr = function(x,y, xlab = "Time (Subgroups)", ylab = "Moving Range"){
+  
+  # Testing values  
+  # Suppose we sample just the first out of each our months.
+  # water = read_csv("workshops/onsen.csv") %>% filter(id %in% c(1, 21, 41, 61, 81, 101, 121, 141))
+  # x = water$time; y = water$temp;
+  
+  # Make data.frame of input vectors
+  data = tibble(x = x, y = y)
+  
+  # Obtain moving range
+  data2 = data %>% 
+    reframe(x = x[-1],
+            mr = y %>% diff() %>% abs())
+  
+  # Get subgroup statistics, with UCL and LCL for moving range
+  stat_s = limits_mr(x = data$x, y = data$y)
+  
+  
+  # Get labels
+  labels = stat_s %>%
+    reframe(
+      x = c(max(x), max(x), max(x)),
+      type = c("mrbar", "upper", "lower"),
+      name = c("mrbar", "+3 s", "-3 s"),
+      value = c(mean(mrbar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
+  
+  # Get one value for grand moving range
+  stat_t = stat_s %>%
+    summarize(mrbar = mr %>% mean())
+  
+  # Make visual
+  gg = ggplot() +
+    geom_hline(data = stat_t, mapping = aes(yintercept = mrbar), color = "lightgrey") +
+    geom_ribbon(data = stat_s, mapping = aes(x = x, ymin = lower, ymax = upper),
+                fill = "steelblue", alpha = 0.2) + 
+    geom_line(data = data2, mapping = aes(x = x, y = mr), linewidth = 1) +
+    geom_point(data = stat_s, mapping = aes(x = x, y = mr), size = 5) + 
+    geom_label(data = labels, mapping = aes(x = x, y = value, label = text),
+               hjust = 1) + # horizontally justify labels
+    labs(x = xlab, y = ylab, subtitle = "Moving Range Chart")
+  
+  return(gg)
 }
 
+# Example
+# water = read_csv("workshops/onsen.csv") %>% filter(id %in% c(1, 21, 41, 61, 81, 101, 121, 141))
+# ggmr(x = water$time, y = water$temp, xlab = "Time (Subgroups)", ylab = "Moving Range")
 
-dn(n = 12)
-
-
-#Let's write a function bn() to calculate our B3 and B4 statistics for any subgroup size n
-bn = function(n, reps = 1e4){
-  tibble(rep = 1:reps) %>%
-    group_by(rep) %>%
-    summarize(s = rnorm(n, mean = 0, sd = 1) %>% sd()) %>%
-    summarize(b2 = mean(s), 
-              b3 = sd(s),
-              C4 = b2, # this is sometimes called C4
-              A3 = 3 / (b2 * sqrt( n  )),
-              B3 = 1 - 3 * b3/b2,
-              B4 = 1 + 3 * b3/b2,
-              # bound B3 at 0, since we can't have a standard deviation below 0
-              B3 = if_else(B3 < 0, true = 0, false = B3)) %>%
-    return()
-}
-
-# For a subgroup of size 12
-stat = bn(n = 12)
-# Statistic of interest
-sbar = 2.5 
-# Lower Control Limit
-sbar * stat$B3
-# Upper control limit
-sbar * stat$B4
