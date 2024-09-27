@@ -542,7 +542,15 @@ ggxbar = function(x,y, xlab = "Time (Subgroups)", ylab = "Average"){
   stat_s = get_stat_s(x = data$x, y = data$y)
 
   # Generate labels
-  labels = get_labels(data = stat_s)
+  labels = stat_s %>%
+    reframe(
+      x = c(max(x), max(x), max(x)),
+      type = c("xbbar", "upper", "lower"),
+      name = c("xbbar", "+3 s", "-3 s"),
+      value = c(mean(xbbar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
   
   # Get overall statistics
   stat_t = get_stat_t(x = x, y = y)
