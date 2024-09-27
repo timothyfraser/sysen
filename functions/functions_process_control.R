@@ -735,3 +735,226 @@ ggmr = function(x,y, xlab = "Time (Subgroups)", ylab = "Moving Range"){
 # water = read_csv("workshops/onsen.csv") %>% filter(id %in% c(1, 21, 41, 61, 81, 101, 121, 141))
 # ggmr(x = water$time, y = water$temp, xlab = "Time (Subgroups)", ylab = "Moving Range")
 
+
+#' @name ggp
+#' @title Fraction Defective (p) Chart in ggplot
+ggp = function(t, x, n, xlab = "Time (Subgroup)", ylab = "Fraction Defective"){
+  
+  # Testing values
+  # inventory = read_csv("workshops/inventory.csv")
+  # t = inventory$t; x = inventory$x; n = inventory$n; xlab = "Time (Subgroup)"; ylab = "Fraction Defective"
+  
+  # Make a data.frame
+  data = tibble(t = t, x = x, n = n)
+  
+  # Get subgroup statistics
+  stat_s = data %>%
+    # For each subgroup...
+    group_by(t) %>%
+    mutate(
+      # Get probability 
+      p = x / n,
+      # Mean number of defective items
+      mu = n * p,
+      # Standard deviation of defective items
+      sigma = sqrt(n*p*(1-p))
+    ) %>%
+    ungroup()
+  
+  # Add total traits here
+  stat_s = stat_s %>%
+    mutate(
+      # get total problems and total items
+      xsum = sum(x),
+      nsum = sum(n),
+      # calculate centerline
+      pbar = xsum / nsum,
+      # calculate standard deviation with binomial assumptions
+      se = sqrt(pbar * (1 - pbar) / n),
+      # Calculate 3-sigma control limits
+      lower = pbar - 3*se,
+      upper = pbar + 3*se
+    ) %>%
+    # Clip the lower estimate at zero or higher
+    mutate(lower = if_else(lower < 0, true = 0, false = lower))
+  
+  # Visualize it
+  gg = ggplot() +
+    # Draw upper and lower control limits
+    geom_ribbon(
+      data = stat_s, 
+      mapping = aes(x = t, ymin = lower, ymax = upper),
+      fill = "steelblue", alpha = 0.2) +
+    # Draw the grand pbar line
+    geom_hline(
+      data = stat_s,
+      mapping = aes(yintercept = pbar),
+      linewidth = 1.5, color = "darkgrey"
+    ) +
+    # Draw probability over time
+    geom_line(data = stat_s, mapping = aes(x = t, y = p)) +
+    # Draw probability over time with points
+    geom_point(data = stat_s, mapping = aes(x = t, y = p)) +
+    # Add labels
+    labs(x = xlab, y = ylab, subtitle = "Fraction Defective (p) Chart")
+  
+  # Return result
+  return(gg)
+}
+
+# Testing values
+# inv = read_csv("workshops/inventory.csv")
+# ggp(t = inv$t, x = inv$x, n = inv$n, xlab = "Time (Subgroups)", y = "Fraction Defective")
+
+
+#' @name ggnp
+#' @title Number of Defects (np) Chart in ggplot
+ggnp = function(t,x,n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (np)"){
+  
+  # Testing values
+  # inv = read_csv("workshops/inventory.csv")
+  # t = inv$t; x = inv$x; n = inv$n;  xlab = "Time (Subgroups)"; ylab = "Number of Defective (np)"
+  
+  # Make a data.frame
+  data = tibble(t = t, x = x, n = n)
+  
+  # Get subgroup statistics
+  stat_s = data %>%
+    # For each subgroup...
+    group_by(t) %>%
+    mutate(
+      # Get probability 
+      p = x / n,
+      # Mean number of defective items
+      np = n * p
+    ) %>%
+    ungroup()
+  
+  
+  # Add total traits here
+  stat_s = stat_s %>%
+    mutate(
+      # get total problems and total items
+      xsum = sum(x),
+      nsum = sum(n),
+      # calculate centerline
+      npbar = sum(n * p)/n(),
+      pbar = sum(n*p)/sum(n),
+      # calculate standard error
+      se = sqrt(npbar * (1 - pbar)),
+      # Calculate 3-sigma control limits
+      lower = npbar - 3*se,
+      upper = npbar + 3*se
+    ) %>%
+    # Clip the lower estimate at zero or higher
+    mutate(lower = if_else(lower < 0, true = 0, false = lower))
+  
+  labels = stat_s %>%
+    reframe(
+      t = c(max(t), max(t), max(t)),
+      type = c("npbar", "upper", "lower"),
+      name = c("npbar", "+3 s", "-3 s"),
+      value = c(mean(npbar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
+  
+  
+  
+  # Visualize it
+  gg = ggplot() +
+    # Draw upper and lower control limits
+    geom_ribbon(
+      data = stat_s, 
+      mapping = aes(x = t, ymin = lower, ymax = upper),
+      fill = "steelblue", alpha = 0.2) +
+    # Draw the grand pbar line
+    geom_hline(
+      data = stat_s,
+      mapping = aes(yintercept = npbar),
+      linewidth = 1.5, color = "darkgrey"
+    ) +
+    # Draw probability over time
+    geom_line(data = stat_s, mapping = aes(x = t, y = np)) +
+    # Draw probability over time with points
+    geom_point(data = stat_s, mapping = aes(x = t, y = np)) +
+    # Add text
+    geom_label(data = labels, mapping = aes(x = t, y = value, label = text), hjust = 1) +
+    # Add labels
+    labs(x = xlab, y = ylab, subtitle = "Mean Defective (np) Chart")
+  
+  return(gg)
+}
+
+# Example
+# inv = read_csv("workshops/inventory.csv")
+# ggnp(t = inv$t, x = inv$x, n = inv$n, xlab = "Time (Subgroups)", y = "Number of Defectives")
+
+# Example
+# bulbs = read_csv("workshops/bulbs.csv")
+# ggnp(t = bulbs$t, x = bulbs$x, n = bulbs$n, xlab = "Time (Subgroups)", y = "Number of Defectives")
+
+# More info here:
+# https://sixsigmastudyguide.com/attribute-chart-np-chart/
+
+#' @name ggu
+#' @title Defects per Product (u) Chart in ggplot
+ggu = function(t,x, xlab = "Time (Subgroups)", ylab = "Number of Defects (u)"){
+  
+  data = tibble(t = t, x = x)
+  stat_s = data %>%
+    group_by(t) %>%
+    mutate(
+      # get total accidents per time stamp
+      u = sum(x),
+      # within-group sample size
+      nw = n()
+    ) %>%
+    ungroup() %>%
+    # Calculate centerline
+    mutate(ubar = sum(u)/ sum(nw)) %>%
+    mutate(se = sqrt(ubar / nw)) %>%
+    mutate(lower = ubar - 3*se,
+           upper = ubar + 3*se) %>%
+    # Curb lower to be no lower than 0
+    mutate(lower = if_else(lower < 0, 0, lower))
+  
+  labels = stat_s %>%
+    reframe(
+      t = c(max(t), max(t), max(t)),
+      type = c("ubar", "upper", "lower"),
+      name = c("ubar", "+3 s", "-3 s"),
+      value = c(mean(ubar), max(upper), min(lower))
+    ) %>%
+    mutate(value = round(value, 2)) %>%
+    mutate(text = paste0(name, " = ", value))
+  
+  # Visualize
+  gg = ggplot() +
+    # Draw upper and lower control limits
+    geom_ribbon(
+      data = stat_s, 
+      mapping = aes(x = t, ymin = lower, ymax = upper),
+      fill = "steelblue", alpha = 0.2)  +
+    # Draw the grand pbar line
+    geom_hline(
+      data = stat_s,
+      mapping = aes(yintercept = ubar),
+      linewidth = 1.5, color = "darkgrey"
+    ) +
+    # Draw probability over time
+    geom_line(data = stat_s, mapping = aes(x = t, y = u)) +
+    # Draw probability over time with points
+    geom_point(data = stat_s, mapping = aes(x = t, y = u)) +
+    # Add text
+    geom_label(data = labels, mapping = aes(x = t, y = value, label = text), hjust = 1) +
+    # Add labels
+    labs(x = xlab, y = ylab, subtitle = "Number of Defects (u) Chart")
+  
+  
+  return(gg)
+}
+# Example
+# acc = read_csv("workshops/accidents.csv")
+# ggu(t = acc$t, x = acc$x, xlab = "Time", ylab = "Number of Defects")
+
