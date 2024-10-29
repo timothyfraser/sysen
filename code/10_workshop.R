@@ -15,22 +15,117 @@ library(broom)
 alt <- tibble(
   # Characteristic life in hours
   c = c(1400, 1450, 1500, 1550, 1650),
+
   # Temperature in Celsius
   temp = c(160, 155, 152, 147, 144),
+  
   # Temperature Factor (a standardized unit)
   tf = 1 / (1 / 11605 * (temp + 273.15)),
+  
   # Voltage, in volts
   volts = c(17, 16.5, 14.5, 14, 13),
+  
   # Hours of life spent by time of test
   time = c(1200, 1000, 950, 600, 500),
+  
   # Performance Rating, in Amps
-  rating = c(60, 70, 80, 90, 100))
+  rating = c(60, 70, 80, 90, 100)  )
+
+alt
+
+
+
+
+
+
+
+
+
 
 # Line of best fit in ggplot
 ggplot() +
   geom_point(data = alt, mapping = aes(x = temp, y = c )) +
   geom_smooth(data = alt, mapping = aes(x = temp, y = c),
               method = "lm", se = FALSE)
+
+
+# y = m*x + b
+# y-axis = slope m * x-axis + intercept b
+
+# y = beta * x + alpha
+# y = alpha + beta * x
+
+m = alt %>% lm(formula = c ~ temp)
+
+# y = 3748.26 + -14.76 * x
+
+get_y = function(x){ 3748.26 + -14.76 * x }
+get_y(1)
+get_y(c(100, 125))
+
+broom::tidy(m)
+broom::glance(m)
+
+# r.squared = % of variation in y explained by model
+# --- grade of your model. 
+# 0 = god-awful model
+# 0.5 = pretty respectable
+# 0.95 = very very happy
+# 1.0 = perfect
+
+
+m %>%
+  glance() %>%
+  select(r.squared)
+
+
+# What is the acceleration factor for characteristic life
+# as temperature increases?
+m %>%
+  tidy() %>%
+  filter(term == "temp")
+
+m$coefficients
+m$coefficients[2]
+m$coefficients["temp"]
+
+# Make predictions!
+# Equivalent options
+tibble(
+  temp = c(50, 100, 150),
+  chat = predict(object = m, newdata = tibble(temp))
+)
+
+tibble(temp = c(50, 100, 150)) %>%
+  mutate(chat = predict(object = m, newdata = tibble(temp)))
+
+dat = tibble(temp = c(50, 100, 150))
+predict(object = m, newdata = dat)
+
+
+
+tibble(
+  temp = c(50, 100, 150),
+  chat = predict(object = m, newdata = tibble(temp))
+)
+
+predict(m, newdata = tibble(temp = c(0, 200, 300) ))
+
+
+
+# Exponential
+alt %>% lm(formula = c ~ temp)
+
+m2 = alt %>% lm(formula = log(c) ~ temp)
+
+m2
+
+
+
+
+
+
+
 
 
 m1 = alt %>% lm(formula = c ~ temp)
@@ -41,6 +136,8 @@ m1 %>% glance() %>% select(r.squared)
 m2 = alt %>% lm(formula = log(c) ~ temp)
 m2
 exp(8.794759)
+
+exp(8.794759 + -0.009739 * 30)
 m2 %>% glance()
 
 
@@ -63,6 +160,38 @@ chat(temp = 32)
 # beta = slope of temperature
 
 
+
+# ASIDE: PROJECTS ###########################
+
+alt %>% lm(formula = c ~ temp)
+alt %>% lm(formula = c ~ temp + volts)
+m3 = alt %>% lm(formula = log(c) ~ temp + volts)
+
+tibble(
+  temp = c(0, 50, 100),
+  volts = c(5, 10, 15),
+  chat = predict(m3, newdata = tibble(temp, volts)) %>% exp()
+)
+
+
+library(tidyr)
+dat = expand_grid(
+  temp = c(0, 50, 100),
+  volts = c(5, 10, 15)
+) %>%
+  mutate(chat = predict(m3, newdata = tibble(temp, volts)) %>% exp() )
+
+
+ggplot() +
+  geom_tile(data = dat,
+            mapping = aes(x = temp, y = volts, fill = chat)) +
+  geom_text(data = dat,
+            mapping = aes(x = temp, y = volts, label = round(chat) ))
+  
+
+
+
+# To be continued on Thursday!! #########################
 
 
 
