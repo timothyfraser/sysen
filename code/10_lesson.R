@@ -319,3 +319,29 @@ p$c85 / p$c125
 
 rm(list = ls())
 
+
+
+# 5. Conditional Probability of Failure given Burn-In #############################
+
+# Let's write the Weibull density and failure function, as always...
+d = function(t, c, m){  (m / t) * (t / c)^m * exp(-1*(t/c)^m)   }
+f = function(t, c, m){ 1 - exp(-1*((t/c)^m)) }
+
+fb = function(t, tb, a, c, m){ 
+  # Change in probability of failure
+  delta_failure <- f(t = t + a*tb, c, m) - f(t = a*tb, c, m)  
+  # Reliability after burn-in period
+  reliability <- 1 - f(t = a*tb, c, m)
+  # conditional probability of failure
+  delta_failure / reliability
+}
+
+# 1000 hours after burn-in
+# with a burn-in period of 100 hours
+# an acceleration factor of 20
+# characteristic life c = 2000 hours
+# and
+# shape parameter m = 1.5
+fb(t = 1000, tb = 100, a = 20, c = 2000, m = 1.5)
+
+
