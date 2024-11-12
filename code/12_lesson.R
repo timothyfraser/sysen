@@ -12,20 +12,134 @@ donuts = read_csv("workshops/donuts.csv")
 # You can also use this code:
 donuts = read_csv("https://raw.githubusercontent.com/timothyfraser/sysen/main/workshops/donuts.csv")
 
+
 # Convert type to factor, where treatment group b is first
 donuts2 = donuts %>%
   mutate(type = factor(type, levels = c("b", "a")))
+
+# donuts$tastiness %>% unique()
+
+
+
+
+
+# 
+
+donuts = read_csv("workshops/donuts.csv")
+
+donuts %>% glimpse()
+
+
+# Tidy long format
+long = donuts %>% 
+  group_by(type) %>%
+  summarize(xbar = mean(tastiness)) %>%
+  mutate(testid = 1)
+
+
+# Wide matrix
+wide = tibble(xbar_a = 2.84, xbar_b = 4.16) %>%
+  mutate(dbar = xbar_b - xbar_a)
+
+
+long
+
+long %>%
+  tidyr::pivot_wider(id_cols = testid, names_from = type, values_from = xbar) %>%
+  mutate(dbar = b - a)
+
+library(tidyr)
+
+
+# T-test Examples ##########################################################
+
+donuts2 = donuts %>%
+  mutate(type = factor(type, levels = c("a", "b")))
+
+
+donuts2 %>%
+  # Run our t-test using the data from donuts, then tidy() it into a data.frame
+  summarize(t.test(weight ~ type, var.equal = TRUE) %>% tidy()) %>%
+  glimpse()
+
+
+donuts2 %>%
+  lm(formula = weight ~ type) %>%
+  broom::tidy()
+
+donuts2 %>%
+  group_by(type) %>%
+  summarize(xbar = mean(weight))
+
+# There's a -3.4 gram difference (95% CI is -1.8 ~ -4.9, p < 0.001)
+# What if we knew that 1 gram costs us $0.01
+# What if we knew that we're going to produce 50,000 donuts
+# 
+
+dbar = -3.4
+dbar_lower = -1.8
+n = 50000
+cost_per_gram = 0.01
+dbar * cost_per_gram * n
+
+
+
+donuts %>%
+  group_by(type) %>%
+  summarize(var = var(weight))
+
+
+donuts2 %>%
+  summarize(t.test(weight ~ type, var.equal = FALSE) %>% tidy())  
+
+
+
+
+ggplot() +
+  geom_violin(data = donuts2, mapping = aes(x = type, y = weight)) +
+  geom_jitter(data = donuts2, mapping = aes(x = type, y = weight)) 
+
+
+ggplot() +
+  geom_boxplot(data = donuts2, mapping = aes(x = type, y = weight)) +
+  geom_jitter(data = donuts2, mapping = aes(x = type, y = weight)) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 
 donuts %>% glimpse()
 
+
 donuts %>% group_by(baker) %>% count()
+
 
 m = donuts %>% lm(formula = tastiness ~ baker)
 
+m
+
+
 m %>% broom::tidy()
+
+
 m$coefficients
 
 m %>%
@@ -86,37 +200,19 @@ donuts %>%
 
 
 
-# 
-
-donuts = read_csv("workshops/donuts.csv")
-
-donuts %>% glimpse()
 
 
-# Tidy long format
-long = donuts %>% 
-  group_by(type) %>%
-  summarize(xbar = mean(tastiness)) %>%
-  mutate(testid = 1)
 
 
-# Wide matrix
-wide = tibble(xbar_a = 2.84, xbar_b = 4.16) %>%
-  mutate(dbar = xbar_b - xbar_a)
 
-
-long %>%
-  pivot_wider(id_cols = testid, names_from = type, values_from = xbar) %>%
-  mutate(dbar = b - a)
-
-library(tidyr)
-
+# Permutation Test Examples ##################################################
 
 long2 = donuts %>% 
   group_by(baker, type) %>%
   summarize(xbar = mean(tastiness)) %>%
   ungroup() %>%
   mutate(testid = c(1,1, 2,2, 3,3)) 
+
 
 long2 %>%
   pivot_wider(id_cols = c(baker, testid), names_from = type, values_from = xbar) %>%
