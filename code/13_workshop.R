@@ -40,25 +40,82 @@ se
 # Example 1: Calculate Direct Effects ########################
 
 # Calculate the direct effect of having a heart vs. foam in your latte
-stat = lattes %>%
-  reframe(
-    name = 'Heart - Foamy',
-    xbar1 = mean(y[art == "heart"]),
-    xbar0 = mean(y[art == "foamy"]),
-    dbar = xbar1 - xbar0,
-    se = se,
-    z = qnorm(0.975),
-    lower = dbar - se * z,
-    upper = dbar + se * z
-  )
 
+lattes %>%
+  summarize(dbar =  mean(y[machine == "a"]) - mean(y[machine == "b"] ) )
+
+
+lattes %>%
+  reframe(dbar =  mean(y[machine == "a"]) - mean(y[machine == "b"] ) )
+
+
+lattes %>%
+  reframe(dbar =  y[machine == "a"] - y[machine == "b"] )
+
+lattes %>%
+  summarize(dbar =  y[machine == "a"] - y[machine == "b"] )
+
+
+
+myse = lattes %>%
+  group_by(machine, syrup, art) %>%
+  summarize(
+    s = sd(y),
+    n = n()) %>%
+  ungroup() %>%
+  summarize(se = sqrt( sum(s^2 / n) )) 
+myse %>%  {.$se}
+myse %>%  with(se)
+
+se = myse$se
+
+
+stat = lattes %>%
+  summarize(dbar =  mean(y[machine == "a"]) - mean(y[machine == "b"]) ) %>%
+  mutate(se = se) %>%
+  mutate(
+    name = "Machine A - B",
+    z = qnorm(0.975),
+    upper = dbar + z * se,
+    lower = dbar - z * se)
+
+# pnorm(3)
+stat
+
+colors()
+
+ggplot() +
+  geom_point(data = stat, mapping = aes(x = name, y = dbar)) +
+  geom_crossbar(data = stat, mapping = aes(x = name, y = dbar, ymin = lower, ymax = upper),
+                fill = "violetred") +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_text(data = stat, mapping = aes(x = name, y = upper + 2, label = round(upper, 2) )) +
+  geom_text(data = stat, mapping = aes(x = name, y = lower - 2, label = round(lower, 2) ))
+
+
+# stat = lattes %>%
+#   reframe(
+#     name = 'Heart - Foamy',
+#     xbar1 = mean(y[art == "heart"]),
+#     xbar0 = mean(y[art == "foamy"]),
+#     dbar = xbar1 - xbar0,
+#     se = se,
+#     z = qnorm(0.975),
+#     lower = dbar - se * z,
+#     upper = dbar + se * z
+#   )
+# 
 
 # Visualize it!
 ggplot() +
-  geom_crossbar(data = stats,
-                mapping = aes(x = name, y = dbar, ymin = lower, ymax = upper)) +
+  geom_crossbar(
+    data = stat,
+    mapping = aes(x = name, y = dbar, ymin = lower, ymax = upper)) +
   geom_hline(yintercept = 0, linetype = "dashed")
 # Is that effect significant with 95% confidence?
+
+
+
 
 
 
@@ -181,27 +238,222 @@ se_factorial = function(formula = y ~ machine + syrup + art, data){
 
 # Generate your interaction effects for a 2^3 factorial experiment
 dbar_oneway(formula = y ~ machine, data = lattes)
+
+# Highest alphabeltic level - Lowest Alphabeltical Level
+# B - A
+
+
+lattes$machine %>% unique()
+# B - A
+dbar_oneway(formula = y ~ machine, data = lattes)
+
+lattes$syrup %>% unique()
+# Torani - Monin
 dbar_oneway(formula = y ~ syrup, data = lattes)
+
+
+lattes$art %>% unique()
+# Heart - Foamy
 dbar_oneway(formula = y ~ art, data = lattes)
+
+
+# B*Torani - A*Monin
 dbar_twoway(formula = y ~ machine * syrup, data = lattes)
+
+# B*Heart - A*Foamy
 dbar_twoway(formula = y ~ machine * art, data = lattes)
+
+# B*Heart*Torani - A*Foamy*Monin
 dbar_threeway(formula = y ~ machine * syrup * art, data = lattes)
+
+
+# Get your standard error free o charge
 se_factorial(formula = y ~ machine + syrup + art, data = lattes)
 
 
-
-# Can we stack these?
 effects = bind_rows(
-  tibble(name = "machine", estimate = dbar_oneway(formula = y ~ machine, data = lattes) ),
-  tibble(name = "machine * syrup", estimate = dbar_twoway(formula = y ~ machine * syrup, data = lattes) )
-) %>%
-  mutate(se = se_factorial(formula = y ~ machine + syrup + art, data = lattes))
+  tibble(
+    name = "Torani - Monin",
+    estimate = dbar_oneway(formula = y ~ syrup, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
   
+  tibble(
+    name = "Heart - Foam",
+    estimate = dbar_oneway(formula = y ~ art, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
+  
+  tibble(
+    name = "Machine B - A",
+    estimate = dbar_oneway(formula = y ~ machine, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
+  
+  
+  tibble(
+    name = "Machine * Art",
+    estimate = dbar_twoway(formula = y ~ machine * art, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
+  
+  tibble(
+    name = "Machine * Syrup",
+    estimate = dbar_twoway(formula = y ~ machine * syrup, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
+  
+  
+  tibble(
+    name = "Syrup * Art",
+    estimate = dbar_twoway(formula = y ~ syrup * art, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  ),
+  
+  tibble(
+    name = "Machine * Syrup * Art",
+    estimate = dbar_threeway(formula = y ~ machine * syrup * art, data = lattes),
+    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
+  )
+) %>%
+   mutate(z = qnorm(0.975),
+          upper = estimate + se * z,
+          lower = estimate - se * z)
 
+effects
+gg = ggplot() +
+  geom_crossbar(data = effects,
+                mapping = aes(x = name, y = estimate, ymin = lower, ymax = upper,
+                              fill = name)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none") +
+  coord_flip() 
+
+gg = ggplot() +
+  geom_crossbar(data = effects,
+                mapping = aes(x = name, y = estimate, ymin = lower, ymax = upper,
+                              fill = estimate)) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  theme(legend.position = "none") +
+  coord_flip()  +
+  scale_fill_gradient2(high = "royalblue", low = "salmon", mid = "white", midpoint = 0)
+
+gg
+
+
+# # Can we stack these?
+# effects = bind_rows(
+#   tibble(name = "machine", estimate = dbar_oneway(formula = y ~ machine, data = lattes) ),
+#   tibble(name = "machine * syrup", estimate = dbar_twoway(formula = y ~ machine * syrup, data = lattes) )
+# ) %>%
+#   mutate(se = se_factorial(formula = y ~ machine + syrup + art, data = lattes))
+#   
+# 
+
+
+# MULTIPLE LEVELS IN A FACTOR ####################################
 
 # What if we want to test the effects of 3 or more levels in one factor?
+
+lattes$milk %>% unique()
+
+lattes %>%
+  lm(formula = y ~ milk)
+
+lattes %>%
+  oneway.test(formula = y ~ milk)
+
+
+
+
+
+
+
+
+
+
+
+
+
+lattes %>%
+  mutate(oat = milk == "oat") %>%
+  dbar_oneway(formula = y ~ oat)
+
+
+
+
+
+
+
+# Compare the ones that are oatmilk vs. not
+lattes %>%
+  mutate(oat = milk == "oat") %>%
+  dbar_oneway(formula = y ~ oat)
+
+# Compare the ones that are skim vs. not
+lattes %>%
+  mutate(skim = milk == "skim") %>%
+  dbar_oneway(formula = y ~ skim)
+
+
+
+
+
+# Compare the ones that are whole vs. not
+lattes %>%
+  mutate(whole = milk == "whole") %>%
+  dbar_oneway(formula = y ~ whole)
+
+
+
+
+
+
+
 
 # Compare the ones that are oatmilk AND from machine B against all the ones that are NOT oatmilk and from machine A
 lattes %>%
   mutate(oat = milk == "oat") %>%
-  dbar_oneway(formula = y ~ machine * oat)
+  dbar_twoway(formula = y ~ machine * oat)
+
+
+
+
+
+
+# interactions with lm() #############################
+
+
+m = lattes %>%
+  lm(formula = y ~ machine * art) 
+# Tastiness = 54 + -26 * (machine B?) + 15 * (heart?) - 8 * (machineB?)(heart?)
+# Tastiness = 54 + -26 * (1) + 15 * (0) - 8 * (1)(0)
+# Tastiness = 54 + -26 * (1) + 15 * (1) - 8 * (1)(1)
+# Tastiness = 54 + -26 * (0) + 15 * (0) - 8 * (0)(0)
+
+tibble(
+  machine = "b",
+  art = "heart",
+  y = predict(m, newdata = tibble(machine, art))
+)
+
+
+predict(m, newdata = tibble(machine = "b", art = "heart"), se.fit = TRUE) %>%
+  as_tibble() %>%
+  select(yhat = fit, se = se.fit)
+
+
+grid = expand_grid(
+  machine = c("a", "b"),
+  art = c("heart", "foamy")
+)
+
+effects = predict(m, newdata = grid, se.fit = TRUE) %>% 
+  as_tibble() %>%
+  mutate(grid) %>%
+  mutate(z = qnorm(0.975),
+         upper = fit + se * z,
+         lower = fit - se * z)
+
+
+
