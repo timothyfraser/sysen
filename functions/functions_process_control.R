@@ -339,7 +339,7 @@ limits_avg = function(x,y){
   
   # For each different subgroup sample size, calculate control constant A3
   constants = stat_s %>%
-    select(nw) %>%
+    dplyr::select(nw) %>%
     distinct() %>%
     group_by(nw) %>%
     summarize(A3 =  bn(n = nw, reps = 1e4)$A3   ) %>%
@@ -396,7 +396,7 @@ limits_s = function(x,y){
   
   # For each different subgroup sample size, calculate control constants
   constants = stat_s %>%
-    select(nw) %>%
+    dplyr::select(nw) %>%
     distinct() %>%
     group_by(nw) %>%
     summarize( bn(n = nw, reps = 1e4) ) %>%
@@ -448,7 +448,7 @@ limits_r = function(x,y){
   
   # For each different subgroup sample size, calculate control constants
   constants = stat_s %>%
-    select(nw) %>%
+    dplyr::select(nw) %>%
     distinct() %>%
     group_by(nw) %>%
     summarize( dn(n = nw, reps = 1e4) ) %>%
