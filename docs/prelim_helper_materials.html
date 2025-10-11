@@ -2092,12 +2092,12 @@ margin-left: 0 !important;
           <div class="SidebarItems" id="toc">
             <ul>
             <li><a href="#table-1-chi-squared" id="toc-table-1-chi-squared">Table 1: Chi-Squared</a></li>
-            <li><a href="#table-2-k-factor-upper" id="toc-table-2-k-factor-upper">Table 2: k-factor
-            (upper)</a></li>
-            <li><a href="#table-3-k-factor-lower" id="toc-table-3-k-factor-lower">Table 3: k-factor
-            (lower)</a></li>
-            <li><a href="#table-4-k-factor-rules" id="toc-table-4-k-factor-rules">Table 4: k-factor
+            <li><a href="#table-2-k-factor-rules" id="toc-table-2-k-factor-rules">Table 2: k-factor
             rules</a></li>
+            <li><a href="#table-3-k-factor-upper" id="toc-table-3-k-factor-upper">Table 3: k-factor
+            (upper)</a></li>
+            <li><a href="#table-4-k-factor-lower" id="toc-table-4-k-factor-lower">Table 4: k-factor
+            (lower)</a></li>
             <li><a href="#table-5-control-constants-d" id="toc-table-5-control-constants-d">Table 5: Control
             Constants (d)</a></li>
             <li><a href="#table-6-control-constants-b" id="toc-table-6-control-constants-b">Table 6: Control
@@ -2996,14 +2996,151 @@ df
 <hr>
 <p><br></p>
 </div>
-<div id="table-2-k-factor-upper" class="section level2">
-<h2>Table 2: k-factor (upper)</h2>
+<div id="table-2-k-factor-rules" class="section level2">
+<h2>Table 2: k-factor rules</h2>
+<table class="table table-striped table-responsive" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
+<caption style="font-size: initial !important;">
+Table 2: Rules for Finding k-factors
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+Data
+</th>
+<th style="text-align:left;">
+Censor
+</th>
+<th style="text-align:center;">
+Bounds
+</th>
+<th style="text-align:left;">
+Rule
+</th>
+<th style="text-align:left;">
+Code
+</th>
+<th style="text-align:left;">
+Steps
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 1.5cm; ">
+Complete
+</td>
+<td style="text-align:left;width: 1cm; ">
+None
+</td>
+<td style="text-align:center;width: 1.5cm; ">
+both
+</td>
+<td style="text-align:left;width: 4cm; ">
+<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
+\frac{1}{2r}\)</span>
+</td>
+<td style="text-align:left;">
+qchisq(ci, df = 2<em>r) / (2</em>r)
+</td>
+<td style="text-align:left;">
+Lookup r in Table 3 or 4.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 1.5cm; ">
+Type I
+</td>
+<td style="text-align:left;width: 1cm; ">
+Time
+</td>
+<td style="text-align:center;width: 1.5cm; ">
+lower
+</td>
+<td style="text-align:left;width: 4cm; ">
+<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
+\frac{1}{2r}\)</span>
+</td>
+<td style="text-align:left;">
+qchisq(ci, df = 2<em>r) / (2</em>r)
+</td>
+<td style="text-align:left;">
+Lookup r in Table 4.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 1.5cm; ">
+Type I
+</td>
+<td style="text-align:left;width: 1cm; ">
+Time
+</td>
+<td style="text-align:center;width: 1.5cm; ">
+upper
+</td>
+<td style="text-align:left;width: 4cm; ">
+<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2(r + 1)} \times
+\frac{1}{2r}\)</span>
+</td>
+<td style="text-align:left;">
+qchisq(ci, df = 2<em>(r + 1)) / (2</em>r)
+</td>
+<td style="text-align:left;">
+Lookup r + 1 in Table 3.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 1.5cm; ">
+Type II
+</td>
+<td style="text-align:left;width: 1cm; ">
+Failures
+</td>
+<td style="text-align:center;width: 1.5cm; ">
+lower
+</td>
+<td style="text-align:left;width: 4cm; ">
+<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
+\frac{1}{2r}\)</span>
+</td>
+<td style="text-align:left;">
+qchisq(ci, df = 2<em>r) / (2</em>r)
+</td>
+<td style="text-align:left;">
+Lookup r in Table 4.
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 1.5cm; ">
+Type II
+</td>
+<td style="text-align:left;width: 1cm; ">
+Failures
+</td>
+<td style="text-align:center;width: 1.5cm; ">
+upper
+</td>
+<td style="text-align:left;width: 4cm; ">
+<span class="math inline">\(k_{ci,r} =  \chi^{2}_{ci, 2((r-1) + 1)}
+\times \frac{1}{2(r - 1)} \times \frac{(r - 1)}{r}\)</span>
+</td>
+<td style="text-align:left;">
+qchisq(ci, df = 2 * ( (r - 1) + 1)) / (2 * (r - 1) ) * (r - 1) / r
+</td>
+<td style="text-align:left;">
+Lookup r - 1 in Table 3. Multiply k by <span class="math inline">\(\frac{(r-1)}{r}\)</span>.
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="table-3-k-factor-upper" class="section level2">
+<h2>Table 3: k-factor (upper)</h2>
 <table class="table table-striped table-responsive" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; font-weight: bold; " colspan="8">
 <div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
-Table 2: k-factors for One-Sided Exponential Upper Bound
+Table 3: k-factors for One-Sided Exponential Upper Bound
 </div>
 </th>
 </tr>
@@ -4137,14 +4274,14 @@ r
 <hr>
 <p><br></p>
 </div>
-<div id="table-3-k-factor-lower" class="section level2">
-<h2>Table 3: k-factor (lower)</h2>
+<div id="table-4-k-factor-lower" class="section level2">
+<h2>Table 4: k-factor (lower)</h2>
 <table class="table table-striped table-responsive" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
 <th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; font-weight: bold; " colspan="8">
 <div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
-Table 3: k-factors for One-Sided Exponential Lower Bound
+Table 4: k-factors for One-Sided Exponential Lower Bound
 </div>
 </th>
 </tr>
@@ -5277,143 +5414,6 @@ r
 <br>
 <hr>
 <p><br></p>
-</div>
-<div id="table-4-k-factor-rules" class="section level2">
-<h2>Table 4: k-factor rules</h2>
-<table class="table table-striped table-responsive" style="font-size: 12px; color: black; margin-left: auto; margin-right: auto;">
-<caption style="font-size: initial !important;">
-Table 4: Rules for Finding k-factors
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-Data
-</th>
-<th style="text-align:left;">
-Censor
-</th>
-<th style="text-align:center;">
-Bounds
-</th>
-<th style="text-align:left;">
-Rule
-</th>
-<th style="text-align:left;">
-Code
-</th>
-<th style="text-align:left;">
-Steps
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;width: 1.5cm; ">
-Complete
-</td>
-<td style="text-align:left;width: 1cm; ">
-None
-</td>
-<td style="text-align:center;width: 1.5cm; ">
-both
-</td>
-<td style="text-align:left;width: 4cm; ">
-<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
-\frac{1}{2r}\)</span>
-</td>
-<td style="text-align:left;">
-qchisq(ci, df = 2<em>r) / (2</em>r)
-</td>
-<td style="text-align:left;">
-Lookup r in Table 2 or 3.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 1.5cm; ">
-Type I
-</td>
-<td style="text-align:left;width: 1cm; ">
-Time
-</td>
-<td style="text-align:center;width: 1.5cm; ">
-lower
-</td>
-<td style="text-align:left;width: 4cm; ">
-<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
-\frac{1}{2r}\)</span>
-</td>
-<td style="text-align:left;">
-qchisq(ci, df = 2<em>r) / (2</em>r)
-</td>
-<td style="text-align:left;">
-Lookup r in Table 3.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 1.5cm; ">
-Type I
-</td>
-<td style="text-align:left;width: 1cm; ">
-Time
-</td>
-<td style="text-align:center;width: 1.5cm; ">
-upper
-</td>
-<td style="text-align:left;width: 4cm; ">
-<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2(r + 1)} \times
-\frac{1}{2r}\)</span>
-</td>
-<td style="text-align:left;">
-qchisq(ci, df = 2<em>(r + 1)) / (2</em>r)
-</td>
-<td style="text-align:left;">
-Lookup r + 1 in Table 2.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 1.5cm; ">
-Type II
-</td>
-<td style="text-align:left;width: 1cm; ">
-Failures
-</td>
-<td style="text-align:center;width: 1.5cm; ">
-lower
-</td>
-<td style="text-align:left;width: 4cm; ">
-<span class="math inline">\(k_{ci,r} = \chi^{2}_{ci, 2r} \times
-\frac{1}{2r}\)</span>
-</td>
-<td style="text-align:left;">
-qchisq(ci, df = 2<em>r) / (2</em>r)
-</td>
-<td style="text-align:left;">
-Lookup r in Table 3.
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 1.5cm; ">
-Type II
-</td>
-<td style="text-align:left;width: 1cm; ">
-Failures
-</td>
-<td style="text-align:center;width: 1.5cm; ">
-upper
-</td>
-<td style="text-align:left;width: 4cm; ">
-<span class="math inline">\(k_{ci,r} =  \chi^{2}_{ci, 2((r-1) + 1)}
-\times \frac{1}{2(r - 1)} \times \frac{(r - 1)}{r}\)</span>
-</td>
-<td style="text-align:left;">
-qchisq(ci, df = 2 * ( (r - 1) + 1)) / (2 * (r - 1) ) * (r - 1) / r
-</td>
-<td style="text-align:left;">
-Lookup r - 1 in Table 2. Multiply k by <span class="math inline">\(\frac{(r-1)}{r}\)</span>.
-</td>
-</tr>
-</tbody>
-</table>
 </div>
 <div id="table-5-control-constants-d" class="section level2">
 <h2>Table 5: Control Constants (d)</h2>
