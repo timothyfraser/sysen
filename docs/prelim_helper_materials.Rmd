@@ -1,0 +1,345 @@
+---
+title: 'Statistical Tables and Common Equations'
+output:
+  rmdformats::downcute:
+    self_contained: true
+    default_style: "light"
+    downcute_theme: "default"
+    number_sections: FALSE
+    css: prelim_bank.css
+    df_print: kable
+    mathjax: "default"
+---
+  
+```{r setup, message = FALSE,  warning = FALSE, echo = FALSE, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, echo = FALSE)
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(htmltools)
+library(purrr)
+library(ggplot2)
+library(readr)
+library(stringr)
+fontsize = 14
+
+
+block = function(x){
+  htmltools::tags$table(
+    htmltools::tags$tr(htmltools::tags$td("Explanation")),
+    htmltools::tags$tr(htmltools::tags$td(htmltools::HTML(x)))
+  )
+}
+
+box = function(title, ...){
+  bslib::card(class = "cerulean",
+              bslib::card_header(bslib::card_title(title)),
+              bslib::card_body_fill(...))
+}
+
+```
+
+
+## Table 1: Chi-Squared
+
+```{r table1, out.width="50%", fig.align='center'}
+dist = tibble(chisq = seq(from = 0.001, to = 15, by = 0.01),
+       d = dchisq(chisq, df = 4),
+       alpha = 0.10,
+       ci = 1 - alpha,
+       type = chisq > qchisq(ci, df = 4))
+
+g1 = ggplot() +
+  geom_area(data = dist, mapping = aes(x = chisq, y = d, fill = type), color = "#373737") +
+  annotate("text", x = 8, y = 0.15, label = "P(ci)", size = 7) +
+  annotate("segment", x = 7, xend = 4, y = 0.14, yend = 0.10, arrow = arrow(type = "closed"), size = 3) +
+  annotate("text", x = 12, y = 0.08, label = "P(1 - alpha)", size = 7) +
+  annotate("segment", x = 12, xend = 10, y = 0.060, yend = 0.01, arrow = arrow(type = "closed"), size = 3) +
+  theme_classic(base_size = 14) +
+  theme(axis.line.y = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank()) +
+  guides(fill = "none") +
+  scale_fill_manual(values = c("#ebece6", "darkgrey"))
+#ggsave(g1, filename = "images/qchisq_dist.png", width = 3, height = 1.5)
+
+fix = function(x, n){x %>% format(scientific = FALSE) %>%  
+    str_extract(paste(".[0-9]+[.][0-9]{", n, "}", sep = ""))}
+
+tab_chisq = tidyr::expand_grid(
+  df = c(1:21),
+  alpha = c(0.995, 0.975, 0.20, 0.10, 0.05, 
+        0.025, 0.02, 0.01, 0.005, 0.002, 0.001)) %>%
+  mutate(
+    # Calculate chi-squared for each percentile and df
+    chisq = qchisq(1 - alpha, df),
+    # For those which are *not* very tiny, just truncate
+    chisq = case_when(
+      alpha %in% c(0.995, 0.975) & df %in% c(1) ~ chisq %>% fix(7),
+      alpha %in% c(0.995, 0.975) & df %in% c(2:3) ~ chisq %>% fix(3),
+      TRUE ~ chisq %>% fix(2))) %>%
+  mutate(ci = paste((1 - alpha) * 100, "%", sep = "")) %>%
+  tidyr::pivot_wider(id_cols = c(df), names_from = ci, values_from = chisq)
+
+tab_chisq %>% write_csv("workshops/chisq.csv")
+
+k1 = tab_chisq %>%
+  kable(booktabs = TRUE, format = "html", align = "c", escape = FALSE) %>%
+  kable_styling(font_size = 12, bootstrap_options = c("striped", "responsive"),full_width = TRUE)%>%
+  add_header_above(
+    bold = TRUE, 
+    header = c(" " = 1, "confidence interval ci = 1 - alpha level" = 11), escape = FALSE) %>%
+  add_header_above(
+    italic = TRUE, escape = FALSE,
+    header = c(" " = 1, "Chi<sup>2</sup> = qchisq(p = ci, df)" = 11)) %>%
+  add_header_above(
+    bold = TRUE, escape = FALSE,
+    header = c("Table 1: Chi<sup>2</sup> Statistics" = 12))
+
+g1; k1
+```
+
+<br>
+<hr>
+<br>
+
+## Table 2: k-factor rules
+
+```{r table4, fig.align='center', echo = FALSE}
+tribble(
+  
+  ~Data,  ~Censor,  ~Bounds,   ~Rule,     ~Code, ~Steps,
+   
+  "Complete", "None",   "both",  "$k_{ci,r} = \\chi^{2}_{ci, 2r} \\times \\frac{1}{2r}$",
+    "qchisq(ci, df = 2*r) / (2*r)", "Lookup r in Table 3 or 4.",
+  
+  "Type I",  "Time",   "lower", "$k_{ci,r} = \\chi^{2}_{ci, 2r} \\times \\frac{1}{2r}$",
+    "qchisq(ci, df = 2*r) / (2*r)", "Lookup r in Table 4.",
+  
+  "Type I", "Time", "upper", "$k_{ci,r} = \\chi^{2}_{ci, 2(r + 1)} \\times \\frac{1}{2r}$",  
+    "qchisq(ci, df = 2*(r + 1)) / (2*r)", "Lookup r + 1 in Table 3.",
+  
+  "Type II", "Failures", "lower", "$k_{ci,r} = \\chi^{2}_{ci, 2r} \\times \\frac{1}{2r}$",
+    "qchisq(ci, df = 2*r) / (2*r)", "Lookup r in Table 4.",
+  
+  "Type II", "Failures", "upper", "$k_{ci,r} =  \\chi^{2}_{ci, 2((r-1) + 1)} \\times \\frac{1}{2(r - 1)} \\times \\frac{(r - 1)}{r}$", "qchisq(ci, df = 2 * ( (r - 1) + 1)) / (2 * (r - 1) )  *  (r - 1) / r", "Lookup r - 1 in Table 3. Multiply k by $\\frac{(r-1)}{r}$."
+
+) %>%
+ kable(escape = FALSE, format = "html",  booktabs = TRUE,align = c("l","l","c","l","l", "l"),
+       caption = "Table 2: Rules for Finding k-factors") %>%
+  kable_styling(full_width = TRUE, bootstrap_options = c("striped", "responsive"), font_size = 12) %>%
+  column_spec(column = 1, width = "1.5cm") %>%
+  column_spec(column = 2, width = "1cm") %>%
+  column_spec(column = 3, width = "1.5cm") %>%
+  column_spec(column = 4, width = "4cm")
+```
+
+
+
+## Table 3: k-factor (upper)
+
+```{r table2, fig.align='center'}
+fix = function(x, n){x %>% format(scientific = FALSE) %>%  
+    str_extract(paste(".[0-9]+[.][0-9]{", n, "}", sep = ""))}
+
+table_k_upper = tidyr::expand_grid(
+  r = c(1:41),
+  ci = c(0.60, .80, 0.90, .95, .975, .99, .999)) %>%
+  mutate(
+    # Calculate chi-squared for each percentile and df
+    k = qchisq(ci, df = 2*(r+1)) / (2*r)) %>%
+  mutate(k = k %>% round(2)) %>%
+  mutate(ci = paste(ci * 100, "%", sep = "")) %>%
+  tidyr::pivot_wider(id_cols = c(r), names_from = ci, values_from = k)
+
+table_k_upper %>% write_csv("workshops/k_upper.csv")
+
+k2 = table_k_upper %>%
+  kable(booktabs = TRUE, format = "html", align = "c", escape = TRUE) %>%
+  add_header_above(
+    bold = TRUE, escape = FALSE,
+    header = c("r fails" = 1, "confidence interval (ci = 1 - alpha level)"  = 7)) %>%
+  add_header_above(italic = TRUE, header = c(" " = 1, "k-upper = qchisq(ci, df = 2*(r+1)) / (2*r)" = 7)) %>%
+  add_header_above(bold = TRUE, header = c(" " = 1, "Time/Type I Censoring; If Type II Censoring, be sure to adjust." = 7)) %>%
+  add_header_above(bold = TRUE, header = c("Table 3: k-factors for One-Sided Exponential Upper Bound" = 8)) %>%
+  kableExtra::column_spec(1,border_right = TRUE) %>%
+  kable_styling(font_size = 12,bootstrap_options = c("striped", "responsive"), full_width = TRUE)
+k2
+```
+<br>
+<hr>
+<br>
+
+## Table 4: k-factor (lower)
+
+```{r}
+fix = function(x, n){x %>% format(scientific = FALSE) %>%  
+    str_extract(paste(".[0-9]+[.][0-9]{", n, "}", sep = ""))}
+
+table_k_lower = tidyr::expand_grid(
+  r = c(1:41),
+  alpha = c(0.60, .80, 0.90, .95, .975, .99, .999)) %>%
+  mutate(
+    # Calculate chi-squared for each percentile and df
+    k = qchisq(1 - alpha, df = (2*r)) / (2*r)) %>%
+  mutate(k = k %>% round(2)) %>%
+  mutate(ci = paste((1 - alpha) * 100, "%", sep = "")) %>%
+  tidyr::pivot_wider(id_cols = c(r), names_from = ci, values_from = k)
+
+table_k_lower %>% write_csv("workshops/k_lower.csv")
+
+k3 = table_k_lower %>%
+  kable(booktabs = TRUE, format = "html", align = "c", escape = TRUE) %>%
+  add_header_above(
+    bold = TRUE, escape = FALSE,
+    header = c("r fails" = 1, "confidence interval (ci = 1 - alpha level)"  = 7)) %>%
+  add_header_above(italic = TRUE, header = c(" " = 1, "k-upper = qchisq(ci, df = 2*r) / (2*r)" = 7)) %>%
+  add_header_above(bold = TRUE, header = c(" " = 1, "Type I & II Censoring, No Censoring" = 7)) %>%
+  add_header_above(bold = TRUE, header = c("Table 4: k-factors for One-Sided Exponential Lower Bound" = 8)) %>%
+  column_spec(1,border_right = TRUE) %>%
+  kable_styling(font_size = 12, bootstrap_options = c("striped", "responsive"),full_width = TRUE) 
+# View table
+k3
+```
+
+<br>
+<hr>
+<br>
+
+
+## Table 5: Control Constants (d)
+
+```{r table5, fig.align="center", echo = FALSE, cache=TRUE}
+
+# # Let's calculate our own d function
+# dn = function(n, reps = 1e4){
+#   # For 10,0000 reps
+#   tibble(rep = 1:reps) %>%
+#     # For each rep,
+#     group_by(rep) %>%
+#     # Simulate the ranges of n values
+#     summarize(r = rnorm(n = n, mean = 0, sd = 1) %>% range() %>% diff() %>% abs()) %>%
+#     ungroup() %>%
+#     # And calculate...
+#     summarize(
+#       # Mean range
+#       d2 = mean(r),
+#       # standard deviation of ranges
+#       d3 = sd(r),
+#       # and constants for obtaining lower and upper ci for rbar
+#       D3 = 1 - 3*(d3/d2), # sometimes written D3
+#       D4 = 1 + 3*(d3/d2), # sometimes written D4
+#       # Sometimes D3 goes negative; we need to bound it at zero
+#       D3 = if_else(D3 < 0, true = 0, false = D3) ) %>%
+#     return()
+# }
+# 
+# # Let's write a function bn() to calculate our B3 and B4 statistics for any subgroup size n
+# bn = function(n, reps = 1e4){
+#   tibble(rep = 1:reps) %>%
+#     group_by(rep) %>%
+#     summarize(s = rnorm(n, mean = 0, sd = 1) %>% sd()) %>%
+#     summarize(b2 = mean(s), 
+#               b3 = sd(s),
+#               C4 = b2, # this is sometimes called C4
+#               A3 = 3 / (b2 * sqrt( n  )),
+#               B3 = 1 - 3 * b3/b2,
+#               B4 = 1 + 3 * b3/b2,
+#               # bound B3 at 0, since we can't have a standard deviation below 0
+#               B3 = if_else(B3 < 0, true = 0, false = B3)) %>%
+#     return()
+# }
+# 
+# library(dplyr)
+# library(readr)
+# d = tibble(n = 2:50) %>% split(.$n) %>% purrr::map_dfr(~dn(n = .x$n, reps = 10000), .id = "n") %>%
+#   mutate(n = as.integer(n)) %>%
+#   mutate(across(d2:D4, .fns = ~round(.x, 3))) %>%
+#   select(n, d2:D4) 
+#   write_csv("workshops/dn.csv")
+# 
+# b = tibble(n = 2:50) %>% split(.$n) %>% purrr::map_dfr(~bn(n = .x$n, reps = 10000), .id = "n") %>%
+#   mutate(n = as.integer(n)) %>%
+#   select(n, b2:B4) 
+# 
+# b %>%
+#   mutate(across(b2:B4, .fns = ~round(.x, 3))) %>%
+#   write_csv("workshops/bn.csv")
+
+
+ 
+read_csv("workshops/dn.csv") %>%
+    kable(booktabs = TRUE, format = "html", align = "c", escape = TRUE) %>%
+  add_header_above(
+    bold = TRUE, escape = FALSE,
+    header = c("Subgroup Size" = 1, "Control Constants"  = 4), line = TRUE) %>%
+  add_header_above(bold = TRUE, header = c("d-factor control constants" = 5), line = TRUE) %>%
+  column_spec(1,border_right = TRUE) %>%
+  kable_styling(font_size = fontsize, bootstrap_options = c("striped", "responsive"),full_width = TRUE)
+```
+
+
+
+## Table 6: Control Constants (b)
+
+```{r table6, fig.align="center", echo = FALSE, cache=TRUE}
+# View table 
+read_csv("workshops/bn.csv") %>%
+    kable(booktabs = TRUE, format = "html", align = "c", escape = TRUE) %>%
+  add_header_above(
+    bold = TRUE, escape = FALSE,
+    header = c("Subgroup Size" = 1, "Control Constants"  = 6), line = TRUE) %>%
+  add_header_above(bold = TRUE, header = c("b-factor control constants" = 7), line = TRUE) %>%
+  column_spec(1,border_right = TRUE) %>%
+  kable_styling(font_size = fontsize, bootstrap_options = c("striped", "responsive"),full_width = TRUE)
+# View table
+```
+
+
+
+## Formula
+
+```{r}
+c1 = box(title = "Exponential Distribution",
+    span("$$ f(t) = \\lambda e^{-\\lambda t } $$"),
+    span("$$ F(t) = 1 - e^{-\\lambda t } $$"),
+    span("$$ MTTF = \\frac{1}{\\lambda} $$"))
+
+c2 = box(title = "Weibull Distribution",
+    span("$$ f(t) = \\frac{m}{c} (\\frac{t}{c})^{m-1} \\times e^{-(t / c)^m } $$"),
+    span("$$ F(t) = 1 - e^{-(t/c)^m} $$")
+)
+
+c3 = box(
+  title = "Estimating Lambda",
+  span("$$ \\hat{\\lambda} = \\frac{r}{\\sum_{i=1}^{r}{ t_i } + (n - r) \\times T_{max}  } $$"),
+  span("$$ Type \\ I: \\ T_{max} = \\ end \\ of \\ study \\ period \\\\ Type \\ II: \\ T_{max} = \\ time \\ of \\ last \\ failure $$")
+)
+
+c4 = box(title = "Maximum Failure Rate",
+         span("$$  \\ when \\ r \\geq 1 \\ failures \\\\ \\lambda_{(1 - \\alpha)} = \\hat{\\lambda} \\times k_{ \\ r, (1-\\alpha)} $$"),
+         span("$$ when \\ r = 0 \\ failures \\\\ \\lambda_{(1 - \\alpha)} = \\frac{-ln(\\alpha ) }{n \\times T} $$"))
+
+c5 = box(title = "Chi-squared Statistic",
+         span("$$ \\chi^{2} = \\sum{ \\frac{(observed - expected)^{2} }{ expected }} $$ "),
+         span("$$ Degrees \\ of \\ Freedom \\ (df) \\ for \\ \\chi^{2} \\\\ df = n_{intervals}  - 1 - n_{parameters} $$")
+         )
+
+c6 = box(title = "Process Indices",
+         span("$$ C_{p} = \\frac{ E_{upper} - E_{lower} }{6 \\sigma_{short} }
+              \\\\
+              C_{pk} = \\frac{ | E_{limit} - \\mu | }{3 \\sigma_{short} } $$"),
+         span("$$ P_{p} = \\frac{ E_{upper} - E_{lower} }{6 \\sigma_{total} }
+              \\\\
+              P_{pk} = \\frac{ | E_{limit} - \\mu | }{3 \\sigma_{total} } $$"),
+         
+         )
+bslib::layout_column_wrap(
+  c1, c2, c3, c4, c5, c6,
+  width = 0.5,
+  fill = TRUE
+)
+```
+
+
