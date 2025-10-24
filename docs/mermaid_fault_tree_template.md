@@ -1,6 +1,8 @@
 # `mermaid` Fault Tree Template
 
-```mermaid
+Use this code at `mermaid.live` to render a Fault Tree. Works so-so on Github READMEs.
+
+```
 flowchart TD
 
 %% Nodes
