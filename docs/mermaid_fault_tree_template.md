@@ -2,6 +2,8 @@
 
 Use this code at `mermaid.live` to render a Fault Tree. Works so-so on Github READMEs.
 
+<img width="1465" height="984" alt="image" src="https://github.com/user-attachments/assets/c73188fc-da6a-4700-8570-c9dbf5425c74" />
+
 ```
 flowchart TD
 
