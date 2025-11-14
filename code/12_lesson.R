@@ -7,15 +7,54 @@ library(broom) # get our tidy() function
 # Read data!
 donuts = read_csv("workshops/donuts.csv")
 
-
+donuts %>% glimpse()
 # Having trouble reading in your data?
 # You can also use this code:
 donuts = read_csv("https://raw.githubusercontent.com/timothyfraser/sysen/main/workshops/donuts.csv")
 
 
+donuts
+
+aov(tastiness ~ baker, data = donuts)
+
+oneway.test(tastiness ~ baker, data = donuts, var.equal = TRUE)
+# tastiness varies significantly between bakers
+
+lm(formula = tastiness ~ baker, data = donuts) %>%
+  glance()
+
+
+
+donuts3 = donuts %>%
+  filter(baker %in% c("Craig", "Melanie"))
+
+
+t.test(tastiness ~ baker, data = donuts3, var.equal = TRUE) %>%
+  tidy()
+
+
+
+donuts3 = donuts3 %>%
+  mutate(baker = factor(baker, levels = c("Melanie", "Craig")))
+
+t.test(tastiness ~ baker, data = donuts3, var.equal = TRUE) %>%
+  tidy()
+
+
+
+donuts3 %>%
+  mutate(baker = factor(baker, levels = c("Melanie", "Craig"))) %>%
+  t.test(tastiness ~ baker, data = ., var.equal = TRUE) %>%
+  tidy()
+
+  
+
 # Convert type to factor, where treatment group b is first
 donuts2 = donuts %>%
   mutate(type = factor(type, levels = c("b", "a")))
+
+
+
 
 # donuts$tastiness %>% unique()
 
@@ -87,6 +126,7 @@ dbar * cost_per_gram * n
 donuts %>%
   group_by(type) %>%
   summarize(var = var(weight))
+
 
 
 donuts2 %>%
@@ -205,50 +245,67 @@ donuts %>%
 
 
 
+
 # Permutation Test Examples ##################################################
+# Load packages, to get our dplyr, ggplot, tibble, and readr functions
+library(dplyr)
+library(broom) # get our tidy() function
 
-long2 = donuts %>% 
-  group_by(baker, type) %>%
-  summarize(xbar = mean(tastiness)) %>%
-  ungroup() %>%
-  mutate(testid = c(1,1, 2,2, 3,3)) 
+# Read data!
+donuts = read_csv("workshops/donuts.csv")
 
 
-long2 %>%
-  pivot_wider(id_cols = c(baker, testid), names_from = type, values_from = xbar) %>%
-  mutate(dbar = b - a)
+obs = donuts %>%
+  summarize(dbar = mean(tastiness[baker == "Melanie"])  - mean(tastiness[baker == "Craig"]))
 
+obs$dbar
 
 donuts %>%
-  select(type, tastiness) %>%
-  mutate(tastiness = sample(tastiness, replace = FALSE)) %>%
-  group_by(type) %>%
-  summarize(xbar = mean(tastiness)) %>%
-  summarize(dbar = xbar[type == "b"] - xbar[type == "a"])
-
+  mutate(tastiness = sample(tastiness,size = n(), replace = FALSE) ) 
 
 mydbar = tibble(reps = 1:1000) %>%
   # Get 1000 identical dataset
   group_by(reps) %>%
-  reframe(donuts %>% select(type, tastiness)) %>%
+  reframe(donuts %>% select(baker, tastiness)) %>%
   # We shuffle the quality metric within each dataset
   group_by(reps) %>%
   mutate(tastiness = sample(tastiness, replace = FALSE))  %>%
-  # For each rep and type, get mean
-  group_by(reps, type) %>%
-  summarize(xbar = mean(tastiness)) %>%
-  # Get 1000 random differences of means.
+  # For each rep, get mean
   group_by(reps) %>%
-  summarize(dbar = xbar[type == "b"] - xbar[type == "a"])
+  summarize(dbar = mean(tastiness[baker == "Melanie"])  - mean(tastiness[baker == "Craig"]))
 
 
-mydbar %>%
-  ggplot(mapping = aes(x = dbar)) +
-  geom_histogram()
+ggplot() +
+  geom_histogram(data = mydbar, mapping = aes(x = dbar)) +
+  geom_vline(xintercept = obs$dbar)
 
-rt(n = 1000, df = 98) %>% hist()
+
+mean(mydbar$dbar > obs$dbar)
+
+
+
 
 
 ####################################################
+# Deprecated content
+# rt(n = 1000, df = 98) %>% hist()
+# long2 = donuts %>% 
+#   group_by(baker, type) %>%
+#   summarize(xbar = mean(tastiness)) %>%
+#   ungroup() %>%
+#   mutate(testid = c(1,1, 2,2, 3,3)) 
+# 
+# 
+# long2 %>%
+#   pivot_wider(id_cols = c(baker, testid), names_from = type, values_from = xbar) %>%
+#   mutate(dbar = b - a)
+# 
+# 
+# donuts %>%
+#   select(type, tastiness) %>%
+#   mutate(tastiness = sample(tastiness, replace = FALSE)) %>%
+#   group_by(type) %>%
+#   summarize(xbar = mean(tastiness)) %>%
+#   summarize(dbar = xbar[type == "b"] - xbar[type == "a"])
 
 
