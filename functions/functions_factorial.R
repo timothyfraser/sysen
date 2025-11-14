@@ -1,10 +1,25 @@
 # functions_factorial.R
 # Script of R functions for running difference of means tests on factorial experiments.
 
+#' @name se_factorial
+#' @title Calculate Standard Error for Factorial Experiments
+#' @description Calculates the standard error for a response variable in a factorial experiment by pooling standard deviations across all treatment combinations.
+#' @param formula [formula] A formula specifying the response variable and factors (e.g., `y ~ machine + syrup + art`). The first variable should be the response variable.
+#' @param data [data.frame] A data frame containing the variables specified in the formula.
+#' @return [numeric] A single numeric value representing the pooled standard error.
+#' @examples
+#' # Load the lattes data
+#' lattes = read.csv("workshops/lattes.csv")
+#' 
+#' # Calculate standard error for a three-factor experiment
+#' se_factorial(formula = tastiness ~ machine + syrup + art, data = lattes)
+#' 
+#' # Calculate standard error for a two-factor experiment
+#' se_factorial(formula = tastiness ~ machine + syrup, data = lattes)
 se_factorial = function(formula = y ~ machine + syrup + art, data){
   # formula = y ~  machine + syrup + art
   # data = lattes
-  
+  require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
 
   # Get frame of data
   frame = model.frame(formula, data) %>%
@@ -24,10 +39,26 @@ se_factorial = function(formula = y ~ machine + syrup + art, data){
   return(output)
 }
 
+#' @name dbar_oneway
+#' @title Calculate One-Way Treatment Effect
+#' @description Calculates the mean difference (dbar) between two levels of a single factor in a factorial experiment. The function compares the "High" group (second level) to the "Low" group (first level).
+#' @param formula [formula] A formula with a single factor (e.g., `y ~ machine`). The first variable should be the response variable, and the second should be the factor of interest.
+#' @param data [data.frame] A data frame containing the variables specified in the formula.
+#' @return [numeric] A single numeric value representing the mean difference between the two factor levels.
+#' @examples
+#' # Load the lattes data
+#' lattes = read.csv("workshops/lattes.csv")
+#' 
+#' # Calculate one-way effect for machine factor
+#' dbar_oneway(formula = tastiness ~ machine, data = lattes)
+#' 
+#' # Calculate one-way effect for syrup factor
+#' dbar_oneway(formula = tastiness ~ syrup, data = lattes)
 dbar_oneway = function(formula, data){
   # formula = y ~ machine
   # data = lattes
-  
+  require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
+
   frame = model.frame(formula, data) %>%
     select(y = 1, a = 2) %>%
     mutate(a = factor(a)) %>%
@@ -41,10 +72,28 @@ dbar_oneway = function(formula, data){
     ) %>%
     with(dbar)
 }
+
+#' @name dbar_twoway
+#' @title Calculate Two-Way Interaction Effect
+#' @description Calculates the two-way interaction effect (dbar) between two factors in a factorial experiment. The function compares combinations where factors are aligned (both high or both low) versus combinations where factors are opposite (one high, one low).
+#' @param formula [formula] A formula with two factors and their interaction (e.g., `y ~ machine * syrup`). The first variable should be the response variable, followed by two factors.
+#' @param data [data.frame] A data frame containing the variables specified in the formula.
+#' @return [numeric] A single numeric value representing the two-way interaction effect.
+#' @examples
+#' # Load the lattes data
+#' lattes = read.csv("workshops/lattes.csv")
+#' 
+#' # Calculate two-way interaction between machine and syrup
+#' dbar_twoway(formula = tastiness ~ machine * syrup, data = lattes)
+#' 
+#' # Calculate two-way interaction between machine and art
+#' dbar_twoway(formula = tastiness ~ machine * art, data = lattes)
 dbar_twoway = function(formula, data){
   # formula = y ~ machine * syrup
   # data = lattes
   
+  require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
+
   # Extract model frame
   frame = model.frame(formula, data) %>%
     # Rename columns as y, a, b
@@ -75,10 +124,23 @@ dbar_twoway = function(formula, data){
   return(output)
 }
 
+#' @name dbar_threeway
+#' @title Calculate Three-Way Interaction Effect
+#' @description Calculates the three-way interaction effect (dbar) between three factors in a factorial experiment. The function evaluates the AC interaction at different levels of factor B, then computes the average difference between these interactions.
+#' @param formula [formula] A formula with three factors and their interactions (e.g., `y ~ machine * syrup * art`). The first variable should be the response variable, followed by three factors.
+#' @param data [data.frame] A data frame containing the variables specified in the formula.
+#' @return [numeric] A single numeric value representing the three-way interaction effect.
+#' @examples
+#' # Load the lattes data
+#' lattes = read.csv("workshops/lattes.csv")
+#' 
+#' # Calculate three-way interaction between machine, syrup, and art
+#' dbar_threeway(formula = tastiness ~ machine * syrup * art, data = lattes)
 dbar_threeway = function(formula, data){
   # formula = y ~  machine * syrup * art
   # data = lattes
-  
+  require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
+
   frame = model.frame(formula, data) %>%
     select(y = 1, a = 2, b = 3, c = 4) %>%
     mutate(a = factor(a), b = factor(b), c= factor(c)) %>%
