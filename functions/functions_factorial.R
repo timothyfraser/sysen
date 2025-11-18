@@ -60,7 +60,7 @@ dbar_oneway = function(formula, data){
   require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
 
   frame = model.frame(formula, data) %>%
-    select(y = 1, a = 2) %>%
+    dplyr::select(y = 1, a = 2) %>%
     mutate(a = factor(a)) %>%
     mutate(a = as.integer(a) - 1)
   
@@ -97,7 +97,7 @@ dbar_twoway = function(formula, data){
   # Extract model frame
   frame = model.frame(formula, data) %>%
     # Rename columns as y, a, b
-    select(y = 1, a = 2, b = 3) %>%
+    dplyr::select(y = 1, a = 2, b = 3) %>%
     mutate(a = factor(a), b = factor(b))
   
   levels_a = levels(frame$a)
@@ -142,7 +142,7 @@ dbar_threeway = function(formula, data){
   require(dplyr, warn.conflicts = FALSE, quietly = TRUE)
 
   frame = model.frame(formula, data) %>%
-    select(y = 1, a = 2, b = 3, c = 4) %>%
+    dplyr::select(y = 1, a = 2, b = 3, c = 4) %>%
     mutate(a = factor(a), b = factor(b), c= factor(c)) %>%
     mutate(a = as.integer(a) - 1, b = as.integer(b) - 1, c = as.integer(c) - 1)
   
@@ -165,7 +165,7 @@ dbar_threeway = function(formula, data){
       # Get the average of the two effects 
       dbar = (dbar_b - dbar_a) / 2
     ) %>%
-    select(dbar) %>%
+    dplyr::select(dbar) %>%
     with(dbar)
   return(output)
 }
