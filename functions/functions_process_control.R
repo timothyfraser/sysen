@@ -42,7 +42,12 @@ set_theme = function(){
 
 #' @name describe
 #' @title Describe a vector `x`
+#' @description Calculates summary statistics including mean, standard deviation, skewness, and kurtosis for a numeric vector, and formats them into a caption string.
 #' @param x [numeric] a numeric vector of observed metric values
+#' @return [data.frame] A tibble with columns: mean, sd, skew, kurtosis, caption. The caption column contains a formatted string with all statistics.
+#' @examples
+#' # Describe a vector of random normal values
+#' describe(x = rnorm(1000, 0, 1))
 describe = function(x){
   # Put our vector x in a tibble
   tibble(x) %>%
@@ -75,10 +80,16 @@ describe = function(x){
 
 #' @name ggprocess
 #' @title Make a Process Overview Diagram in ggplot
+#' @description Creates a combined visualization showing process behavior over time with a boxplot and a side histogram.
 #' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
 #' @param xlab [string] label for x-axis.
 #' @param ylab [string] label for y-axis.
+#' @return [ggplot] A combined plot showing process overview with boxplot and histogram (using ggarrange).
+#' @examples
+#' # Load the lattes data
+#' water = read_csv("workshops/onsen.csv")
+#' ggprocess(x = water$time, y = water$temp, xlab = "Subgroup", ylab = "Metric")
 ggprocess = function(x, y, xlab = "Subgroup", ylab = "Metric"){
   
   # Testing values
@@ -124,8 +135,14 @@ ggprocess = function(x, y, xlab = "Subgroup", ylab = "Metric"){
 
 #' @name get_stat_s
 #' @title Get Subgroup Statistics
+#' @description Calculates within-subgroup statistics including means, ranges, standard deviations, and control limits for each subgroup.
 #' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @return [data.frame] A tibble with columns: x, xbar, r, s, nw, df, xbbar, sigma_s, sigma_t, se, upper, lower. One row per subgroup.
+#' @examples
+#' # Load the lattes data
+#' water = read_csv("workshops/onsen.csv")
+#' get_stat_s(x = water$time, y = water$temp)
 get_stat_s = function(x,y){
 
   # Testing values  
@@ -181,8 +198,14 @@ get_stat_s = function(x,y){
 
 #' @name get_stat_t
 #' @title Get Total Statistics
+#' @description Calculates overall process statistics summarizing behavior across all subgroups.
 #' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
 #' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @return [data.frame] A tibble with columns: xbbar, rbar, sbar, sigma_s, sigma_t, n. One row with overall statistics.
+#' @examples
+#' # Load the lattes data
+#' water = read_csv("workshops/onsen.csv")
+#' get_stat_t(x = water$time, y = water$temp)
 get_stat_t = function(x,y){
   
   # Testing values  
@@ -241,7 +264,14 @@ get_stat_t = function(x,y){
 
 #' @name get_labels
 #' @title Get Labels from Subgroup Statistics
+#' @description Creates labels for control charts showing mean, upper, and lower control limits.
 #' @param data [data.frame] output of get_stat_s()
+#' @return [data.frame] A tibble with columns: x, type, name, value, text. Three rows for xbbar, upper, and lower labels.
+#' @examples
+#' # Load the lattes data
+#' water = read_csv("workshops/onsen.csv")
+#' stat_s = get_stat_s(x = water$time, y = water$temp)
+#' get_labels(data = stat_s)
 get_labels = function(data){
   
   stat_s %>%
@@ -262,6 +292,18 @@ get_labels = function(data){
 # get_labels(data = stat_s)
 
 
+#' @name dn
+#' @title Calculate Control Constants for Range Charts
+#' @description Simulates ranges from normal distributions to calculate d2, d3, D3, and D4 constants used in range control charts.
+#' @param n [numeric] subgroup size. Default is 12.
+#' @param reps [numeric] number of simulation replicates. Default is 10000.
+#' @return [data.frame] A tibble with columns: d2, d3, D3, D4
+#' @examples
+#' # Calculate control constants for subgroup size 12
+#' dn(n = 12)
+#' 
+#' # Calculate control constants for subgroup size 5
+#' dn(n = 5, reps = 10000)
 # How do we approximate sigma-short?
 dn = function(n = 12, reps = 1e4){
   # For 10,0000 reps
@@ -289,6 +331,21 @@ dn = function(n = 12, reps = 1e4){
 #dn(n = 12)
 
 
+#' @name bn
+#' @title Calculate Control Constants for Standard Deviation Charts
+#' @description Simulates standard deviations from normal distributions to calculate b2, b3, C4, A3, B3, and B4 constants used in standard deviation control charts.
+#' @param n [numeric] subgroup size
+#' @param reps [numeric] number of simulation replicates. Default is 10000.
+#' @return [data.frame] A tibble with columns: b2, b3, C4, A3, B3, B4
+#' @examples
+#' # Calculate control constants for subgroup size 12
+#' stat = bn(n = 12)
+#' # Statistic of interest
+#' sbar = 2.5
+#' # Lower Control Limit
+#' sbar * stat$B3
+#' # Upper control limit
+#' sbar * stat$B4
 #Let's write a function bn() to calculate our B3 and B4 statistics for any subgroup size n
 bn = function(n, reps = 1e4){
   tibble(rep = 1:reps) %>%
@@ -966,3 +1023,250 @@ ggu = function(t,x, xlab = "Time (Subgroups)", ylab = "Number of Defects (u)"){
 # acc = read_csv("workshops/accidents.csv")
 # ggu(t = acc$t, x = acc$x, xlab = "Time", ylab = "Number of Defects")
 
+
+# PROCESS CONTROL INDEX FUNCTIONS ----------------------------
+
+#' @name cp
+#' @title Capability Index (for centered, stable processes)
+#' @description Calculates the process capability index Cp, which measures the potential capability of a centered, stable process. Cp compares the process spread (6*sigma_s) to the specification width.
+#' @param sigma_s [numeric] within-subgroup standard deviation (short-term variation)
+#' @param upper [numeric] upper specification limit
+#' @param lower [numeric] lower specification limit
+#' @return [numeric] A single numeric value representing the Cp index. Values > 1 indicate the process spread is smaller than the specification width.
+#' @examples
+#' # Calculate Cp for a process with sigma_s = 2, USL = 100, LSL = 80
+#' cp(sigma_s = 2, upper = 100, lower = 80)
+#' 
+#' # Cp = (100 - 80) / (6 * 2) = 20 / 12 = 1.67
+# Capability Index (for centered, normal data)
+cp = function(sigma_s, upper, lower){  abs(upper - lower) / (6*sigma_s)   }
+
+#' @name pp
+#' @title Process Performance Index (for centered, unstable processes)
+#' @description Calculates the process performance index Pp, which measures the potential performance of a centered process using total variation. Pp compares the process spread (6*sigma_t) to the specification width.
+#' @param sigma_t [numeric] total standard deviation (long-term variation)
+#' @param upper [numeric] upper specification limit
+#' @param lower [numeric] lower specification limit
+#' @return [numeric] A single numeric value representing the Pp index. Values > 1 indicate the process spread is smaller than the specification width.
+#' @examples
+#' # Calculate Pp for a process with sigma_t = 2.5, USL = 100, LSL = 80
+#' pp(sigma_t = 2.5, upper = 100, lower = 80)
+#' 
+#' # Pp = (100 - 80) / (6 * 2.5) = 20 / 15 = 1.33
+# Process Performance Index (for centered, normal data)
+pp = function(sigma_t, upper, lower){  abs(upper - lower) / (6*sigma_t)   }
+
+#' @name cpk
+#' @title Capability Index (for uncentered, stable processes)
+#' @description Calculates the process capability index Cpk, which measures the actual capability of a stable process that may not be centered. Cpk considers both the process mean location and within-subgroup variation.
+#' @param mu [numeric] process mean
+#' @param sigma_s [numeric] within-subgroup standard deviation (short-term variation)
+#' @param lower [numeric, optional] lower specification limit. If NULL, only upper limit is used.
+#' @param upper [numeric, optional] upper specification limit. If NULL, only lower limit is used.
+#' @return [numeric] A single numeric value representing the Cpk index. Returns the minimum of the upper and lower capability ratios if both limits are provided, otherwise returns the appropriate one-sided ratio. Values > 1 indicate the process is capable.
+#' @examples
+#' # Calculate Cpk with both limits
+#' cpk(mu = 90, sigma_s = 2, lower = 80, upper = 100)
+#' 
+#' # Calculate Cpk with only upper limit
+#' cpk(mu = 90, sigma_s = 2, upper = 100)
+#' 
+#' # Calculate Cpk with only lower limit
+#' cpk(mu = 90, sigma_s = 2, lower = 80)
+# Capability Index (for skewed, uncentered data)
+cpk = function(mu, sigma_s, lower = NULL, upper = NULL){
+  if(!is.null(lower)){
+    a = abs(mu - lower) / (3 * sigma_s)
+  }
+  if(!is.null(upper)){
+    b = abs(upper - mu) /  (3 * sigma_s)
+  }
+  # We can also write if else statements like this
+  # If we got both stats, return the min!
+  if(!is.null(lower) & !is.null(upper)){
+    min(a,b) %>% return()
+    
+    # If we got just the upper stat, return b (for upper)
+  }else if(is.null(lower)){ return(b) 
+    
+    # If we got just the lower stat, return a (for lower)
+    }else if(is.null(upper)){ return(a) }
+}
+
+#' @name ppk
+#' @title Process Performance Index (for uncentered, unstable processes)
+#' @description Calculates the process performance index Ppk, which measures the actual performance of a process that may not be centered or stable. Ppk considers both the process mean location and total variation.
+#' @param mu [numeric] process mean
+#' @param sigma_t [numeric] total standard deviation (long-term variation)
+#' @param lower [numeric, optional] lower specification limit. If NULL, only upper limit is used.
+#' @param upper [numeric, optional] upper specification limit. If NULL, only lower limit is used.
+#' @return [numeric] A single numeric value representing the Ppk index. Returns the minimum of the upper and lower performance ratios if both limits are provided, otherwise returns the appropriate one-sided ratio. Values > 1 indicate the process is performing within specifications.
+#' @examples
+#' # Calculate Ppk with both limits
+#' ppk(mu = 90, sigma_t = 2.5, lower = 80, upper = 100)
+#' 
+#' # Calculate Ppk with only upper limit
+#' ppk(mu = 90, sigma_t = 2.5, upper = 100)
+#' 
+#' # Calculate Ppk with only lower limit
+#' ppk(mu = 90, sigma_t = 2.5, lower = 80)
+# Process Performance Index (for skewed, uncentered data)
+ppk = function(mu, sigma_t, lower = NULL, upper = NULL){
+  if(!is.null(lower)){
+    a = abs(mu - lower) / (3 * sigma_t)
+  }
+  if(!is.null(upper)){
+    b = abs(upper - mu) /  (3 * sigma_t)
+  }
+  # We can also write if else statements like this
+  # If we got both stats, return the min!
+  if(!is.null(lower) & !is.null(upper)){
+    min(a,b) %>% return()
+    
+    # If we got just the upper stat, return b (for upper)
+  }else if(is.null(lower)){ return(b) 
+    
+    # If we got just the lower stat, return a (for lower)
+  }else if(is.null(upper)){ return(a) }
+}
+
+#' @name get_index
+#' @title Bootstrap Process Capability/Performance Index with Confidence Intervals
+#' @description Calculates a process capability or performance index (cp, pp, cpk, ppk) and bootstraps it to provide confidence intervals. Supports both subgroup-level and individual-level resampling.
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @param index [string] one of "cp", "pp", "cpk", "ppk". Default is "cp".
+#' @param upper [numeric] upper specification limit. Required for cp/pp, optional for cpk/ppk.
+#' @param lower [numeric] lower specification limit. Required for cp/pp, optional for cpk/ppk.
+#' @param bootstrap_reps [numeric] number of bootstrap replicates. Default is 1000. A warning is issued if < 500.
+#' @param ci_level [numeric] confidence level for intervals. Default is 0.95.
+#' @param by_subgroup [logical] if TRUE, resample subgroups with replacement (preserves subgroup structure). If FALSE, resample individual observations. Default is TRUE.
+#' @return [data.frame] A tibble with columns: term, estimate, se, lower, upper
+#' @examples
+#' # Load the lattes data
+#' water = read_csv("workshops/onsen.csv")
+#' 
+#' # Bootstrap Cp index with subgroup resampling
+#' get_index(x = water$time, y = water$temp, index = "cp", 
+#'           upper = 80, lower = 42, bootstrap_reps = 1000)
+#' 
+#' # Bootstrap Cpk index with individual resampling
+#' get_index(x = water$time, y = water$temp, index = "cpk", 
+#'           upper = 80, lower = 42, by_subgroup = FALSE)
+get_index = function(x, y, index = "cp", upper, lower, 
+                     bootstrap_reps = 1000, ci_level = 0.95, 
+                     by_subgroup = TRUE){
+  
+  # Validate index
+  if(!index %in% c("cp", "pp", "cpk", "ppk")){
+    stop("index must be one of: cp, pp, cpk, ppk")
+  }
+  
+  # Validate specification limits
+  if(index %in% c("cp", "pp")){
+    if(missing(upper) || missing(lower)){
+      stop("upper and lower specification limits are required for cp and pp")
+    }
+  } else {
+    if(missing(upper) && missing(lower)){
+      stop("at least one of upper or lower specification limit is required for cpk and ppk")
+    }
+  }
+  
+  # Warn if bootstrap_reps < 500
+  if(bootstrap_reps < 500){
+    warning("bootstrap_reps < 500 may result in unreliable confidence intervals")
+  }
+  
+  # Make a data.frame
+  data = tibble(x = x, y = y)
+  
+  # Calculate observed index
+  if(index == "cp"){
+    stat_s = get_stat_s(x = x, y = y)
+    sigma_s = stat_s$sigma_s[1]
+    estimate = cp(sigma_s = sigma_s, upper = upper, lower = lower)
+  } else if(index == "pp"){
+    stat_t = get_stat_t(x = x, y = y)
+    sigma_t = stat_t$sigma_t[1]
+    estimate = pp(sigma_t = sigma_t, upper = upper, lower = lower)
+  } else if(index == "cpk"){
+    stat_s = get_stat_s(x = x, y = y)
+    stat_t = get_stat_t(x = x, y = y)
+    mu = stat_t$xbbar[1]
+    sigma_s = stat_s$sigma_s[1]
+    estimate = cpk(mu = mu, sigma_s = sigma_s, 
+                   upper = if(missing(upper)) NULL else upper,
+                   lower = if(missing(lower)) NULL else lower)
+  } else if(index == "ppk"){
+    stat_t = get_stat_t(x = x, y = y)
+    mu = stat_t$xbbar[1]
+    sigma_t = stat_t$sigma_t[1]
+    estimate = ppk(mu = mu, sigma_t = sigma_t,
+                   upper = if(missing(upper)) NULL else upper,
+                   lower = if(missing(lower)) NULL else lower)
+  }
+  
+  # Bootstrap loop
+  boot_values = numeric(bootstrap_reps)
+  
+  for(i in 1:bootstrap_reps){
+    if(by_subgroup){
+      # Resample subgroups with replacement
+      subgroups = unique(data$x)
+      sampled_subgroups = sample(subgroups, size = length(subgroups), replace = TRUE)
+      
+      # Create bootstrap sample by combining sampled subgroups
+      boot_data = tibble()
+      for(sg in sampled_subgroups){
+        sg_data = data %>% filter(x == sg)
+        boot_data = bind_rows(boot_data, sg_data)
+      }
+    } else {
+      # Resample individual observations with replacement
+      boot_data = data %>% slice_sample(n = nrow(data), replace = TRUE)
+    }
+    
+    # Calculate index for bootstrap sample
+    if(index == "cp"){
+      boot_stat_s = get_stat_s(x = boot_data$x, y = boot_data$y)
+      boot_sigma_s = boot_stat_s$sigma_s[1]
+      boot_values[i] = cp(sigma_s = boot_sigma_s, upper = upper, lower = lower)
+    } else if(index == "pp"){
+      boot_stat_t = get_stat_t(x = boot_data$x, y = boot_data$y)
+      boot_sigma_t = boot_stat_t$sigma_t[1]
+      boot_values[i] = pp(sigma_t = boot_sigma_t, upper = upper, lower = lower)
+    } else if(index == "cpk"){
+      boot_stat_s = get_stat_s(x = boot_data$x, y = boot_data$y)
+      boot_stat_t = get_stat_t(x = boot_data$x, y = boot_data$y)
+      boot_mu = boot_stat_t$xbbar[1]
+      boot_sigma_s = boot_stat_s$sigma_s[1]
+      boot_values[i] = cpk(mu = boot_mu, sigma_s = boot_sigma_s,
+                          upper = if(missing(upper)) NULL else upper,
+                          lower = if(missing(lower)) NULL else lower)
+    } else if(index == "ppk"){
+      boot_stat_t = get_stat_t(x = boot_data$x, y = boot_data$y)
+      boot_mu = boot_stat_t$xbbar[1]
+      boot_sigma_t = boot_stat_t$sigma_t[1]
+      boot_values[i] = ppk(mu = boot_mu, sigma_t = boot_sigma_t,
+                          upper = if(missing(upper)) NULL else upper,
+                          lower = if(missing(lower)) NULL else lower)
+    }
+  }
+  
+  # Calculate standard error and confidence intervals
+  se = sd(boot_values)
+  alpha = 1 - ci_level
+  ci_bounds = quantile(boot_values, probs = c(alpha/2, 1 - alpha/2))
+  
+  # Return tidy tibble
+  output = tibble(
+    term = index,
+    estimate = estimate,
+    se = se,
+    lower = ci_bounds[1],
+    upper = ci_bounds[2]
+  )
+  
+  return(output)
+}
