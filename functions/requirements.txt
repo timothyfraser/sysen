@@ -1,0 +1,20 @@
+# Python requirements for functions in this directory
+# Install with: pip install -r requirements.txt
+
+# Core data manipulation and numerical computing
+pandas==2.3.3
+numpy==2.3.5
+
+# Scientific computing and statistics
+scipy==1.16.3
+statsmodels==0.14.5
+
+# Statistical modeling
+patsy==1.0.2
+
+# Data visualization
+plotnine==0.15.1
+patchworklib==0.6.6
+
+
+
