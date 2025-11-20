@@ -43,6 +43,11 @@ We may add a few functions here across the course of term to support your learni
 | [`ggp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Fraction Defective (p) Chart in ggplot |
 | [`ggnp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Number of Defects (np) Chart in ggplot |
 | [`ggu`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Defects per Product (u) Chart in ggplot |
+| [`cp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Capability Index (for centered, stable processes) |
+| [`pp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Process Performance Index (for centered, unstable processes) |
+| [`cpk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Capability Index (for uncentered, stable processes) |
+| [`ppk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Process Performance Index (for uncentered, unstable processes) |
+| [`get_index`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Bootstrap Process Capability/Performance Index with Confidence Intervals |
 
 ### `functions_reliability.R`
 
@@ -109,11 +114,43 @@ We may add a few functions here across the course of term to support your learni
 
 | Function | Description |
 |----------|-------------|
+| [`describe`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Describe a vector x |
 | [`ggprocess`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Make a Process Overview Diagram |
 | [`get_stat_s`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Subgroup Statistics |
 | [`get_stat_t`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Total Statistics |
 | [`get_labels`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Labels from Subgroup Statistics |
-| [`ggavgsd`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Average and Standard Deviation Chart |
 | [`rnorm`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Generate random normal values |
 | [`dn`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Calculate control constants for range charts |
 | [`bn`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Calculate control constants for standard deviation charts |
+| [`limits_avg`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Upper and Lower Control Limits for an Averages Chart |
+| [`limits_s`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Upper and Lower Control Limits for a Standard Deviation Chart |
+| [`limits_r`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Upper and Lower Control Limits for a Range Chart |
+| [`limits_mr`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Get Upper and Lower Control Limits for a Moving Range Chart |
+| [`ggxbar`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Average Control Chart with ggplot |
+| [`ggavg`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Average Control Chart with ggplot (alias for ggxbar) |
+| [`ggs`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Standard Deviation Chart with ggplot |
+| [`ggr`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Range Chart with ggplot |
+| [`ggmr`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Moving Range Chart with ggplot |
+| [`ggp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Fraction Defective (p) Chart in ggplot |
+| [`ggnp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Number of Defects (np) Chart in ggplot |
+| [`ggu`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Defects per Product (u) Chart in ggplot |
+| [`cp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Capability Index (for centered, stable processes) |
+| [`pp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Process Performance Index (for centered, unstable processes) |
+| [`cpk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Capability Index (for uncentered, stable processes) |
+| [`ppk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Process Performance Index (for uncentered, unstable processes) |
+| [`get_index`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Bootstrap Process Capability/Performance Index with Confidence Intervals |
+
+### `functions_factorial.py`
+
+| Function | Description |
+|----------|-------------|
+| [`se_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Standard Error for Factorial Experiments |
+| [`dbar_oneway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate One-Way Treatment Effect |
+| [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Two-Way Interaction Effect |
+| [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Three-Way Interaction Effect |
+
+### `functions_crosstab.py` (Coming soon!)
+
+| Function | Description |
+|----------|-------------|
+| [`crosstab`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_crosstab.py) | Crosstabulate Data into intervals where r >= 5 |
