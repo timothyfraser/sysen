@@ -155,7 +155,9 @@ dk = function(x, r, .time = FALSE, .failure = FALSE){
   curve = density(q_range, cut = c(0))
   
   # Approximate a function
-  f = approxfun(density(q_range, cut = c(0)), method = "linear", rule = 2, na.rm = TRUE)(x)
+  f = approxfun(
+    density(q_range, cut = c(0)), 
+    method = "linear", rule = 2, na.rm = TRUE)
   # Estimate density
   d = f(x)
   return(d)
