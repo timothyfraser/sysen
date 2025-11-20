@@ -65,14 +65,14 @@ crosstab = function(x, binsize = 100, cutoff = Inf){
     # Aggregate to the new interval levels
     data4 = data3 %>%
       group_by(bin, interval) %>%
-      summarize(r_obs = sum(r_obs))
+      summarize(r_obs = sum(r_obs), .groups = "drop")
     
     # Calculate the midpoints
     data5 = data4 %>%  
       mutate(lower = (bin - 1) * binsize,
              upper = (bin * binsize),
              midpoint = (lower + upper) / 2) %>%
-      select(bin,interval, midpoint,  r_obs)
+      dplyr::select(bin,interval, midpoint,  r_obs)
     
     output = data5
     
