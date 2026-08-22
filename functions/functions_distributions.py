@@ -1,3 +1,21 @@
+# What this file is ----------------------------------------------------------
+#
+# Python versions of the distribution commands R gives you for free --
+# dnorm(), pnorm(), qnorm(), rnorm(), and the same four for the exponential,
+# Weibull, gamma, Poisson, binomial, and uniform distributions -- plus a few
+# quick tools for describing and plotting a sample.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_distributions import rnorm, dnorm
+#
+# Then try:
+#   rnorm(n = 5, mean = 0, sd = 1)
+#
+# You never need to edit anything below.
+#
+
 # Import scipy functions
 # !pip install scipy
 from scipy.stats import norm, expon, gamma, weibull_min, poisson, uniform, binom, chi2

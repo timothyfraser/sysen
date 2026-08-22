@@ -1,3 +1,19 @@
+# What this file is ----------------------------------------------------------
+#
+# The five reliability functions for a part whose failures follow an
+# exponential distribution: the chance it has failed by time t, the chance
+# it is still working, the failure rate, the cumulative hazard, and the
+# average failure rate across an interval.
+#
+# Load it, from the top of the project folder:
+#   source("functions/functions_reliability.R")
+#
+# Then try:
+#   r(t = 1000, lambda = 1/2000)   # chance a part survives to 1000 hours
+#
+# You never need to edit anything below.
+#
+
 #' @name functions_reliability.R
 #' @title Functions for Reliability (Exponential Distribution)
 

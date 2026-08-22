@@ -1,3 +1,23 @@
+# What this file is ----------------------------------------------------------
+#
+# Four helpers for factorial experiments -- the kind where you change two or
+# three things at once and want to know how much each one mattered, and
+# whether they work differently in combination. You get the pooled standard
+# error, plus the one-way, two-way, and three-way effects.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_factorial import se_factorial, dbar_oneway
+#
+# Then try:
+#   import pandas as pd
+#   lattes = pd.read_csv("workshops/lattes.csv")
+#   dbar_oneway(formula = "tastiness ~ machine", data = lattes)
+#
+# You never need to edit anything below.
+#
+
 # functions_factorial.py
 # Script of Python functions for running difference of means tests on factorial experiments.
 

@@ -1,3 +1,19 @@
+# What this file is ----------------------------------------------------------
+#
+# The k-factor functions, used to put a confidence interval around an
+# estimated failure rate. They come in the same four flavors R uses for any
+# distribution: qk() for quantiles, pk() for cumulative probabilities, dk()
+# for densities, and rk() for random draws.
+#
+# Load it, from the top of the project folder:
+#   source("functions/functions_k.R")
+#
+# Then try:
+#   qk(p = 0.95, r = 20, .time = FALSE, .failure = FALSE)
+#
+# You never need to edit anything below.
+#
+
 #' @name qk
 #' @title k-factor Quantiles
 #' @description 

@@ -1,3 +1,23 @@
+# What this file is ----------------------------------------------------------
+#
+# One helper for grouping times-to-failure into bins you can actually run a
+# chi-squared test on. It bins the data at a fixed width, then merges the
+# thin bins in the tail together until every bin holds at least 5
+# observations.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_crosstab import crosstab
+#
+# Then try:
+#   x = [1, 5, 20, 45, 90, 130, 260, 410, 520, 700,
+#        15, 33, 88, 140, 255, 390, 505, 660, 12, 44]
+#   crosstab(x = x, binsize = 100, cutoff = 450)
+#
+# You never need to edit anything below.
+#
+
 # functions_crosstab.py
 # Script of Python functions for crosstabulating data into intervals.
 

@@ -1,3 +1,15 @@
+# What this file is ----------------------------------------------------------
+#
+# A short demonstration script. It loads functions_crosstab.R and runs
+# crosstab() once on a sample of times to failure, so you can watch the
+# function work on real numbers before you use it yourself.
+#
+# Run it from the top of the project folder, a few lines at a time:
+# highlight a chunk with your cursor and press CTRL and ENTER
+# simultaneously. Change the numbers and run it again -- that is what
+# this file is for.
+#
+
 # workflow_crosstab.R
 # Simple demonstration script for the crosstab function
 

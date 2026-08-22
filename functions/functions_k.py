@@ -1,3 +1,21 @@
+# What this file is ----------------------------------------------------------
+#
+# The k-factor functions, used to put a confidence interval around an
+# estimated failure rate. They come in the same four flavors R uses for any
+# distribution: qk() for quantiles, pk() for cumulative probabilities, dk()
+# for densities, and rk() for random draws.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_k import rk
+#
+# Then try:
+#   rk(n = 3, r = 20, time = False, failure = False)
+#
+# You never need to edit anything below.
+#
+
 # functions_k.py
 
 """

@@ -1,3 +1,15 @@
+# What this file is ----------------------------------------------------------
+#
+# A short demonstration script. It loads functions_process_control.R and
+# walks through its functions one at a time on the onsen data -- summary
+# statistics, control limits, then each control chart.
+#
+# Run it from the top of the project folder, a few lines at a time:
+# highlight a chunk with your cursor and press CTRL and ENTER
+# simultaneously. Change the numbers and run it again -- that is what
+# this file is for.
+#
+
 # workflow_process_control.R
 # Simple demonstration script for the process control functions
 

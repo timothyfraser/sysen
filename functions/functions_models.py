@@ -1,3 +1,23 @@
+# What this file is ----------------------------------------------------------
+#
+# Python versions of the modeling commands R gives you: lm() to fit a linear
+# model, tidy() to lay its coefficients out as a table, and glance() to
+# summarize how the whole model did in a single row.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_models import lm, tidy, glance
+#
+# Then try:
+#   import pandas as pd
+#   diamonds = pd.read_csv("workshops/mydiamonds.csv")
+#   m = lm(formula = 'price ~ carat', data = diamonds)
+#   tidy(m)
+#
+# You never need to edit anything below.
+#
+
 # functions_models.py
 
 # Functions for modeling in Python 

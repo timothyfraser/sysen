@@ -1,7 +1,59 @@
-# `functions` README
+# `functions` — the course's helper functions
 
-This folder contains scripts for `functions` that you may call into R or Python.
-We may add a few functions here across the course of term to support your learning.
+A **function** is a named command that does a job for you: you hand it some
+input, it hands back a result. `sqrt(4)` is a function — `sqrt` is the name, `4`
+is the input, `2` is what comes back.
+
+R and Python each ship with hundreds of functions built in, but a course like
+this needs a few of its own: control chart limits, reliability curves, factorial
+effects, k-factors. That's what this folder is. A file full of functions like
+this is usually called a **function library** — on its own it doesn't do
+anything, it just teaches your session a handful of new commands.
+
+**You never need to edit these files.** You only need to load one.
+
+## Loading a library
+
+In R, use `source()`:
+
+```r
+source("functions/functions_process_control.R")
+```
+
+`source()` means "run this whole file for me, quietly." Nothing visible happens
+— but from that point on, every function in the file is available to you, the
+same way `sqrt()` always is. Put the `source()` line near the top of your script
+and run it once per session, before the first line that needs one of the
+functions.
+
+In Python, add this folder to the search path, then import what you want:
+
+```python
+import sys
+sys.path.append("functions")
+from functions_distributions import rnorm, dnorm
+```
+
+Both of these assume you're running from the top of the project folder. If you
+get a "file not found," see [`workshops/README.md`](../workshops/README.md) —
+the fix is usually to open `project.Rproj`.
+
+### If it says it can't find the function
+
+`could not find function "ggxbar"` almost always means the `source()` line hasn't
+been run yet in this session, or a different file got sourced. Scroll up, run
+the `source()` line, and try again. This is a normal thing to get wrong.
+
+## The `workflow_*` files
+
+Next to most libraries sits a short `workflow_*` script that loads it and calls
+each of its functions once on real data. If you'd rather watch a function work
+than read about it, open the `workflow_` file and run it a few lines at a time.
+
+## Every function, by file
+
+The tables below list everything these libraries give you, grouped by file.
+Each name links to the source, if you're curious how it works.
 
 ## R Functions
 

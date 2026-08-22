@@ -1,3 +1,15 @@
+# What this file is ----------------------------------------------------------
+#
+# A short demonstration script. It loads functions_k.R and calls each of the
+# four k-factor functions once, so you can see the shape of what each one
+# returns.
+#
+# Run it from the top of the project folder, a few lines at a time:
+# highlight a chunk with your cursor and press CTRL and ENTER
+# simultaneously. Change the numbers and run it again -- that is what
+# this file is for.
+#
+
 # workflow_k.R
 # Simple demonstration script for the k-factor functions
 

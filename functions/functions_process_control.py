@@ -1,3 +1,24 @@
+# What this file is ----------------------------------------------------------
+#
+# The statistical process control toolkit. It summarizes a batch of
+# measurements, works out the control limits, and draws the control charts
+# (averages, standard deviation, range, moving range, p, np, and u) using
+# plotnine. It also calculates the capability and performance indices --
+# cp, cpk, pp, and ppk -- with confidence intervals.
+#
+# Load it, from the top of the project folder:
+#   import sys
+#   sys.path.append("functions")
+#   from functions_process_control import describe, ggxbar
+#
+# Then try:
+#   import pandas as pd
+#   water = pd.read_csv("workshops/onsen.csv")
+#   ggxbar(x = water["time"], y = water["temp"])
+#
+# You never need to edit anything below.
+#
+
 # functions_process_control.py
 # Script of Python functions for statistical process control.
 

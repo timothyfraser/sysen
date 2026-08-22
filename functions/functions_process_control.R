@@ -1,3 +1,21 @@
+# What this file is ----------------------------------------------------------
+#
+# The statistical process control toolkit. It summarizes a batch of
+# measurements, works out the control limits, and draws the control charts
+# (averages, standard deviation, range, moving range, p, np, and u) as
+# ggplots. It also calculates the capability and performance indices --
+# cp, cpk, pp, and ppk -- with confidence intervals.
+#
+# Load it, from the top of the project folder:
+#   source("functions/functions_process_control.R")
+#
+# Then try:
+#   water = read_csv("workshops/onsen.csv")
+#   ggxbar(x = water$time, y = water$temp)
+#
+# You never need to edit anything below.
+#
+
 #' @name functions_process_control.R
 #' @title Functions for Statistical Process Control
 #' @description 
