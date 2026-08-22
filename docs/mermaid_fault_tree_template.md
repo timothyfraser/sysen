@@ -10,9 +10,9 @@ flowchart TD
 %% Nodes
 T["T"]
 %% [Edit Gates here] ---
-G1[G1<img src="https://raw.githubusercontent.com/timothyfraser/sigma/refs/heads/main/images/gate_and.svg" style="height: 50px;"></img>]
-G2[G2<img src="https://raw.githubusercontent.com/timothyfraser/sigma/refs/heads/main/images/gate_or.svg" style="height: 50px;"></img>]
-G3[G3<img src="https://raw.githubusercontent.com/timothyfraser/sigma/refs/heads/main/images/gate_or.svg" style="height: 50px;"></img>]
+G1[G1<img src="https://timothyfraser.com/sigma/images/gate_and.svg" style="height: 50px;"></img>]
+G2[G2<img src="https://timothyfraser.com/sigma/images/gate_or.svg" style="height: 50px;"></img>]
+G3[G3<img src="https://timothyfraser.com/sigma/images/gate_or.svg" style="height: 50px;"></img>]
 
 %% [Edit nodes here] —--
 p1(("1"))

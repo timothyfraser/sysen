@@ -1,6 +1,7 @@
 # Import scipy functions
 # !pip install scipy
-from scipy.stats import norm, expon, gamma, weibull_min, poisson, uniform, binom
+from scipy.stats import norm, expon, gamma, weibull_min, poisson, uniform, binom, chi2
+import pandas as pd
 
 # Simple visualization #############################
 
@@ -288,4 +289,95 @@ def runif(n, min=0, max=1):
     from pandas import Series
     output = uniform.rvs(loc=min, scale=max, size = n)
     output = Series(output)
+    return output
+
+## Chi-Squared Goodness-of-Fit Test ##########################
+def get_chisq(t=None, binwidth=5, data=None, n_total=None, f=None, np=1, **kwargs):
+    """
+    Function to Get Chi-Squared!
+    
+    If observed vector...
+    t: a vector of times to failure
+    binwidth: size of intervals (eg. 5 hours) (Only if t is provided)
+    If cross-tabulated data...
+    data: a DataFrame with the vectors 'lower', 'upper', and 'r_obs'
+    Common Parameters:
+    n_total: total number of units.
+    f: specific failure function, such as f = f(t, lambda)
+    np: total number of parameters in your function (eg. if exponential, 1 (lambda))
+    **kwargs: fill in here any named parameters you need, like lambda=2.4 or rate=2.3 or mean=0, sd=2
+    """
+    
+    # If vector `t` is NOT None
+    # Do the raw data route
+    if t is not None:
+        # Make a DataFrame called 'tab'
+        tab = pd.DataFrame({'t': t})
+        # Part 1.1: Split into bins
+        # Create all bins first (including empty ones)
+        max_t = int(tab['t'].max())
+        bins = list(range(0, max_t + binwidth + 1, binwidth))
+        tab['interval'] = pd.cut(tab['t'], bins=bins, right=True, include_lowest=True, precision=0)
+        
+        # Fix the first interval label to show (0, binwidth] instead of (-0.001, binwidth]
+        cats = list(tab['interval'].cat.categories)
+        if len(cats) > 0:
+            first_cat_str = str(cats[0])
+            if first_cat_str.startswith('(-'):
+                upper = first_cat_str.split(', ')[1]
+                new_first = f'(0, {upper}'
+                rename_map = {cats[0]: new_first}
+                tab['interval'] = tab['interval'].cat.rename_categories(rename_map)
+        
+        # Part 1.2: Tally up observed failures 'r_obs' by bin
+        # Get all interval categories (including empty bins)
+        all_categories = tab['interval'].cat.categories
+        
+        # Count observations per bin
+        tab_grouped = tab.groupby('interval', dropna=False, observed=True).size().reset_index(name='r_obs')
+        
+        # Create a DataFrame with all categories and merge counts (filling 0 for empty bins)
+        tab = pd.DataFrame({'interval': pd.Categorical(all_categories, categories=all_categories)})
+        tab = tab.merge(tab_grouped, on='interval', how='left')
+        tab['r_obs'] = tab['r_obs'].fillna(0).astype(int)
+        
+        # Add bin information first (so we can sort by bin number)
+        tab['bin'] = range(1, len(tab) + 1)  # 1-based indexing like R
+        tab['lower'] = (tab['bin'] - 1) * binwidth
+        tab['upper'] = tab['bin'] * binwidth
+        tab['midpoint'] = (tab['lower'] + tab['upper']) / 2
+        
+        # Sort by bin number (which is already in order, but ensures consistency)
+        tab = tab.sort_values('bin').reset_index(drop=True)
+        
+    # Otherwise, if DataFrame `data` is NOT None
+    # Do the cross-tabulated data route
+    elif data is not None:
+        tab = data.copy()
+        tab['bin'] = range(1, len(tab) + 1)
+        tab['midpoint'] = (tab['lower'] + tab['upper']) / 2
+    else:
+        raise ValueError("Either 't' or 'data' must be provided")
+    
+    # Part 2. Calculate probabilities by interval
+    tab['p_upper'] = f(tab['upper'], **kwargs)
+    tab['p_lower'] = f(tab['lower'], **kwargs)
+    tab['p_fail'] = tab['p_upper'] - tab['p_lower']
+    tab['n_total'] = n_total
+    tab['r_exp'] = tab['n_total'] * tab['p_fail']
+    
+    # Part 3-4: Calculate Chi-Squared statistic and p-value
+    chisq = ((tab['r_obs'] - tab['r_exp'])**2 / tab['r_exp']).sum()
+    nbin = len(tab)
+    df = nbin - np - 1
+    p_value = chi2.sf(x=chisq, df=df)
+    
+    output = pd.DataFrame({
+        'chisq': [chisq],
+        'nbin': [nbin],
+        'np': [np],
+        'df': [df],
+        'p_value': [p_value]
+    })
+    
     return output
