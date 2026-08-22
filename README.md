@@ -1,65 +1,87 @@
-# `sysen` — SYSEN 5300 code and data
+# `sysen` — the code and data for SYSEN 5300
 
 **Systems Engineering and Six Sigma for the Design and Operation of Reliable
 Systems** · Cornell University · Dr. Timothy Fraser
 
-This is the **code and data companion** to the course textbook. The textbook
-teaches; this repo holds the scripts and the datasets those chapters run on.
-Clone it once, `git pull` when a chapter says to, and run the code alongside the
-reading.
+Welcome. This is the **code and data companion** to the course textbook. The
+textbook teaches; this **repository** — or *repo*, a shared folder of files that
+everyone in the course gets a copy of — holds the scripts and the datasets those
+chapters run on.
+
+Plenty of people arrive in this course having never written a line of code.
+That is expected, and the course is built for it. Get a copy of this once, read
+the textbook alongside it, and run the code as you go.
 
 ## Quick links
 
 | | |
 |---|---|
 | **Textbook** (start here) | [timothyfraser.com/sigma](https://timothyfraser.com/sigma/) |
-| **Canvas** (deadlines, submission, grades, quizzes) | [canvas.cornell.edu/courses/88388](https://canvas.cornell.edu/courses/88388) |
+| **Canvas** (deadlines, submission, grades, quizzes) | [Canvas](https://timothyfraser.com/sigma/canvas) |
 | **This repo** | [github.com/timothyfraser/sysen](https://github.com/timothyfraser/sysen) |
 
-> The textbook is authoritative for **content** — what to read, what to run, how
-> a technique works. Canvas is authoritative for **dates, deadlines, grades, and
-> quizzes**. You will not find a due date in this repo, and that is on purpose.
+> Two rules that save a lot of confusion. The textbook is authoritative for
+> **content** — what to read, what to run, how a technique works. Canvas is
+> authoritative for **dates, deadlines, grades, and quizzes**. You will not find
+> a due date anywhere in this repo, and that is on purpose.
 
 ## What's in here
 
 | Folder | What it holds |
 |---|---|
-| [`workshops/`](workshops) | The datasets. Every `read_csv("workshops/....csv")` in a textbook chapter reads a file from this folder. |
-| [`code/`](code) | The R and Python scripts from the workshops, lessons, and recitations — the live-coded versions of what the chapters walk through. |
-| [`functions/`](functions) | Reusable helper functions the course provides (`functions_*.R`, `functions_*.py`), plus short `workflow_*` scripts showing how to call them. |
-| [`docs/`](docs) | Cheat sheets and helper documents for RStudio, `dplyr`, `ggplot2`, and `stringr`. |
+| [`workshops/`](workshops) | The data. Every `read_csv("workshops/....csv")` you see in a chapter reads a file from this folder. |
+| [`code/`](code) | The R and Python scripts from the workshops, lessons, and recitations — the live-coded version of what the chapters walk through. |
+| [`functions/`](functions) | Helper functions written for this course (`functions_*.R`, `functions_*.py`), plus short `workflow_*` scripts showing how to call them. |
+| [`docs/`](docs) | Cheat sheets for RStudio, `dplyr`, `ggplot2`, and `stringr`. |
+
+Each of those folders has its own README explaining it in more detail. Read the
+one for the folder you need; you can ignore the rest.
 
 ## Getting started
 
-### 1. Clone the repo
+Three one-time steps, and then you're set for the term.
+
+### 1. Get a copy of the repo
+
+If you're using **Posit Cloud** — the browser version of R, which needs nothing
+installed on your computer — the course project already has all of this in it.
+Nothing to do here; go to step 2.
+
+Otherwise, download it with `git`:
 
 ```sh
 git clone https://github.com/timothyfraser/sysen.git
 cd sysen
 ```
 
-Pull updates as the term goes on:
+Chapters occasionally gain new data during the term. Pull those updates with:
 
 ```sh
 cd sysen
 git pull
 ```
 
-You won't push to this repo — it's read-only for students.
+You will never push anything back — this repo is read-only for students, so
+there is nothing here you can break.
 
-If you use RStudio, open `project.Rproj` after cloning. That sets your working
-directory to the repo root, which is what every path below assumes.
+**Open the project, not just the file.** After you have a copy, double-click
+`project.Rproj`. That tells R to treat the top of this folder as the place it
+starts looking from, which is what every file path in every chapter assumes.
+It's one click, and it heads off the single most common error of the first week.
 
 ### 2. Install what you need
 
-**R** — run this once, from the repo root:
+**R** — run this once, from the top of the folder:
 
 ```r
 source("workshops/packages.R")
 ```
 
-That installs the tidyverse plus the course's statistical and visualization
-packages. It takes a while the first time.
+A **package** is a bundle of extra commands that someone else wrote and shared.
+That one line installs every package this course uses: the tidyverse, plus the
+statistical and visualization packages. It takes a while the first time, so
+start it and go get coffee. Warnings about packages built under a different
+version of R are normal — ignore them.
 
 **Python** — run this once:
 
@@ -70,12 +92,12 @@ pip install -r functions/requirements.txt
 The Python track uses `pandas`, `numpy`, `scipy`, `statsmodels`, and `plotnine`
 (the `ggplot2` grammar, in Python).
 
-Both tracks are first-class. Most chapters exist in both R and Python; pick the
-one that matches your background and stay on it.
+Both tracks are first-class, and you only need one. Most chapters exist in both
+R and Python — pick the one that fits your background and stay with it.
 
-### 3. Run code from the repo root
+### 3. Run code from the top of the repo
 
-Scripts load data with paths **relative to the top of the repo**:
+Scripts load data using paths written **relative to the top of this repo**:
 
 ```r
 library(readr)
@@ -87,18 +109,23 @@ import pandas as pd
 onsen = pd.read_csv("workshops/onsen.csv")
 ```
 
-So keep the repo root as your working directory. A "file not found" or "No such
-file or directory" error almost always means you're sitting inside `code/`
-instead of at the top. In R, `getwd()` tells you where you are.
+That path means "go into `workshops`, then take `onsen.csv`" — starting from the
+top. So keep the top of the repo as the place R is looking from, which is
+exactly what opening `project.Rproj` does for you.
 
-Some chapters read the same CSVs straight off the web instead, so the code runs
-without a clone:
+If you see `No such file or directory` or `cannot open file`, that's the
+giveaway that R is looking from somewhere else — usually from inside `code/`.
+Type `getwd()` in the console and it will tell you where it currently is. This
+is a normal thing to get wrong, not a sign that you broke something.
+
+Some chapters skip the local file and read the same data straight off the web,
+so the code runs anywhere:
 
 ```r
 diamonds = read_csv("https://raw.githubusercontent.com/timothyfraser/sysen/main/workshops/mydiamonds.csv")
 ```
 
-Both routes give you the same data.
+Both routes give you the same numbers.
 
 ### 4. Use the helper functions
 
