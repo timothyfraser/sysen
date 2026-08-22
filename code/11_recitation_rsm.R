@@ -9,6 +9,7 @@ library(dplyr)
 library(readr)
 library(ggplot2)
 library(metR)
+library(rsm)     # contour() on an lm dispatches to rsm's contour.lm (used ~line 313)
 library(broom)
 library(viridis)
 
@@ -31,11 +32,11 @@ m0 = cookies %>%
   lm(formula = yum ~ molasses + ginger + cinnamon + butter + flour)
 
 m0
-# yum_predicted = 5.5459 + 5.1184 * molasses +
-#  0.56 * ginger +
-#  0.27 * cinnamon +
-#  0.68 * butter +
-#  1.24 * flour
+# yum_predicted = 10.7652 + 5.4716 * molasses +
+#  0.44 * ginger +
+#  0.07 * cinnamon +
+#  0.25 * butter +
+# -0.32 * flour
 
 
 m0 %>% glance()
@@ -70,9 +71,9 @@ cor(cookies$yum, cookies$flour)
 cookies %>% lm(formula = yum ~ molasses)
 
 cookies %>% lm(formula = yum ~ poly(molasses, 2) )
-# y = 18.64 +
-# 629.38 * molasses +
-# 158.90 * molasses^2
+# y = 18.66 +
+# 672.81 * molasses +
+# 179.33 * molasses^2
 
 cookies %>% lm(formula = yum ~ poly(molasses, 2) ) %>% glance()
 
@@ -232,29 +233,29 @@ ggplot() +
 cookies %>% 
   lm(formula = yum ~ molasses + ginger * cinnamon + butter + flour)
 
-# ginger = +0.59961
-# cinnamon = +0.33664
-# ginger:cinnamon = -0.02585
+# ginger = +0.63402
+# cinnamon = +0.42118
+# ginger:cinnamon = -0.15599
 # As both increase by 1, we expect XXXX less of the outcome.
 
-5.47320 + 5.11842 * 0 + 
-  0*0.68424 + 1.24766*0 +
+10.32645 + 5.47159 * 0 + 
+  0*0.25065 + -0.31940*0 +
   # effect of ginger
-  0.59961 * 1 + 
+  0.63402 * 1 + 
   # Effect of cinnamon
-  0.33664 * 2 + 
+  0.42118 * 2 + 
   # Effect of both
-  -0.02585 * (1 * 2)
+  -0.15599 * (1 * 2)
 
 
 
-# yum_predicted = 5.5459 + 
-#  5.11 * molasses +
-#  0.59 * ginger +
-#  0.33 * cinnamon +
-#  0.68 * butter +
-#  1.24 * flour +
-# -0.025 * ginger * cinnamon
+# yum_predicted = 10.3264 + 
+#  5.47 * molasses +
+#  0.63 * ginger +
+#  0.42 * cinnamon +
+#  0.25 * butter +
+# -0.32 * flour +
+# -0.156 * ginger * cinnamon
 
 
 cookies %>% 
