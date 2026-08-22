@@ -105,8 +105,8 @@ Don't file these as discoveries; they're on the maintainer's list:
 
 - Script numbers don't always match chapter numbers (`14_workshop.R` is the
   Response Surface Methodology chapter, `13_workshop.R` is Factorial Design).
-  `docs/RENAME-PROPOSAL.md` tracks the intended alignment. Do not rename files —
-  the textbook hotlinks these paths.
+  Scripts are numbered by class session to match the slide decks. Do not
+  rename files — the textbook hotlinks these paths.
 - A few `code/*_solutions.R` files are checked in. They are worked examples the
   instructor shares deliberately.
 - `functions/functions_process_control.R` and `.py` reference a few CSVs in

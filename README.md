@@ -121,8 +121,8 @@ does.
 
 Chapters are listed by **title**, in textbook order. Not every chapter has a
 script here — many are self-contained in the textbook — and the script numbers
-do not always line up with the chapter numbers (see
-[`docs/RENAME-PROPOSAL.md`](docs/RENAME-PROPOSAL.md)).
+do not always line up with the chapter numbers — scripts are numbered by
+class session (lesson/workshop/recitation), matching the slide decks.
 
 | Textbook chapter | Data in `workshops/` | Scripts in `code/` |
 |---|---|---|
