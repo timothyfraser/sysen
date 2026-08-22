@@ -1,4 +1,14 @@
 # 00_attribute_charts.R
+# Tim Fraser
+# Extra: attribute control charts (p, np, c and u charts)
+# Chapter: Statistical Process Control in R
+#
+# Data note: this script GENERATES its own data. The tribbles below write
+# workshops/inventory.csv, workshops/bulbs.csv and workshops/accidents.csv
+# before anything reads them, so those three files are OUTPUTS of this script,
+# not missing inputs. Run it from the repo root so the paths resolve. Every
+# read_csv() line further down is commented out on purpose - the objects are
+# already in memory by then.
 
 library(dplyr)
 

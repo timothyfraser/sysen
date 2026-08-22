@@ -1,6 +1,7 @@
-# 07_workshop.R
-# Statistical Techniques for Exponential Distributions in R
+# 07b_workshop.R
 # Tim Fraser
+# Lesson 7B: Statistical Techniques for Exponential Distributions
+# Chapter: Statistical Techniques for Exponential Distributions in R
 
 # Workshop code paired with the textbook chapters
 # "Useful Life Distributions (Exponential)" and

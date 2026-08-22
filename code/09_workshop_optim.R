@@ -1,7 +1,7 @@
-#' @name 08_recitation
-#' @title Maximum Likelihood Estimation in R [part 2]
-#' @author Tim Fraser, PhD
-#' @description Multi-Parameter MLE 
+# 09_workshop_optim.R
+# Tim Fraser
+# Workshop 9: Parameter Estimation - Multi-Parameter Maximum Likelihood with optim()
+# Chapter: Useful Life Distributions (Weibull, Gamma, & Lognormal) in R
 
 
 # Using optim() for MLE with 1 parameter ##############################################

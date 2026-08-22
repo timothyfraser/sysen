@@ -41,7 +41,7 @@ first time. **Coach; don't complete.** Concretely:
 ```
 sysen/
 ├── workshops/   # the datasets (CSV), plus packages.R (one-time R install)
-├── code/        # teaching scripts: NN_workshop, NN_lesson, NN_recitation, NN_training
+├── code/        # teaching scripts: NN_workshop, NN_lesson, NN_recitation (.R and .py)
 ├── functions/   # reusable helpers: functions_*.R / .py, and workflow_* demos
 ├── docs/        # cheat sheets (PDF/PNG) and helper documents
 └── README.md    # student-facing overview + chapter-to-file table
@@ -85,7 +85,7 @@ writing R for this course, even if you'd write it differently elsewhere.
 Most scripts in `code/` were typed in front of students while working a problem.
 They contain false starts, an early version of a function that a better version
 later replaces, commented-out board work, and occasional pseudo-code that will
-not run (`code/14_workshop.R` has a flagged example). This is intentional and it
+not run (`code/11_recitation.R` has a flagged example). This is intentional and it
 is not a defect to clean up.
 
 Practical consequences:
@@ -103,10 +103,14 @@ Practical consequences:
 
 Don't file these as discoveries; they're on the maintainer's list:
 
-- Script numbers don't always match chapter numbers (`14_workshop.R` is the
-  Response Surface Methodology chapter, `13_workshop.R` is Factorial Design).
-  Scripts are numbered by class session to match the slide decks. Do not
+- Scripts are numbered by **class session**, not by textbook chapter and not by
+  calendar week: `NN` is the number on the slide deck (`Workshop 11` → `11`).
+  One session can draw on two chapters, so `11_recitation.R` is the Response
+  Surface Methodology material and `13_workshop.R` is Factorial Design. Do not
   rename files — the textbook hotlinks these paths.
+- R and Python scripts for the same session **share a basename** (`01_workshop.R`
+  / `01_workshop.py`). The old parallel `NN_training.py` series has been retired;
+  that content now lives in the Python textbook chapters.
 - A few `code/*_solutions.R` files are checked in. They are worked examples the
   instructor shares deliberately.
 - `functions/functions_process_control.R` and `.py` reference a few CSVs in

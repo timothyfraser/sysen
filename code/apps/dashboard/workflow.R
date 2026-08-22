@@ -16,7 +16,7 @@ library(readr)
 # check working directory and adjust code below as needed
 getwd() 
 # Load in helper functions
-source("code/15_workshop/dashboard/functions.R")
+source("code/apps/dashboard/functions.R")
 
 # 3. WORKFLOW ----------------------------------------------
 

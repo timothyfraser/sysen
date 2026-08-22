@@ -16,5 +16,11 @@ patsy==1.0.2
 plotnine==0.15.1
 patchworklib==0.6.6
 
+# dplyr-style pipelines, as taught in the Python chapters
+dfply==0.3.3
 
+# example datasets used by the Python chapters (e.g. diamonds)
+seaborn==0.13.2
 
+# symbolic calculus - stands in for R's mosaicCalc (antiD / D)
+sympy==1.14.0

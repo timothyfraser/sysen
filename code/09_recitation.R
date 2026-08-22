@@ -1,6 +1,7 @@
-#' @name 09_lesson.R
-#' @author Tim Fraser, PhD
-#' @note pairs with: https://timothyfraser.com/sigma/fault-tree-analysis-in-r.html 
+# 09_recitation.R
+# Tim Fraser
+# Recitation 9: Fault Tree Analysis
+# Chapter: Fault Tree Analysis in R
 
 library(dplyr)
 library(ggplot2)

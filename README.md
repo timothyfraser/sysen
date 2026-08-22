@@ -124,42 +124,46 @@ script here — many are self-contained in the textbook — and the script numbe
 do not always line up with the chapter numbers — scripts are numbered by
 class session (lesson/workshop/recitation), matching the slide decks.
 
+An R script and its Python twin **share a basename**: `01_workshop.R` and
+`01_workshop.py` are the same session, each written in the style of its own
+textbook chapter.
+
 | Textbook chapter | Data in `workshops/` | Scripts in `code/` |
 |---|---|---|
 | Coding in R | — | `01_workshop.R` |
-| Coding in Python | — | `01_workshop.py`, `01_training.py` |
+| Coding in Python | — | `01_workshop.py` |
 | FMEA in R · FMEA in Python | — | — |
 | Visualization with `ggplot` in R | — | `01_recitation.R` |
-| Visualization with `plotnine` in Python | — | — |
+| Visualization with `plotnine` in Python | — | `01_recitation.py` |
 | Distributions and Descriptive Statistics in R | `la_parishes.csv` | `02_workshop.R`, `02_recitation.R` |
-| Distributions and Descriptive Statistics in Python | `la_parishes.csv` | `02_training.py` |
-| Functions in R · Functions in Python | — | `03_lesson.R` |
+| Distributions and Descriptive Statistics in Python | `la_parishes.csv` | `02_workshop.py`, `02_recitation.py` |
+| Functions in R · Functions in Python | — | `03_lesson.R`, `03_lesson.py` |
 | Probability in R | — | `03_workshop.R`, `03_workshop_solutions.R` |
-| Probability in Python | — | `03_training.py` |
+| Probability in Python | — | `03_workshop.py`, `03_workshop_solutions.py` |
 | Probability Functions in R | — | `03_workshop.R` |
 | System Reliability in R | — | `04_workshop.R`, `04_workshop_solutions.R`, `04_recitation_solutions.R` |
-| System Reliability in Python | — | `04_training.py` |
+| System Reliability in Python | — | — |
 | Statistical Process Control in R | `onsen.csv` | `05_workshop_solutions.R`, `05_recitation.R` |
-| Statistical Process Control in Python | `onsen.csv` | `05_training.py` |
+| Statistical Process Control in Python | `onsen.csv` | — |
 | Indices and Confidence Intervals for Statistical Process Control in R | `onsen.csv` | `06_recitation_solutions.R`, `06_workshop_extra.R` |
-| Indices and Confidence Intervals for Statistical Process Control in Python | `onsen.csv` | `06_training.py` |
+| Indices and Confidence Intervals for Statistical Process Control in Python | `onsen.csv` | — |
 | Useful Life Distributions (Exponential) | `masks.csv` | `07_lesson.R`, `07_recitation.R` |
-| Statistical Techniques for Exponential Distributions in R | `masks.csv` | `07_workshop.R` |
-| Statistical Techniques for Exponential Distributions in Python | `masks.csv` | `07_training.py` |
-| Useful Life Distributions (Weibull, Gamma, & Lognormal) in R | `crops.csv` | `08_workshop_solutions.R`, `08_lesson.R`, `08_recitation.R` |
-| Useful Life Distributions (Weibull, Gamma, & Lognormal) in Python | `crops.csv` | `08_training.py` |
-| Fault Tree Analysis in R | `fault_tree_engine_nodes.csv`, `fault_tree_engine_edges.csv` (used by the textbook's interactive diagram) | `09_workshop.R`, `09_lesson.R` |
+| Statistical Techniques for Exponential Distributions in R | `masks.csv` | `07b_workshop.R` |
+| Statistical Techniques for Exponential Distributions in Python | `masks.csv` | — |
+| Useful Life Distributions (Weibull, Gamma, & Lognormal) in R | `crops.csv` | `09_workshop.R`, `09_workshop_optim.R`, `09_workshop_solutions.R` |
+| Useful Life Distributions (Weibull, Gamma, & Lognormal) in Python | `crops.csv` | — |
+| Fault Tree Analysis in R | `fault_tree_engine_nodes.csv`, `fault_tree_engine_edges.csv` (used by the textbook's interactive diagram) | `09_recitation.R`, `09_recitation_solutions.R` |
 | Fault Tree Analysis in Python | — | — |
 | Physical Acceleration Models | — | `10_workshop.R`, `10_lesson.R` |
-| Physical Acceleration Models in Python | — | `10_training.py` |
+| Physical Acceleration Models in Python | — | — |
 | Bivariate Regression: Modeling Diamond Pricing | `mydiamonds.csv` | — |
 | Bivariate Regression: Modeling Diamond Pricing in Python | `mydiamonds.csv` | — |
-| Multivariate Regression: Modeling Effects of Disaster on Social Capital | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | `11_recitation.R`, `11_workshop_exercises.R` |
+| Multivariate Regression: Modeling Effects of Disaster on Social Capital | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | `11_workshop.R`, `11_workshop_exercises.R` |
 | Multivariate Regression: Modeling Effects of Disaster on Social Capital in Python | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | — |
 | Design of Experiments in R | `donuts.csv` | `12_workshop.R`, `12_lesson.R` |
 | Factorial Design and Interaction Effects in R | `lattes.csv` | `13_workshop.R`, `13_lesson.R`, `13_examples.R` |
 | Factorial Design and Interaction Effects in Python | `lattes.csv` | — |
-| Response Surface Methodology in R | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | `14_workshop.R`, `11_recitation_rsm.R` |
+| Response Surface Methodology in R | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | `11_recitation.R`, `11_recitation_rsm.R` |
 | Response Surface Methodology in Python | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | — |
 | Appendix: `ggplot` tips | — | — |
 | Appendix: `mermaid` Block Diagrams (Flowcharts) in R | — | — |
@@ -168,7 +172,7 @@ class session (lesson/workshop/recitation), matching the slide decks.
 
 Extras with no chapter of their own: `code/00_*` (demos and side topics),
 `code/ZZ_financial_analysis.R` (financial impact analysis), and
-`code/15_workshop/` (Shiny dashboards, `plumber` APIs, and parameterized
+`code/apps/` (Shiny dashboards, `plumber` APIs, and parameterized
 reports).
 
 ## Cheat sheets

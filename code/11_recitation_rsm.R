@@ -1,4 +1,7 @@
 # 11_recitation_rsm.R
+# Tim Fraser
+# Recitation 11: Response Surface Methodology (in-class script, further reading)
+# Chapter: Response Surface Methodology in R
 
 ## SETUP ---------------------------------
 
@@ -9,7 +12,7 @@ library(metR)
 library(broom)
 library(viridis)
 
-link = "https://bit.ly/gingerbread_test3"
+link = "workshops/gingerbread_test3.csv"
 cookies = link %>% read_csv()
 
 cookies
