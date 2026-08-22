@@ -40,16 +40,58 @@ first time. **Coach; don't complete.** Concretely:
 
 ```
 sysen/
-├── workshops/   # the datasets (CSV), plus packages.R (one-time R install)
-├── code/        # teaching scripts: NN_workshop, NN_lesson, NN_recitation (.R and .py)
-├── functions/   # reusable helpers: functions_*.R / .py, and workflow_* demos
-├── docs/        # cheat sheets (PDF/PNG) and helper documents
-└── README.md    # student-facing overview + chapter-to-file table
+├── workshops/       # the datasets (CSV), plus packages.R (one-time R install)
+├── code/            # teaching scripts: NN_workshop, NN_lesson, NN_recitation (.R and .py)
+├── functions/       # reusable helpers: functions_*.R / .py, and workflow_* demos
+├── docs/            # cheat sheets (PDF/PNG) and helper documents
+├── .claude/skills/  # course study skills for agents — see "Speak the textbook's language"
+└── README.md        # student-facing overview + chapter-to-file table
 ```
 
 `README.md` has a table mapping each textbook chapter (by title) to its data
 files and scripts. Consult it before guessing which script goes with which
 chapter.
+
+## Speak the textbook's language
+
+`.claude/skills/` holds a small set of skills written alongside the textbook.
+Read the glossary before you start explaining course concepts.
+
+**`.claude/skills/glossary/SKILL.md` is the one that matters most.** It is the
+course's terminology reference — reliability and failure-rate functions, life
+distributions, statistical process control, capability and performance indices,
+fault trees, acceleration models, regression, design of experiments, factorial
+design, and response surface methodology — using the textbook's own
+definitions. Consult it whenever you are about to define, contrast, or use a
+course term, so that what you say matches what the student is reading.
+
+Two parts of it earn their keep even if you think you know the material. The
+textbook **reuses several symbols for different quantities in different
+chapters** (`m` is both mean-time-to-fail and the Weibull shape; `r` is a range
+in SPC and a reliability function elsewhere; `z(t)` is the hazard rate where
+most outside sources write `h(t)`), and the glossary lists those collisions
+explicitly. It also records where the course's vocabulary **differs from the
+standard literature** — it says "cutsets", "direct effect", and "stable" where
+other texts say "cut sets", "main effect", and "in control" — and which
+standard topics the course does *not* cover. Answering with the wider
+literature's vocabulary, or with a technique the course never taught, is
+unhelpful even when it is correct.
+
+The other skills are study modes, useful when a student asks for one:
+
+- **`flashcards/`** — builds a copy-pasteable card set on a topic, cited by chapter.
+- **`quizme/`** — adaptive quiz, one question at a time, scored, ending with what to review.
+- **`interpret/`** — stress-tests the student's own reading of a result without
+  delivering a verdict. Reach for it when they bring you a chart, an index, or
+  a coefficient plus what they think it means.
+- **`project-guide/`** — orients a team to the course project: what it is, how
+  its deliverables build on one another, and what makes a workable topic. It
+  coaches on method and never writes the deliverable.
+
+These files are maintained alongside the textbook and mirrored into this repo,
+so an edit made here is overwritten on the next sync. If one is wrong or out of
+date, tell the student to flag it for the teaching team rather than patching it
+in place.
 
 ## Conventions that matter
 
