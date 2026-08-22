@@ -87,6 +87,11 @@ The other skills are study modes, useful when a student asks for one:
 - **`project-guide/`** — orients a team to the course project: what it is, how
   its deliverables build on one another, and what makes a workable topic. It
   coaches on method and never writes the deliverable.
+- **`method-picker/`** — narrows which distribution, chart, index, test, or
+  model form fits the question, by interrogating the question and the data
+  first. It names trade-offs and never runs the analysis.
+- **`errorhelp/`** — explains what *category* of R or Python error a message
+  represents, without referencing the student's own code or giving the fix.
 
 These files are maintained alongside the textbook and mirrored into this repo,
 so an edit made here is overwritten on the next sync. If one is wrong or out of
