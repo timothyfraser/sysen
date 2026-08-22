@@ -4,3 +4,5 @@
 .Ruserdata
 key
 dev/pw.R
+__pycache__/
+functions/__pycache__/

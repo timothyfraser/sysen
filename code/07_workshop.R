@@ -1,8 +1,28 @@
 # 07_workshop.R
+# Statistical Techniques for Exponential Distributions in R
+# Tim Fraser
+
+# Workshop code paired with the textbook chapters
+# "Useful Life Distributions (Exponential)" and
+# "Statistical Techniques for Exponential Distributions in R"
+# at timothyfraser.com/sigma.
+
+# What this script does:
+# Takes a vector of 100 product times-to-failure and works out, step by
+# step, how to crosstabulate them into intervals - first by hand with
+# cut_interval() and count(), then as our own crosstab() function, then
+# handling the awkward case where an interval holds fewer than 5 failures.
+# Those interval counts are what a chi-squared goodness-of-fit test needs.
+
+# Inputs: none from disk for the first half - the failure times are typed in
+#         below. The second half sources functions/functions_crosstab.R.
+# Packages: dplyr, ggplot2
 
 # Load packages
 library(dplyr)
 library(ggplot2)
+
+# 1. Times to failure ##########################################
 
 # Product Times to Failure
 hours = c(1,2,2,3,4,5,7,8,9,10,
@@ -18,6 +38,8 @@ hours = c(1,2,2,3,4,5,7,8,9,10,
 
 
 hours
+
+# 2. Binning continuous times into intervals ###################
 
 # Use ggplot2's cut_interval() to recode values as categories
 cut_interval(hours, length = 55)
@@ -38,6 +60,8 @@ tibble(t = hours) %>%
   arrange(desc(interval))
 
 tmax = 1000
+
+# 3. Tallying up failures per interval #########################
 
 # Three equivalent ways to tally up observations
 
@@ -69,6 +93,8 @@ tibble(t = hours) %>%
 
 
 
+# 4. Bundling it into a crosstab() function ####################
+
 # We can write ourselves a crosstab() function to do it for us
 crosstab = function(x, binsize = 55){
   
@@ -82,6 +108,8 @@ crosstab = function(x, binsize = 55){
 tab = crosstab(hours, binsize = 100)
 
 tab
+
+# 5. The r >= 5 problem: merging sparse intervals ##############
 
 # But hang on = some intervals have fewer than 5 failures per interval.
 
@@ -175,8 +203,10 @@ crosstab2(x = hours, binsize = 100,
 
 
 
+# 6. Use the packaged helper instead ###########################
+
 # I went on to update this and have provided a helper function under
-# functions/function_crosstab.R
+# functions/functions_crosstab.R
 # Try it out!
 source("functions/functions_crosstab.R")
 

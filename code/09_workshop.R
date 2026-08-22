@@ -1,5 +1,24 @@
+# 09_workshop.R
+# Fault Tree Analysis in R
+# Tim Fraser
+
+# Workshop code paired with the textbook chapter
+# "Fault Tree Analysis in R" at timothyfraser.com/sigma.
+
+# What this script does:
+# We build a fault tree by hand, as a function f() that turns the failure
+# probabilities of five components (b, s, h, o, n) into the probability of
+# the TOP EVENT. Then we make that function progressively more realistic:
+#   fixed probabilities -> probabilities that grow over time from failure
+#   rates (lambdas) -> lambdas that are themselves uncertain and simulated.
+
+# Inputs: none. Every number is typed into the script; no data files are read.
+# Packages: dplyr, ggplot2
+
 library(dplyr)
 library(ggplot2)
+
+# 1. A top event function ######################################
 
 # Probability of top event
 f = function(b, s, h, o, n){ b + s + h + o * n }
@@ -19,6 +38,10 @@ f(b = 1, s = 0, h = 1, o = 0, n = 0)
 f(b = 0.0005, s = 0, h = 0.5, o = 0, n = 0)
 
 
+# 2. One set of component probabilities ########################
+
+# Put the five component probabilities in a tibble and let f() compute
+# the top event probability t for that one combination.
 tibble(
   b = 0.000000000005,
   s = 0.00001,
@@ -30,6 +53,10 @@ tibble(
 )
 
 
+# 3. Sweeping one component across a range #####################
+
+# Hold b, s, h, o fixed and let n vary from 0 to 1, so we can see how
+# sensitive the top event is to that one component.
 probs = tibble(
   b = 0.000000005,
   s = 0.00001,
@@ -44,6 +71,8 @@ probs %>%
   select(n, t) %>%
   plot()
 
+
+# 4. Where do these probabilities come from? ###################
 
 # Probabilities are uncertain ---> simulate from binomial
 # Probabilities vary over time ---> calculate probability at time t
@@ -72,6 +101,10 @@ f = function(b, s, h, o, n){
 
 
 
+# 5. Probabilities that grow over time #########################
+
+# Each component has a failure rate (lambda). pexp(t, rate = lambda) turns
+# a rate into the probability that the component has failed by time t.
 mylambdas = tibble(
   t = 0:5,
   b_lambda = 0.0000001,
@@ -100,6 +133,8 @@ myprobs %>%
   glimpse()
 
 
+# 6. Uncertain lambdas: simulate them ##########################
+
 # What if lambdas vary?
 
 
@@ -113,6 +148,8 @@ mylambdas = tibble(
 )
 
 
+# Cross every simulated set of lambdas with every time point t, compute
+# each component's failure probability at t, then the top event.
 sim1 = tibble(t = 1:10) %>%
   group_by(t) %>%
   reframe(mylambdas) %>%
@@ -124,6 +161,8 @@ sim1 = tibble(t = 1:10) %>%
   mutate(top = f(b,s,h,o,n))
 
 qi1 = sim1 %>%
+# Summarize the 1000 simulations at each time t into a median and a
+# 95% simulated confidence interval.
   group_by(t) %>%
   summarize(lower = quantile(top, prob = 0.025),
             median = quantile(top, prob = 0.50),

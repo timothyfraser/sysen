@@ -1,4 +1,4 @@
-#' @name workshop_10.R
+#' @name 10_workshop.R
 #' @title Physical Acceleration Models
 
 

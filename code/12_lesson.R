@@ -1,4 +1,4 @@
-#’ @name lesson_12
+#' @name 12_lesson.R
 
 # Load packages, to get our dplyr, ggplot, tibble, and readr functions
 library(dplyr)

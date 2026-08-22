@@ -1,3 +1,23 @@
+# 14_workshop.R
+# Response Surface Methodology in R
+# Tim Fraser
+
+# Workshop code paired with the textbook chapter
+# "Response Surface Methodology in R" at timothyfraser.com/sigma.
+
+# What this script does:
+# Uses the gingerbread cookie experiment to move from a plain first order
+# model up to a second order (polynomial) model with interactions, then
+# predicts over a grid of ingredient values and draws the response surface
+# as a contour plot to find the mix that maximizes the 'yum' score.
+
+# Inputs: gingerbread_test3, read from the web via https://bit.ly/gingerbread_test3
+#         (the same data also lives at workshops/gingerbread_test3.csv).
+# Packages: dplyr, readr, ggplot2, broom, rsm, viridis, metR, tidyr
+
+# Heads up: line ~52 below is deliberately pseudo-code, not runnable code.
+# Run this script chunk by chunk rather than all at once.
+
 library(dplyr)
 library(readr)
 library(ggplot2)
@@ -5,6 +25,8 @@ library(broom)
 library(rsm)
 library(viridis)
 library(metR)
+
+# 1. Load the cookie data ######################################
 
 link = "https://bit.ly/gingerbread_test3"
 cookies = link %>% read_csv()
@@ -19,6 +41,9 @@ cookies$batch %>% unique() %>% length()
 
 cookies$yum %>% range()
 
+# 2. First order model #########################################
+
+# Every ingredient gets one straight-line slope.
 m0 = cookies %>% 
   lm(formula = yum ~ molasses + ginger + cinnamon + butter + flour)
 
@@ -39,6 +64,8 @@ cookies %>%
   glance()
 
 
+# 3. Why go to second order? ###################################
+
 # first order polynomial
 
 # y = slope*x
@@ -49,9 +76,14 @@ cookies %>%
 
 
 # two second order polynomials
+# NOTE: the next line is pseudo-code written on the board, not runnable R.
+# slope1..slope4, x, and z are never defined - skip it when running.
 y = slope1*x + slope2*x^2 + slope3*z + slope4*z^2
 
 
+# 4. Correlations, and one predictor at a time #################
+
+# poly(x, 2) adds both x and x^2 to the model in one go.
 cor(cookies$yum, cookies$cinnamon)
 cor(cookies$yum, cookies$molasses)
 cor(cookies$yum, cookies$butter)
@@ -65,6 +97,8 @@ cookies %>% lm(formula = yum ~ poly(molasses, 2) )
 # 158.90 * molasses^2
 
 cookies %>% lm(formula = yum ~ poly(molasses, 2) ) %>% glance()
+
+# 5. Full second order model, and predicting from it ###########
 
 m = cookies %>% lm(formula = yum ~ poly(molasses, 2) + 
                  poly(ginger, 2) +
@@ -82,6 +116,9 @@ tibble(
   mutate(yhat = predict(m, newdata = .))
 
 
+# 6. Adding an interaction term ################################
+
+# I(molasses * cinnamon) says the effect of molasses depends on cinnamon.
 m = cookies %>% lm(formula = yum ~ poly(molasses, 2) + 
                      poly(ginger, 2) +
                      poly(cinnamon, 2) +
@@ -104,6 +141,10 @@ m = cookies %>% lm(
 glance(m)
 
 
+# 7. Predict across a grid of ingredient values ################
+
+# expand_grid() makes every combination of molasses and ginger;
+# predict() gives the model's yum score at each one.
 data = tidyr::expand_grid(
   molasses = seq(from = 0, to = 3, by = 0.1),
   ginger = seq(from = 0, to = 3, by = 0.1)
@@ -119,6 +160,9 @@ data %>%
 
 library(viridis)
 
+# 8. Draw the response surface #################################
+
+# geom_tile() paints the predicted surface; contours label the ridges.
 ggplot() +
   geom_tile(data = data, mapping = aes(x = molasses, y = ginger, fill = yhat)) +
   scale_fill_viridis(option = "plasma") +

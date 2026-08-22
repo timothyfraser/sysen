@@ -1,3 +1,21 @@
+# 11_workshop_exercises.R
+# Multivariate Regression: Modeling Effects of Disaster on Social Capital
+# Tim Fraser
+
+# Practice exercises paired with the textbook chapter
+# "Multivariate Regression: Modeling Effects of Disaster on Social Capital"
+# at timothyfraser.com/sigma.
+
+# What this script does:
+# Four numbered exercises on Japanese municipalities hit by the 2011
+# tsunami. You estimate multivariate models of income per capita, practice
+# writing up a slope in plain English with its confidence interval, compare
+# logged vs. unlogged outcomes, control for time, and then predict across a
+# range of damage rates while holding other predictors at chosen values.
+
+# Inputs: workshops/jp_matching_experiment.csv
+#         Run this from the repo root, so the relative path resolves.
+# Packages: dplyr, readr, broom, texreg, gtools
 
 
 library(dplyr)

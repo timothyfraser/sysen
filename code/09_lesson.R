@@ -1,6 +1,6 @@
-#’ @name workshop_9_solutions.R
-#’ @author Tim Fraser, PhD
-#’ @note pairs with: https://timothyfraser.com/sigma/workshop-fault-tree-analysis-in-r.html 
+#' @name 09_lesson.R
+#' @author Tim Fraser, PhD
+#' @note pairs with: https://timothyfraser.com/sigma/fault-tree-analysis-in-r.html 
 
 library(dplyr)
 library(ggplot2)
