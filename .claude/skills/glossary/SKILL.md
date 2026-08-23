@@ -18,13 +18,13 @@ study bot — so that everything speaks the same language as the chapters.
 
 Use it as a **dictionary**, not a textbook. When an unfamiliar term shows up in
 a chapter or a lecture, look it up here. When you are about to recommend a
-method on your project, scan the mistakes list in section 13.
+method on your project, scan the mistakes list in section 15.
 
 **Two things this glossary tries hard to do.** First, where a chapter defines a
 term, the definition here agrees with that chapter rather than with the wider
 literature. Second, where the textbook's own notation collides with itself —
 and it does, in several load-bearing places — this glossary says so out loud
-instead of quietly picking a side. Section 12 is nothing but those collisions,
+instead of quietly picking a side. Section 14 is nothing but those collisions,
 and it is the section most likely to save you on an exam.
 
 **A note on both tracks.** Every core idea here exists in R and in Python, and

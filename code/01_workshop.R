@@ -87,6 +87,10 @@ tibble(
 
 d$weight2 = NULL
 
+# Heads up: this next line is SUPPOSED to fail too. We just deleted weight2
+# above, so there is nothing left to deselect. R tells you exactly that:
+# "Can't select columns that don't exist." Deleting a column is permanent -
+# that error is how you find out you already did it.
 d %>% select(-weight2)
 
 
@@ -96,6 +100,9 @@ d %>% select(-weight2)
 
 c(1,2,3,4)
 
+# Heads up: this next line is SUPPOSED to fail, for the same reason as the one
+# up at the top. Multiplying is arithmetic, and these are words - it fails no
+# matter which arithmetic you try. Compare it to the line just below it.
 c("corgi", "dalmatian") * 2
 
 c(1,2,3,4) * 2
