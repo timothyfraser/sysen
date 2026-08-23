@@ -18,6 +18,7 @@ the textbook alongside it, and run the code as you go.
 |---|---|
 | **Textbook** (start here) | [timothyfraser.com/sigma](https://timothyfraser.com/sigma/) |
 | **Canvas** (deadlines, submission, grades, quizzes) | [Canvas](https://timothyfraser.com/sigma/canvas) |
+| **Ed Discussion** (questions & discussion — ask when you get stuck) | [Ed](https://timothyfraser.com/sigma/ed) |
 | **This repo** | [github.com/timothyfraser/sysen](https://github.com/timothyfraser/sysen) |
 
 > Two rules that save a lot of confusion. The textbook is authoritative for
@@ -39,13 +40,35 @@ one for the folder you need; you can ignore the rest.
 
 ## Getting started
 
-Three one-time steps, and then you're set for the term.
+Five one-time steps, and then you're set for the term.
 
-### 1. Get a copy of the repo
+### 1. Get the tools installed
+
+You need somewhere to run R or Python before anything else here will work.
+There are two ways to get there, and the first one is by far the easiest.
+
+**The zero-install path.** [Posit Cloud](https://posit.cloud/) runs R and
+RStudio in your browser. Nothing to download, nothing to configure, and it works
+the same on a Mac, a PC, or a Chromebook. Make a free account and you are done.
+If you have never installed a programming language before, start here.
+
+**The local path.** If you would rather run things on your own computer, install
+these, in this order:
+
+1. [R](https://www.r-project.org/) — the language itself.
+2. [RStudio Desktop](https://posit.co/download/rstudio-desktop/) — the window you
+   actually work in. R is the engine; RStudio is the dashboard. You want both.
+3. [Python](https://www.python.org/downloads/) — only if you are taking the
+   Python track. On the R track you can skip it entirely.
+
+Either path is fine, and you can switch later. Nothing in this repo cares which
+one you picked.
+
+### 2. Get a copy of the repo
 
 If you're using **Posit Cloud** — the browser version of R, which needs nothing
 installed on your computer — the course project already has all of this in it.
-Nothing to do here; go to step 2.
+Nothing to do here; go to step 3.
 
 Otherwise, download it with `git`:
 
@@ -69,7 +92,7 @@ there is nothing here you can break.
 starts looking from, which is what every file path in every chapter assumes.
 It's one click, and it heads off the single most common error of the first week.
 
-### 2. Install what you need
+### 3. Install what you need
 
 **R** — run this once, from the top of the folder:
 
@@ -95,7 +118,7 @@ The Python track uses `pandas`, `numpy`, `scipy`, `statsmodels`, and `plotnine`
 Both tracks are first-class, and you only need one. Most chapters exist in both
 R and Python — pick the one that fits your background and stay with it.
 
-### 3. Run code from the top of the repo
+### 4. Run code from the top of the repo
 
 Scripts load data using paths written **relative to the top of this repo**:
 
@@ -127,7 +150,7 @@ diamonds = read_csv("https://raw.githubusercontent.com/timothyfraser/sysen/main/
 
 Both routes give you the same numbers.
 
-### 4. Use the helper functions
+### 5. Use the helper functions
 
 `functions/` holds functions written for this course — control chart math,
 reliability functions, factorial effects, distribution helpers. Load one with
@@ -215,7 +238,7 @@ use a cheat sheet.
 | `ggplot2` | data visualization | [Cheatsheet](https://rstudio.github.io/cheatsheets/data-visualization.pdf) | [Docs](https://ggplot2.tidyverse.org/) |
 | `stringr` | working with text | [Cheatsheet](https://rstudio.github.io/cheatsheets/strings.pdf) | [Docs](https://stringr.tidyverse.org/) |
 | `viridis` | color palettes | — | [Docs](https://sjmgarnier.github.io/viridis/) |
-| `broom` | tidying model output | [Cheatsheet](https://pop.princeton.edu/sites/g/files/toruqf496/files/documents/2018May_Broom_0.pdf) | [Docs](https://broom.tidymodels.org/) |
+| `broom` | tidying model output | [Vignette](https://broom.tidymodels.org/articles/broom.html) | [Docs](https://broom.tidymodels.org/) |
 
 Local copies of the RStudio, `dplyr`, `ggplot2`, and `stringr` cheat sheets live
 in [`docs/`](docs) as PDFs and PNGs.

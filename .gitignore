@@ -6,3 +6,8 @@ key
 dev/pw.R
 __pycache__/
 functions/__pycache__/
+
+# R writes this at the repo root whenever a script plots while running
+# headlessly (Rscript, source() from a terminal). It is a build artifact of
+# running the course code, not course content.
+Rplots.pdf
