@@ -1,6 +1,8 @@
-# Lesson 0: Introduction!
+# 01_workshop.R
 # Tim Fraser
-# This workshop code summarize basic operations in R.
+# Workshop 1: Introduction - basic operations in R
+# Chapter: Coding in R
+#
 # Check out timothyfraser.com/sigma for more.
 
 # Let's load some packages
@@ -36,6 +38,8 @@ myobject + 1
 
 myobject *2
 
+# Heads up: this next line is SUPPOSED to fail. Run it anyway, and read what R
+# says back to you - you can't add 1 to words. That error message is the lesson.
 c("corgi", "dalmatian", "terriers") + 1
 c("corgi", "dalmatian", "terriers", 1)
 

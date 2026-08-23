@@ -1,6 +1,7 @@
-# recitation_5.R
-# Dr. Fraser
-# Recitation 5: Statistical Process Control Practice in R
+# 05_recitation.R
+# Tim Fraser
+# Recitation 5: Statistical process control practice
+# Chapter: Statistical Process Control in R
 
 # 0. Setup ##################################################
 # Load packages

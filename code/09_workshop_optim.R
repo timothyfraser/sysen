@@ -2,6 +2,10 @@
 # Tim Fraser
 # Workshop 9: Parameter Estimation - Multi-Parameter Maximum Likelihood with optim()
 # Chapter: Useful Life Distributions (Weibull, Gamma, & Lognormal) in R
+#
+# Heads up: the normal-distribution demo below deliberately fails on purpose,
+# to show what bad starting parameters do. Run this script chunk by chunk
+# rather than all at once.
 
 
 # Using optim() for MLE with 1 parameter ##############################################
@@ -78,6 +82,9 @@ ll = function(t, par){
 
 crops$days %>% range()
 # Let's try it!
+# Note the starting values: for a UNIFORM likelihood, min and max must bracket
+# every observation. Any t outside [min, max] has density 0, log(0) is -Inf,
+# and the whole loglikelihood collapses to -Inf before optim() can search.
 optim(fn = ll, par = c(4, 197), 
       t = crops$days, control = list(fnscale = -1))
 
@@ -96,6 +103,9 @@ ll = function(t, par){
   dnorm(t, mean = par[1], sd = par[2]) %>% log() %>% sum()
 }
 # Let's try it out!
+# Heads up: this next line is SUPPOSED to fail. dnorm(crops$days, 0, 1)
+# underflows to 0, log(0) is -Inf, and optim() refuses to start. Run it and
+# read the error - diagnosing it is the next twenty lines of this script.
 optim(par = c(0, 1), t = crops$days, fn = ll, control = list(fnscale = -1))
 # Why doesn't it work?
 

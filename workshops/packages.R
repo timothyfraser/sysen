@@ -21,6 +21,8 @@ install.packages(
     "ggtext",
     "shadowtext",
     "DiagrammeR",
+    "ggpubr",
+    "metR",
     
     # Statistical packages
     "mvtnorm",
@@ -28,6 +30,12 @@ install.packages(
     "moments",
     "texreg",
     "mosaicCalc",
+    "rsm",
+    "gtools",
+    
+    # Dashboards and APIs (the code/apps folder)
+    "shiny",
+    "plumber",
     
     # Sample data packages
     "gapminder",

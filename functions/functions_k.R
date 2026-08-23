@@ -53,7 +53,7 @@ qk = function(p, r, .time = FALSE, .failure = FALSE){
   .zerofailures = r == 0
   
   
-  k = case_when(
+  k = dplyr::case_when(
     # 1+ failures AND complete data AND UPPER tail  --> Get k-factor for r as normal
     .zerofailures == FALSE & .time == FALSE & .failure == FALSE & .upper == TRUE ~ qchisq(p, df = 2*r) / (2*r),
     # 1+ failures AND complete data AND LOWER tail  --> Get k-factor for r as normal

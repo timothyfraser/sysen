@@ -33,10 +33,17 @@ import pandas as pd
 import numpy as np
 from scipy import stats
 from plotnine import *
+# patchworklib is OPTIONAL. If it is installed AND it can actually drive this
+# version of plotnine, ggprocess() returns a combined plot; otherwise it just
+# returns the main plot. patchworklib 0.6.6 (its latest) only works with
+# plotnine <= 0.10.1, so on a current install this is normally False.
 try:
     import patchworklib as pw
-    PATCHWORK_AVAILABLE = True
-except ImportError:
+    import inspect
+    from plotnine import ggplot as _ggplot
+    PATCHWORK_AVAILABLE = (
+        'return_ggplot' in inspect.signature(_ggplot.draw).parameters)
+except Exception:
     PATCHWORK_AVAILABLE = False
 
 
@@ -149,11 +156,15 @@ def ggprocess(x, y, xlab='Subgroup', ylab='Metric'):
     # Then bind them together into 1 plot, horizontally aligned.
     if PATCHWORK_AVAILABLE:
         # Let's combine the plots with patchwork
-        p1 = pw.load_ggplot(g1, figsize=(5, 4))
-        p2 = pw.load_ggplot(g2, figsize=(1, 4))
-        # Bundle them together.
-        pp = (p1 | p2)
-        return pp
+        try:
+            p1 = pw.load_ggplot(g1, figsize=(5, 4))
+            p2 = pw.load_ggplot(g2, figsize=(1, 4))
+            # Bundle them together.
+            pp = (p1 | p2)
+            return pp
+        except Exception:
+            # patchworklib is installed but can't drive this plotnine; fall back
+            return g1
     else:
         # Return just the main plot if patchwork not available
         return g1
@@ -970,7 +981,12 @@ def ggp(t, x, n, xlab="Time (Subgroup)", ylab="Fraction Defective"):
     Examples
     --------
     >>> import pandas as pd
-    >>> inventory = pd.read_csv("workshops/inventory.csv")
+    >>> inventory = pd.DataFrame({
+    ...     't': range(1, 18),
+    ...     'n': [100, 60, 84, 122, 100, 50, 67, 100, 115,
+    ...           75, 82, 100, 130, 67, 45, 100, 134],
+    ...     'x': [10, 4, 7, 12, 6, 4, 5, 5, 9,
+    ...           3, 6, 7, 7, 5, 2, 4, 8]})
     >>> ggp(t=inventory['t'], x=inventory['x'], n=inventory['n'],
     ...     xlab="Time (Subgroup)", ylab="Fraction Defective")
     """
@@ -1042,7 +1058,12 @@ def ggnp(t, x, n, xlab="Time (Subgroups)", ylab="Number of Defectives (np)"):
     Examples
     --------
     >>> import pandas as pd
-    >>> inv = pd.read_csv("workshops/inventory.csv")
+    >>> inv = pd.DataFrame({
+    ...     't': range(1, 18),
+    ...     'n': [100, 60, 84, 122, 100, 50, 67, 100, 115,
+    ...           75, 82, 100, 130, 67, 45, 100, 134],
+    ...     'x': [10, 4, 7, 12, 6, 4, 5, 5, 9,
+    ...           3, 6, 7, 7, 5, 2, 4, 8]})
     >>> ggnp(t=inv['t'], x=inv['x'], n=inv['n'],
     ...      xlab="Time (Subgroups)", ylab="Number of Defectives")
     """
@@ -1123,7 +1144,11 @@ def ggu(t, x, xlab="Time (Subgroups)", ylab="Number of Defects (u)"):
     Examples
     --------
     >>> import pandas as pd
-    >>> acc = pd.read_csv("workshops/accidents.csv")
+    >>> acc = pd.DataFrame({
+    ...     't': range(1, 31),
+    ...     'x': [9, 7, 10, 11, 7, 5, 9, 10, 8, 13,
+    ...           8, 3, 4, 14, 10, 12, 15, 9, 6, 14,
+    ...           9, 15, 11, 8, 4, 2, 8, 5, 3, 2]})
     >>> ggu(t=acc['t'], x=acc['x'], xlab="Time", ylab="Number of Defects")
     """
     data = pd.DataFrame({'t': pd.Series(t), 'x': pd.Series(x)})

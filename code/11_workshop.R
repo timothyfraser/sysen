@@ -7,6 +7,7 @@
 
 # 0. Getting Started ######################################################
 
+library(ggplot2)
 library(dplyr)
 library(readr)
 library(broom)

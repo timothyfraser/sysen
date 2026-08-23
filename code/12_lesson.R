@@ -1,6 +1,8 @@
 #' @name 12_lesson.R
 
 # Load packages, to get our dplyr, ggplot, tibble, and readr functions
+library(readr)
+library(ggplot2)
 library(dplyr)
 library(broom) # get our tidy() function
 
@@ -248,6 +250,8 @@ donuts %>%
 
 # Permutation Test Examples ##################################################
 # Load packages, to get our dplyr, ggplot, tibble, and readr functions
+library(readr)
+library(ggplot2)
 library(dplyr)
 library(broom) # get our tidy() function
 

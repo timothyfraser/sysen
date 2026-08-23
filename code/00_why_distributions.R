@@ -3,6 +3,9 @@
 
 # A quick example summarizing why we use hypothetical distributions
 
+library(dplyr)   # tibble() and the %>% pipe come from here
+library(ggplot2)
+
 # If we have the observed data, great! Let's use that
 hours = c(1000, 2000,3000, 2500, 3200, 500, 3000, 5000, 600, 4000, 3000)
 # Make observed density function

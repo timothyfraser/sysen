@@ -1,6 +1,11 @@
+# 00_practice_mle.R
+# Tim Fraser
+# Extra: practice estimating distribution parameters by maximum likelihood
+# Chapter: Useful Life Distributions (Weibull, Gamma, & Lognormal) in R
 
 # When using MLE
 
+library(dplyr)
 library(readr)
 crops = read_csv("workshops/crops.csv")
 d = function(t, lambda){lambda * exp(-t*lambda) }

@@ -1,7 +1,9 @@
-#' @name lesson_7
-#' @author Tim Fraser
-#' @title Lesson 7 - Exponential Distribution!
-#' @note more info here: https://timothyfraser.com/sigma/ 
+# 07_lesson.R
+# Tim Fraser
+# Lesson 7: The exponential distribution
+# Chapter: Useful Life Distributions (Exponential) in R
+#
+# More info here: https://timothyfraser.com/sigma/
 
 
 library(dplyr)

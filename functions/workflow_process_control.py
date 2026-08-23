@@ -14,7 +14,9 @@
 # Simple demonstration script for the process control functions
 
 # Import the functions
-from functions.functions_process_control import (
+import sys
+sys.path.append("functions")
+from functions_process_control import (
     describe, ggprocess, get_stat_s, get_stat_t, get_labels,
     dn, bn, limits_avg, limits_s, limits_r, limits_mr,
     ggxbar, ggs, ggr, ggmr, ggp, ggnp, ggu,

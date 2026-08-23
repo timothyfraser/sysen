@@ -1,4 +1,9 @@
-# Lousiana Parishes ########################################
+# 02_recitation.R
+# Tim Fraser
+# Recitation 2: Descriptive statistics for the Louisiana parishes data
+# Chapter: Distributions and Descriptive Statistics in R
+
+# Louisiana Parishes ########################################
 
 ## Load packages ###########################
 library(dplyr)

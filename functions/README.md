@@ -101,6 +101,15 @@ Each name links to the source, if you're curious how it works.
 | [`ppk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Process Performance Index (for uncentered, unstable processes) |
 | [`get_index`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Bootstrap Process Capability/Performance Index with Confidence Intervals |
 
+### `functions_k.R`
+
+| Function | Description |
+|----------|-------------|
+| [`qk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_k.R) | k-factor Quantiles |
+| [`rk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_k.R) | k-factor Random Deviates |
+| [`pk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_k.R) | k-factor Cumulative Distribution Function |
+| [`dk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_k.R) | k-factor Probability Density Function |
+
 ### `functions_reliability.R`
 
 | Function | Description |
@@ -201,7 +210,16 @@ Each name links to the source, if you're curious how it works.
 | [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Two-Way Interaction Effect |
 | [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Three-Way Interaction Effect |
 
-### `functions_crosstab.py` (Coming soon!)
+### `functions_kfactors.py`
+
+| Function | Description |
+|----------|-------------|
+| [`qk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_kfactors.py) | k-factor Quantiles |
+| [`rk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_kfactors.py) | k-factor Random Deviates |
+| [`pk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_kfactors.py) | k-factor Cumulative Distribution Function |
+| [`dk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_kfactors.py) | k-factor Probability Density Function |
+
+### `functions_crosstab.py`
 
 | Function | Description |
 |----------|-------------|

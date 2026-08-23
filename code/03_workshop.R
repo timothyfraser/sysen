@@ -1,6 +1,7 @@
-# workshop_3.R
+# 03_workshop.R
+# Tim Fraser
 # Workshop 3: PDFs and CDFs in R
-# Dr. Fraser
+# Chapter: Probability Functions in R
 
 
 # Below, please find the following content for our recitation class from Friday.
@@ -86,6 +87,8 @@ mu = 50
 obs = c(10,50, 20, 30, 40, 50, 30, 20, 90)
 
 # Make an empirical probability density function
+dobs = obs %>% density() %>% approxfun()
+dobs(50)
 
 
 # empirical cumulative probability function for d()

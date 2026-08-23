@@ -2,6 +2,10 @@
 # Tim Fraser
 # Workshop 9: Parameter Estimation by Maximum Likelihood (worked solutions)
 # Chapter: Useful Life Distributions (Weibull, Gamma, & Lognormal) in R
+#
+# Heads up: the normal-distribution demo below deliberately fails on purpose,
+# to show what bad starting parameters do. Run this script chunk by chunk
+# rather than all at once.
 
 # Load packages
 library(dplyr)
@@ -129,10 +133,13 @@ ll = function(t, par){
   dunif(t, min = par[1], max = par[2]) %>% log() %>% sum()
 }
 
+crops$days %>% range()
 # Let's try it!
-optim(fn = ll, par = c(5, 150), 
+# Note the starting values: for a UNIFORM likelihood, min and max must bracket
+# every observation. Any t outside [min, max] has density 0, log(0) is -Inf,
+# and the whole loglikelihood collapses to -Inf before optim() can search.
+optim(fn = ll, par = c(4, 197), 
       t = crops$days, control = list(fnscale = -1))
-# It hates the uniform! Booo!!!
 
 # What about other distributions?
 
@@ -144,6 +151,9 @@ ll = function(t, par){
   dnorm(t, mean = par[1], sd = par[2]) %>% log() %>% sum()
 }
 # Let's try it out!
+# Heads up: this next line is SUPPOSED to fail. dnorm(crops$days, 0, 1)
+# underflows to 0, log(0) is -Inf, and optim() refuses to start. Run it and
+# read the error - the two lines below show you exactly why.
 optim(par = c(0, 1), t = crops$days, fn = ll, control = list(fnscale = -1))
 dnorm(crops$days, mean = 0, sd = 1)
 dnorm(crops$days, mean = 0, sd = 1) %>% log() %>% sum()

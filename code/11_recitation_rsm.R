@@ -3,6 +3,9 @@
 # Recitation 11: Response Surface Methodology (in-class script, further reading)
 # Chapter: Response Surface Methodology in R
 
+# Heads up: line ~63 below is deliberately pseudo-code, not runnable code.
+# Run this script chunk by chunk rather than all at once.
+
 ## SETUP ---------------------------------
 
 library(dplyr)

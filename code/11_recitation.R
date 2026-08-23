@@ -16,7 +16,7 @@
 #         (the gingerbread cookie experiment, read from the repo).
 # Packages: dplyr, readr, ggplot2, broom, rsm, viridis, metR, tidyr
 
-# Heads up: line ~52 below is deliberately pseudo-code, not runnable code.
+# Heads up: line ~82 below is deliberately pseudo-code, not runnable code.
 # Run this script chunk by chunk rather than all at once.
 
 library(dplyr)

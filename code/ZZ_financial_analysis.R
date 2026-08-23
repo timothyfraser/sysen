@@ -1,4 +1,7 @@
-# ZZ_financial_impacts.R
+# ZZ_financial_analysis.R
+# Tim Fraser
+# Extra: financial impact analysis of a process improvement
+# Chapter: Indices and Confidence Intervals for Statistical Process Control in R
 
 # A script to help you do financial impact analysis!
 

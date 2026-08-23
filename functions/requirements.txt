@@ -14,7 +14,14 @@ patsy==1.0.2
 
 # Data visualization
 plotnine==0.15.1
-patchworklib==0.6.6
+matplotlib==3.10.7
+
+# NOTE: patchworklib is deliberately NOT listed. Its latest release (0.6.6)
+# calls plotnine's ggplot.draw(return_ggplot=True), an argument plotnine
+# dropped after 0.10.1 - so patchworklib only works with plotnine <= 0.10.1,
+# three series behind the version these chapters are written for. There is no
+# newer patchworklib. ggprocess() in functions_process_control.py detects this
+# and returns the main plot on its own instead.
 
 # dplyr-style pipelines, as taught in the Python chapters
 dfply==0.3.3

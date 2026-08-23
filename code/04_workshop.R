@@ -1,10 +1,12 @@
-# workshop_4.R
-# Dr. Fraser
+# 04_workshop.R
+# Tim Fraser
+# Workshop 4: Failure functions and system reliability
+# Chapter: System Reliability in R
 
 # In today's workshop, let's practice our many, many ways 
 # of using failure functions to analyze system reliability! 
 
-# See workshop_4_solutions.R for solutions (but only after class!)
+# See 04_workshop_solutions.R for solutions (but only after class!)
 
 # 0. Load Packages ################################################3
 library(dplyr)
@@ -114,16 +116,15 @@ f2(t = 100, lambda = 0.01)
 lambda_a = .01
 lambda_b = .005
 
+# Reliability R(t) - we need these two before we can plot anything with them
+f = function(t, lambda){ 1 - exp(-1*lambda*t) }
+r = function(t, lambda){ 1 - f(t, lambda) }
+
 tibble(
   t = 1:1000,
   prob_a = r(t = t, lambda = lambda_a),
   prob_b = r(t = t, lambda = lambda_b)
 )
-
-
-# Reliability R(t)
-f = function(t, lambda){ 1 - exp(-1*lambda*t) }
-r = function(t, lambda){ 1 - f(t, lambda) }
 
 
 dat = tibble(
@@ -219,6 +220,9 @@ r = function(t, lambda){   exp(-1*lambda*t) }
 # I already defined f, so I can use it in my function
 r = function(t, lambda){ 1 - f(t, lambda)}
 
+# Heads up: the next three lines are SUPPOSED to fail. We throw f away, then
+# ask r() to use it anyway. Run them and read the error - that is the whole
+# point of rule (1) above.
 remove(f,r)
 r = function(t, lambda){ 1 - f(t, lambda)}
 r(t = 2, lambda = 0.001)

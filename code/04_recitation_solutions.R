@@ -1,6 +1,7 @@
-# recitation_4_solutions.R
-# Dr. Fraser
-# Recitation 4: System Reliability in R
+# 04_recitation_solutions.R
+# Tim Fraser
+# Recitation 4: System reliability (worked solutions)
+# Chapter: System Reliability in R
 
 ######################################
 # Load Packages

@@ -14,7 +14,9 @@
 # Simple demonstration script for the factorial functions
 
 # Import the functions
-from functions.functions_factorial import se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
+import sys
+sys.path.append("functions")
+from functions_factorial import se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
 import pandas as pd
 
 

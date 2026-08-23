@@ -1,5 +1,7 @@
-#' @name recitation_7
-#' @author Tim Fraser
+# 07_recitation.R
+# Tim Fraser
+# Recitation 7: Chi-squared goodness-of-fit tests
+# Chapter: Statistical Techniques for Exponential Distributions in R
 
 library(dplyr)
 library(readr)
@@ -79,7 +81,23 @@ get_chisq = function(t = NULL, binwidth = 5, data = NULL,
 }
 
 lambda  = 1 / masks$fabric %>% mean()
-dat = get_chisq(t = masks$fabric, binwidth = 750, n_total = 50, f = f, np = 1, lambda = lambda) %>%
+
+# get_chisq() hands back only the TEST result: chisq, nbin, np, df, p_value.
+# To plot observed against expected we need the binned table itself, which is
+# the same Step 1 + Step 2 crosstab the chapter walks through by hand.
+dat = tibble(t = masks$fabric) %>%
+  mutate(interval = cut_interval(t, length = 750)) %>%
+  group_by(interval, .drop = FALSE) %>%
+  summarize(r_obs = n()) %>%
+  mutate(
+    bin = 1:n(),
+    lower = (bin - 1) * 750,
+    upper = bin * 750,
+    p_upper = f(upper, lambda = lambda),
+    p_lower = f(lower, lambda = lambda),
+    p_fail = p_upper - p_lower,
+    n_total = 50,
+    r_exp = n_total * p_fail) %>%
   select(interval, r_obs, p_fail, n_total, r_exp)
 
 

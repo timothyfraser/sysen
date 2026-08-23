@@ -1,6 +1,7 @@
-#' @name recitation_6.R
-#' @author Tim Fraser
-#' @description Super rad recitation!
+# 06_recitation_solutions.R
+# Tim Fraser
+# Recitation 6: Capability and performance indices (worked solutions)
+# Chapter: Indices and Confidence Intervals for Statistical Process Control in R
 
 library(dplyr)
 library(ggplot2)

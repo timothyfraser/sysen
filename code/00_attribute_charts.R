@@ -66,7 +66,7 @@ bulbs = tribble(
   200, 7
 ) %>% mutate(t = 1:n()) %>%
   select(t,x,n) %>%
-  write_csv("workshops/bulbs.csv")
+  readr::write_csv("workshops/bulbs.csv")
 
 
 

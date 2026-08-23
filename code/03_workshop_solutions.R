@@ -1,6 +1,7 @@
-# workshop_3_solutions.R
-# Workshop 3: PDFs and CDFs in R
-# Dr. Fraser
+# 03_workshop_solutions.R
+# Tim Fraser
+# Workshop 3: PDFs and CDFs in R (worked solutions)
+# Chapter: Probability Functions in R
 
 
 # Below, please find the following content for our recitation class from Friday.

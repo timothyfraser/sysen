@@ -26,6 +26,11 @@ first workshop. Nothing to install.
 4. The result shows up in the **Console** (bottom left). Read it, then move down
    and run the next couple of lines.
 
+The `.py` scripts work the same way, and it matters more there: they're written
+REPL-style, so running one top to bottom prints almost nothing. Open an
+interactive Python console and send a few lines at a time, exactly as you would
+in R.
+
 **Go a few lines at a time. Don't run the whole file top to bottom.** Most of
 these scripts were typed live, in class, while working through a problem with
 students. They read that way on purpose: false starts, a first attempt that a

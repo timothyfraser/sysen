@@ -1,5 +1,6 @@
 # 12_workshop.R
 
+library(ggplot2)
 library(dplyr)
 library(broom)
 

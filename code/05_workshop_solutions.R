@@ -1,5 +1,7 @@
-#' @name workshop_5
-#' @author Tim Fraser
+# 05_workshop_solutions.R
+# Tim Fraser
+# Workshop 5: Statistical process control (worked solutions)
+# Chapter: Statistical Process Control in R
 
 # Let's demo some statistical process control!
 

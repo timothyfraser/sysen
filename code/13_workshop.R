@@ -2,7 +2,9 @@
 #' @title Interaction Effects in R
 #' @author Tim Fraser
 
+library(readr)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(broom)
 

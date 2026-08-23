@@ -1,10 +1,12 @@
-# workshop_4_solutions.R
-# Dr. Fraser
+# 04_workshop_solutions.R
+# Tim Fraser
+# Workshop 4: Failure functions and system reliability (worked solutions)
+# Chapter: System Reliability in R
 
 # In today's workshop, let's practice our many, many ways 
 # of using failure functions to analyze system reliability! 
 
-# See workshop_4_solutions.R for solutions (but only after class!)
+# See 04_workshop_solutions.R for solutions (but only after class!)
 
 ###################################
 # 0. Load Packages
