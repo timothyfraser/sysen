@@ -8,16 +8,19 @@
 
 ## Installing packages ----
 # Upgrade pip
-# !/opt/python/3.8.17/bin/python3.8 -m pip install --upgrade pip
+# !python -m pip install --upgrade pip
 #
-# Install main python packages for this course
-# !pip install pandas
-# !pip install scipy
-# !pip install statsmodels
-# !pip install patsy
-# !pip install plotnine
-# !pip install dplython
-# !pip install dfply
+# This course pins its Python packages in functions/requirements.txt.
+# Install them all at once:
+# !pip install -r functions/requirements.txt
+#
+# Or install the main packages for this course one at a time:
+# !pip install pandas==2.3.3
+# !pip install scipy==1.16.3
+# !pip install statsmodels==0.14.5
+# !pip install patsy==1.0.2
+# !pip install plotnine==0.15.1
+# !pip install dfply==0.3.3
 
 # Print hello world!
 print("hello world")
@@ -31,45 +34,45 @@ from plotnine import * # Import all plotnine functions
 # Basic Calculations ------------------------------------------------------
 
 # Addition
-1+2
+print(1+2)
 
 # Vector
-[1,2,3,4,5]
+print([1,2,3,4,5])
 
 # Subtraction
-5 - 2
+print(5 - 2)
 
 # Multiplication
-2 * 3
+print(2 * 3)
 
 # Division
-15 / 5
+print(15 / 5)
 
 # Exponents
-2**2
+print(2**2)
 
 # Square Root
-16**0.5
+print(16**0.5)
 
 # Order of Operations
-2 * 2 - 5
+print(2 * 2 - 5)
 
 # Use parentheses!
-2 * (2 - 5)
+print(2 * (2 - 5))
 
 
 # Eg.
-64**.5
-64**(1/3)
-8**2
+print(64**.5)
+print(64**(1/3))
+print(8**2)
 
 
 # Types of Data in Python -------------------------------------------------
 
 ## Values and variables ----
 
-2 # this is a value
-"x" # this is a value
+print(2) # this is a value
+print("x") # this is a value
 
 myvalue = 2
 
@@ -77,12 +80,12 @@ secondvalue = myvalue + 2
 
 # In Positron, you can just print the values to console,
 # without using the print() command.
-secondvalue
+print(secondvalue)
 
 
 ## Lists (like R vectors) ----
-[1,2,3]
-["Boston", "New York", "Los Angeles"]
+print([1,2,3])
+print(["Boston", "New York", "Los Angeles"])
 
 
 # Here's a vector of (hypothetical) seawall heights in 10 towns.
@@ -104,30 +107,30 @@ myyears = [1990, 1980, 1970, 1930, 1975, 1975, 1980, 1920, 1995, 2000]
 # let's bundle them into a data.frame with pandas.
 sw = p.DataFrame({'height': myheights, 'town': mytowns, 'year':myyears})
 # Add 2 to all the heights
-sw.height + 2
+print(sw.height + 2)
 
 # Or just make it a series, and then add 2.
-p.Series(myheights) + 2
+print(p.Series(myheights) + 2)
 
 
 # Element-wise multiplication
-p.Series(myheights) * p.Series(myheights)
+print(p.Series(myheights) * p.Series(myheights))
  # or
-sw.height * sw.height
+print(sw.height * sw.height)
 
 # Matrix Multiplication...
-sw.height.dot(sw.height)
+print(sw.height.dot(sw.height))
 
 
 # Common Functions in Python ----------------------------------------------
 
 # Descriptive Stats
-sw.height.mean()
-sw.height.median()
-sw.height.min()
-sw.height.max()
-sw.height.mode()
-sw.height.quantile(q = 0.5)
+print(sw.height.mean())
+print(sw.height.median())
+print(sw.height.min())
+print(sw.height.max())
+print(sw.height.mode())
+print(sw.height.quantile(q = 0.5))
 
 
 # The Pipeline ------------------------------------------------------------
@@ -139,55 +142,55 @@ sw.height.quantile(q = 0.5)
 ## Select, mutate, summarize ----
 
 # Select just one column
-sw >> \
-  select(X.height)
+print(sw >> \
+  select(X.height))
 
 # Mutate a column
-sw >> \
-  mutate(y = X.height ** X.height)
+print(sw >> \
+  mutate(y = X.height ** X.height))
 
 
 # Summarize a data.frame
-sw >>\
-  summarize(mean_value = mean(X.height) )
+print(sw >>\
+  summarize(mean_value = mean(X.height) ))
 
 ## Grouping, arranging, filtering ----
 
 # Get the mean price per diamond cut
-diamonds >>\
+print(diamonds >>\
   group_by(X.cut) >>\
-  summarize(price = mean(X.price ))
+  summarize(price = mean(X.price )))
 
-diamonds >>\
+print(diamonds >>\
   arrange(X.price, ascending=False) >>\
-  head()
+  head())
 
 
 # Filtering
-diamonds >>\
+print(diamonds >>\
   mask(X.carat < 0.23) >>\
-  head()
+  head())
 
 
-diamonds >>\
-  rename(CUT=X.cut, COLOR='color')
+print(diamonds >>\
+  rename(CUT=X.cut, COLOR='color'))
 
 
-diamonds >>\
-  arrange('color')
+print(diamonds >>\
+  arrange('color'))
 
-diamonds >>\
+print(diamonds >>\
   group_by('cut') >>\
-  summarize(price = mean(X.price))
+  summarize(price = mean(X.price)))
 
 ## Reshaping ----
 
 # gather() stacks several columns into key-value pairs.
 # Unlike R's tidyr, dfply's gather() requires you to name
 # the key column, the value column, and the columns to stack.
-diamonds >>\
+print(diamonds >>\
   gather('measure', 'value', ['x', 'y', 'z']) >>\
-  head()
+  head())
 
 
 # Clear environment

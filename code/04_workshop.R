@@ -17,7 +17,7 @@ library(mosaicCalc)
 # 1. Making Functions ##############################################
 
 # You learned to make Functions in Week 3. Let's practice!
-# https://timothyfraser.com/sigma/skill-functions-in-r.html
+# https://timothyfraser.com/sigma/chapters/functions-in-r.html
 
 # Nintendo is product testing its next Switch console.
 # 1000 enthusiastic children received a console in the mail,

@@ -43,7 +43,7 @@ optim(par = c(1, 10000), fn = ll, t = crops$days, control = list(fnscale = -1))
 
 crops$days %>% hist()
 
-# https://timothyfraser.com/sigma/useful-life-distributions-weibull-gamma-lognormal.html#multi-parameter-optimization
+# https://timothyfraser.com/sigma/chapters/useful-life-distributions-weibull-gamma-lognormal-in-r.html#maximum-likelihood-estimation-mle
 n = 75
 r = 50
 tmax = 200

@@ -29,5 +29,8 @@ dfply==0.3.3
 # example datasets used by the Python chapters (e.g. diamonds)
 seaborn==0.13.2
 
+# gapminder dataset - imported directly by the plotnine chapter
+gapminder==0.1
+
 # symbolic calculus - stands in for R's mosaicCalc (antiD / D)
 sympy==1.14.0

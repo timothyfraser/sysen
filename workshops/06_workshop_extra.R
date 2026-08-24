@@ -81,14 +81,3 @@ stat %>%
     upper = estimate + se*qnorm(0.975),
     lower = estimate - se*qnorm(0.975) 
   )
-
-
-
-
-
-
-
-
-
-
-

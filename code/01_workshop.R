@@ -3,6 +3,10 @@
 # Workshop 1: Introduction - basic operations in R
 # Chapter: Coding in R
 #
+# HOW TO RUN: run this script LINE BY LINE (Ctrl+Enter / Cmd+Enter), not with
+# source() - it contains three DELIBERATE errors (they are the point: they teach
+# you to read R's error messages), and source() halts at the first one silently.
+#
 # Check out timothyfraser.com/sigma for more.
 
 # Let's load some packages
@@ -210,6 +214,8 @@ num2 = nums %>% slice(1000:1003)
 
 
 # Clear my environment
+# WARNING: this WIPES everything you have made so far. Skip it if you want to
+# keep the objects above.
 rm(list = ls())
 
 # Here's a brief test of using dplyr-style functions
@@ -249,4 +255,6 @@ diamonds %>%
 
 
 # We can clean up using rm()
+# WARNING: this WIPES everything you have made so far. Skip it if you want to
+# keep the objects above.
 rm(list = ls())

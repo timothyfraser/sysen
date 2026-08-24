@@ -4,7 +4,7 @@
 # Today, we're going to practice using ggplot!
 # This is a practice script. 
 # For the full tutorial, see the textbook
-# https://timothyfraser.com/sigma/visualization-with-ggplot-in-r.html
+# https://timothyfraser.com/sigma/chapters/visualization-with-ggplot-in-r.html
 
 # Load packages
 library(ggplot2)

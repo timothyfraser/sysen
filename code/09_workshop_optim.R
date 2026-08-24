@@ -166,7 +166,7 @@ MASS::fitdistr(x = crops$days, densfun = "weibull")
 
 
 # Interested? Learn more here!
-# https://timothyfraser.com/sigma/appendix-using-fitdistr-to-fitting-distribution-parameters.html
+# https://timothyfraser.com/sigma/chapters/appendix-using-fitdistr-to-fitting-distribution-parameters.html
 
 
 
