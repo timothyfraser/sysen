@@ -192,29 +192,31 @@ textbook chapter.
 | Probability in Python | — | `03_workshop.py`, `03_workshop_solutions.py` |
 | Probability Functions in R | — | `03_workshop.R` |
 | System Reliability in R | — | `04_workshop.R`, `04_workshop_solutions.R`, `04_recitation_solutions.R` |
-| System Reliability in Python | — | — |
+| System Reliability in Python | — | `04_workshop.py` |
 | Statistical Process Control in R | `onsen.csv` | `05_workshop_solutions.R`, `05_recitation.R` |
-| Statistical Process Control in Python | `onsen.csv` | — |
+| Statistical Process Control in Python | `onsen.csv` | `05_recitation.py` |
 | Indices and Confidence Intervals for Statistical Process Control in R | `onsen.csv` | `06_recitation_solutions.R`, `06_workshop_extra.R` |
-| Indices and Confidence Intervals for Statistical Process Control in Python | `onsen.csv` | — |
+| Indices and Confidence Intervals for Statistical Process Control in Python | `onsen.csv` | `06_workshop_extra.py` |
 | Useful Life Distributions (Exponential) | `masks.csv` | `07_lesson.R`, `07_recitation.R` |
+| Useful Life Distributions (Exponential) in Python | `masks.csv` | `07_lesson.py`, `07_recitation.py` |
 | Statistical Techniques for Exponential Distributions in R | `masks.csv` | `07b_workshop.R` |
-| Statistical Techniques for Exponential Distributions in Python | `masks.csv` | — |
+| Statistical Techniques for Exponential Distributions in Python | `masks.csv` | `07b_workshop.py` |
 | Useful Life Distributions (Weibull, Gamma, & Lognormal) in R | `crops.csv` | `09_workshop.R`, `09_workshop_optim.R`, `09_workshop_solutions.R` |
-| Useful Life Distributions (Weibull, Gamma, & Lognormal) in Python | `crops.csv` | — |
+| Useful Life Distributions (Weibull, Gamma, & Lognormal) in Python | `crops.csv` | `09_workshop.py`, `09_workshop_optim.py` |
 | Fault Tree Analysis in R | `fault_tree_engine_nodes.csv`, `fault_tree_engine_edges.csv` (used by the textbook's interactive diagram) | `09_recitation.R`, `09_recitation_solutions.R` |
-| Fault Tree Analysis in Python | — | — |
+| Fault Tree Analysis in Python | — | `09_recitation.py` |
 | Physical Acceleration Models | — | `10_workshop.R`, `10_lesson.R` |
-| Physical Acceleration Models in Python | — | — |
+| Physical Acceleration Models in Python | — | `10_workshop.py`, `10_lesson.py` |
 | Bivariate Regression: Modeling Diamond Pricing | `mydiamonds.csv` | — |
 | Bivariate Regression: Modeling Diamond Pricing in Python | `mydiamonds.csv` | — |
 | Multivariate Regression: Modeling Effects of Disaster on Social Capital | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | `11_workshop.R`, `11_workshop_exercises.R` |
-| Multivariate Regression: Modeling Effects of Disaster on Social Capital in Python | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | — |
+| Multivariate Regression: Modeling Effects of Disaster on Social Capital in Python | `jp_matching_experiment.csv`, `japan_muni_elections.csv` | `11_workshop.py`, `11_workshop_exercises.py` |
 | Design of Experiments in R | `donuts.csv` | `12_workshop.R`, `12_lesson.R` |
+| Design of Experiments in Python | `donuts.csv` | `12_workshop.py`, `12_lesson.py` |
 | Factorial Design and Interaction Effects in R | `lattes.csv` | `13_workshop.R`, `13_lesson.R`, `13_examples.R` |
-| Factorial Design and Interaction Effects in Python | `lattes.csv` | — |
+| Factorial Design and Interaction Effects in Python | `lattes.csv` | `13_workshop.py`, `13_lesson.py`, `13_examples.py` |
 | Response Surface Methodology in R | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | `11_recitation.R`, `11_recitation_rsm.R` |
-| Response Surface Methodology in Python | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | — |
+| Response Surface Methodology in Python | `gingerbread_test1.csv`, `gingerbread_test2.csv`, `gingerbread_test3.csv` | `11_recitation.py`, `11_recitation_rsm.py` |
 | Appendix: `ggplot` tips | — | — |
 | Appendix: `mermaid` Block Diagrams (Flowcharts) in R | — | — |
 | Appendix: Using `fitdistr` to Fit Distribution Parameters | `crops.csv` | `00_practice_mle.R` |
