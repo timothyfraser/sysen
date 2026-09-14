@@ -1,30 +1,30 @@
 # 03_workshop_solutions.py
 # Tim Fraser
 # Workshop 3: PDFs and CDFs in Python (worked solutions)
-# Chapter: Probability in Python
+# Chapter: Probability Functions in Python
 
 # Below, please find the following content for our recitation class from Friday.
 
 # Getting Started ---------------------------------------------------------
 
-import sys
+import os, sys
 import numpy as np
 import pandas as pd            # data wrangling
 from plotnine import *         # visuals
-import sympy as sp             # derivatives and integrals
-
-# NOTE: R uses the `mosaicCalc` package for derivatives and integrals.
-# Python has no `mosaicCalc`; we use `sympy` for symbolic calculus instead.
-# sp.integrate() is our antiD() (PDF -> CDF)
-# sp.diff() is our D()              (CDF -> PDF)
 
 # Our course functions live in functions/ at the repo root.
-# (Run this script from the root of the sigma repo.)
-sys.path.append("functions")
+# (Run this script from the root of the repo.)
+sys.path.append(os.path.abspath('functions'))
 from functions_distributions import (
     hist, density, tidy_density, approxfun,
     dnorm, pnorm, qnorm, rpois, ppois
 )
+
+# NOTE: R uses the `mosaicCalc` package for derivatives and integrals.
+# Python has no `mosaicCalc`, so where R uses antiD() and D(), we use scipy:
+# quad() from scipy.integrate is our antiD()  (PDF -> CDF)
+# a small difference quotient is our D()      (CDF -> PDF)
+from scipy.integrate import quad
 
 
 # Exercise 1 --------------------------------------------------------------
@@ -168,24 +168,39 @@ dobs(50)
 
 # Integrating the PDF to get the CDF
 # In R this was mosaicCalc::antiD(tilde = d(x) ~ x).
-x = sp.Symbol("x")
-p = sp.lambdify(x, sp.integrate(d(x), x), "numpy")
+# quad() integrates d() from 0 up to each x, giving cumulative probability.
+def p(x):
+    # quad() returns (value, error), so keep just the value
+    return np.array([quad(d, 0, xi)[0] for xi in np.atleast_1d(x)])
+
+
 p(50)
 
-# You can't integrate a density model function symbolically.
-# p_obs = sp.integrate(dobs(x), x)
+# You can integrate dobs() too, but it's a connect-the-dots model,
+# so outside the range of the data it just returns NaN.
+# p_obs = quad(dobs, 0, 50)
 obs
 
 # empirical cumulative probability function for d()
-pobs = sp.lambdify(x, sp.integrate(d(x), x), "numpy")
-pobs(np.array([1, 2, 3]))
+pobs = p
+pobs([1, 2, 3])
+
+# And the other direction: R's D() takes the derivative (CDF -> PDF).
+# In Python, a small difference quotient does the same job.
+def d2(x, h=1e-5):
+    return (p(x + h) - p(x - h)) / (2 * h)
+
+
+# It gets us back our original density function d()
+d2(50)
+d(50)
 
 # Can't really easily do that for our approxfun()
 dobs
 
 # R would clear everything here with rm(list = ls()).
 # In Python, we just delete the objects we made.
-del dat, gg, obs, dobs, p, pobs, toasters, mu
+del dat, gg, obs, dobs, p, pobs, d2, toasters, mu
 
 
 # Exercise 4 --------------------------------------------------------------

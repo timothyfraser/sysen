@@ -1,25 +1,25 @@
 # 03_workshop.py
 # Tim Fraser
 # Workshop 3: PDFs and CDFs in Python
-# Chapter: Probability in Python
+# Chapter: Probability Functions in Python
 
 # Below, please find the following content for our recitation class from Friday.
 
 # Getting Started ---------------------------------------------------------
 
-import sys
+import os, sys
 import numpy as np
 import pandas as pd            # data wrangling
 from plotnine import *         # visuals
-import sympy as sp             # derivatives and integrals
-
-# NOTE: R uses the `mosaicCalc` package for derivatives and integrals.
-# Python has no `mosaicCalc`; we use `sympy` for symbolic calculus instead.
 
 # Our course functions live in functions/ at the repo root.
-# (Run this script from the root of the sigma repo.)
-sys.path.append("functions")
+# (Run this script from the root of the repo.)
+sys.path.append(os.path.abspath('functions'))
 from functions_distributions import density, tidy_density, approxfun
+
+# NOTE: R uses the `mosaicCalc` package for derivatives and integrals.
+# Python has no `mosaicCalc`; quad() from scipy.integrate is our antiD().
+from scipy.integrate import quad
 
 
 # Exercise 1 --------------------------------------------------------------
@@ -101,18 +101,27 @@ mu = 50
 obs = [10, 50, 20, 30, 40, 50, 30, 20, 90]
 
 # Make an empirical probability density function
+# In R this was: obs %>% density() %>% approxfun()
+# In Python, density() gives us a kernel density model,
+# tidy_density() turns it into a DataFrame of x and y,
+# and approxfun() connects-the-dots into a function.
+dobs = approxfun(tidy_density(density(obs)))
+dobs(50)
 
 
 # empirical cumulative probability function for d()
 # In R this was mosaicCalc::antiD(tilde = d(x) ~ x).
-# In Python, we integrate d(x) symbolically with sympy,
-# then turn the result back into a numeric function with sp.lambdify().
-x = sp.Symbol("x")
-pobs = sp.lambdify(x, sp.integrate(d(x), x), "numpy")
-pobs(np.array([1, 2, 3]))
+# In Python, quad() integrates d() from 0 up to each x,
+# which is exactly the cumulative probability.
+def pobs(x):
+    # quad() returns (value, error), so keep just the value
+    return np.array([quad(d, 0, xi)[0] for xi in np.atleast_1d(x)])
+
+
+pobs([1, 2, 3])
 
 # Can't really easily do that for our approxfun()
-# dobs
+dobs
 
 
 
