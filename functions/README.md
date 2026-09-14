@@ -138,10 +138,6 @@ Each name links to the source, if you're curious how it works.
 | [`pnorm`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Normal distribution CDF |
 | [`qnorm`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Normal distribution quantile function |
 | [`rnorm`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Generate random normal values |
-| [`dt`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Student's t distribution PDF (optional `ncp`) |
-| [`pt`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Student's t distribution CDF (lower tail, as in R) |
-| [`qt`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Student's t distribution quantile function |
-| [`rt`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Generate random Student's t values |
 | [`dexp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Exponential distribution PDF |
 | [`pexp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Exponential distribution CDF |
 | [`qexp`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_distributions.py) | Exponential distribution quantile function |
