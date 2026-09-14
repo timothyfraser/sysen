@@ -1,7 +1,7 @@
 # What this file is ----------------------------------------------------------
 #
 # Python versions of the distribution commands R gives you for free --
-# dnorm(), pnorm(), qnorm(), rnorm(), and the same four for the exponential,
+# dnorm(), pnorm(), qnorm(), rnorm(), and the same four for the t, exponential,
 # Weibull, gamma, Poisson, binomial, and uniform distributions -- plus a few
 # quick tools for describing and plotting a sample.
 #
@@ -146,6 +146,52 @@ def rnorm(n, mean=0, sd=1):
     from scipy.stats import norm
     from pandas import Series
     output = norm.rvs(loc = mean, scale = sd, size=n)
+    output = Series(output)
+    return output
+
+## Student's t Distribution ##########################
+# The t distribution is the normal distribution's shorter, fatter cousin --
+# the one you use when you estimated the standard deviation from the sample
+# instead of knowing it. It has one parameter, `df` (degrees of freedom);
+# as df grows, t converges on the standard normal.
+#
+# Same four commands, same shapes as R:
+#   dt(x, df)  the density (height of the curve) at x
+#   pt(x, df)  the cumulative probability -- the LOWER tail, P(T <= x), as in R
+#   qt(x, df)  the inverse: hand it a probability, get the cutoff back
+#              e.g. qt(0.975, df = 10) is the 95% two-sided t critical value
+#   rt(n, df)  n random draws
+#
+# `ncp` on dt() is R's non-centrality parameter; leave it at 0 (the default)
+# for the ordinary central t that this course uses.
+def dt(x, df, ncp=0):
+    from scipy.stats import t, nct
+    from pandas import Series
+    if ncp == 0:
+        output = t.pdf(x, df=df)
+    else:
+        output = nct.pdf(x, df=df, nc=ncp)
+    output = Series(output)
+    return output
+
+def pt(x, df):
+    from scipy.stats import t
+    from pandas import Series
+    output = t.cdf(x, df=df)
+    output = Series(output)
+    return output
+
+def qt(x, df):
+    from scipy.stats import t
+    from pandas import Series
+    output = t.ppf(x, df=df)
+    output = Series(output)
+    return output
+
+def rt(n, df):
+    from scipy.stats import t
+    from pandas import Series
+    output = t.rvs(df=df, size=n)
     output = Series(output)
     return output
 
