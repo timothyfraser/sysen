@@ -10,13 +10,13 @@
 
 # Getting Started ---------------------------------------------------------
 
-import os, sys
+import sys
 import numpy as np
 import pandas as pd
 
 # Our course functions live in functions/ at the repo root.
-# (Run this script from the root of the repo.)
-sys.path.append(os.path.abspath('functions'))
+# (Run this script from the root of the sigma repo.)
+sys.path.append("functions")
 from functions_distributions import pexp
 
 
