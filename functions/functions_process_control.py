@@ -1011,6 +1011,7 @@ def ggp(t, x, n, xlab="Time (Subgroup)", ylab="Fraction Defective"):
     stat_s['upper'] = stat_s['pbar'] + 3 * stat_s['se']
     # Clip the lower estimate at zero or higher
     stat_s.loc[stat_s['lower'] < 0, 'lower'] = 0
+    stat_s.loc[stat_s['upper'] > 1, 'upper'] = 1
     
     # Visualize it
     gg = (ggplot() +
@@ -1057,18 +1058,17 @@ def ggnp(t, x, n, xlab="Time (Subgroups)", ylab="Number of Defectives (np)"):
     
     Examples
     --------
-    >>> import pandas as pd
-    >>> inv = pd.DataFrame({
-    ...     't': range(1, 18),
-    ...     'n': [100, 60, 84, 122, 100, 50, 67, 100, 115,
-    ...           75, 82, 100, 130, 67, 45, 100, 134],
-    ...     'x': [10, 4, 7, 12, 6, 4, 5, 5, 9,
-    ...           3, 6, 7, 7, 5, 2, 4, 8]})
-    >>> ggnp(t=inv['t'], x=inv['x'], n=inv['n'],
+    >>> # every subgroup must be the same size n
+    >>> ggnp(t=range(1, 11), x=[2, 3, 1, 4, 2, 3, 1, 2, 3, 2], n=[100]*10,
     ...      xlab="Time (Subgroups)", ylab="Number of Defectives")
     """
     # Make a data.frame
     data = pd.DataFrame({'t': pd.Series(t), 'x': pd.Series(x), 'n': pd.Series(n)})
+    # An np chart only makes sense when every subgroup is the same size.
+    # If they differ, the fraction defective (p) chart is the right tool.
+    if data['n'].nunique() > 1:
+        import warnings
+        warnings.warn("ggnp() needs the same sample size n in every subgroup; your n varies, so use ggp() instead.")
     
     # Get subgroup statistics
     stat_s = data.copy()
@@ -1118,7 +1118,7 @@ def ggnp(t, x, n, xlab="Time (Subgroups)", ylab="Number of Defectives (np)"):
     return gg
 
 
-def ggu(t, x, xlab="Time (Subgroups)", ylab="Number of Defects (u)"):
+def ggu(t, x, n=None, xlab="Time (Subgroups)", ylab="Defects per Unit (u)"):
     """
     Defects per Product (u) Chart in ggplot
     
@@ -1130,11 +1130,14 @@ def ggu(t, x, xlab="Time (Subgroups)", ylab="Number of Defects (u)"):
     t : array-like
         Vector of time/subgroup values
     x : array-like
-        Vector of number of defects observed in each subgroup
+        Vector of number of defects counted (a unit can have several defects)
+    n : array-like, optional
+        Vector of units inspected. If left out, each row counts as one unit,
+        so with one row per subgroup this is the classic count-of-defects (c) chart.
     xlab : str, optional
         Label for x-axis. Default is "Time (Subgroups)".
     ylab : str, optional
-        Label for y-axis. Default is "Number of Defects (u)".
+        Label for y-axis. Default is "Defects per Unit (u)".
     
     Returns
     -------
@@ -1151,17 +1154,20 @@ def ggu(t, x, xlab="Time (Subgroups)", ylab="Number of Defects (u)"):
     ...           9, 15, 11, 8, 4, 2, 8, 5, 3, 2]})
     >>> ggu(t=acc['t'], x=acc['x'], xlab="Time", ylab="Number of Defects")
     """
-    data = pd.DataFrame({'t': pd.Series(t), 'x': pd.Series(x)})
+    # If no units were given, each row is one unit inspected
+    if n is None:
+        n = [1] * len(pd.Series(x))
+    data = pd.DataFrame({'t': pd.Series(t), 'x': pd.Series(x), 'n': pd.Series(n)})
     
+    # One row per subgroup: total defects and total units inspected
     stat_s = (data.groupby('t')
-              .agg({
-                  'x': ['sum', 'count']
-              })
+              .agg(c=('x', 'sum'), nw=('n', 'sum'))
               .reset_index())
-    stat_s.columns = ['t', 'u', 'nw']
+    # Defects per unit in each subgroup
+    stat_s['u'] = stat_s['c'] / stat_s['nw']
     
-    # Calculate centerline
-    stat_s['ubar'] = stat_s['u'].sum() / stat_s['nw'].sum()
+    # Calculate centerline: total defects per total units
+    stat_s['ubar'] = stat_s['c'].sum() / stat_s['nw'].sum()
     stat_s['se'] = np.sqrt(stat_s['ubar'] / stat_s['nw'])
     stat_s['lower'] = stat_s['ubar'] - 3 * stat_s['se']
     stat_s['upper'] = stat_s['ubar'] + 3 * stat_s['se']
@@ -1192,7 +1198,7 @@ def ggu(t, x, xlab="Time (Subgroups)", ylab="Number of Defects (u)"):
           # Add text
           geom_label(data=labels, mapping=aes(x='t', y='value', label='text'), ha='right') +
           # Add labels
-          labs(x=xlab, y=ylab, subtitle="Number of Defects (u) Chart"))
+          labs(x=xlab, y=ylab, subtitle="Defects per Unit (u) Chart"))
     
     return gg
 

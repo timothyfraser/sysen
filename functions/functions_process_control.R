@@ -858,8 +858,9 @@ ggp = function(t, x, n, xlab = "Time (Subgroup)", ylab = "Fraction Defective"){
       lower = pbar - 3*se,
       upper = pbar + 3*se
     ) %>%
-    # Clip the lower estimate at zero or higher
-    mutate(lower = if_else(lower < 0, true = 0, false = lower))
+    # Clip the limits to the possible range of a fraction, 0 to 1
+    mutate(lower = if_else(lower < 0, true = 0, false = lower),
+           upper = if_else(upper > 1, true = 1, false = upper))
   
   # Visualize it
   gg = ggplot() +
@@ -900,6 +901,12 @@ ggnp = function(t,x,n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (
   
   # Make a data.frame
   data = tibble(t = t, x = x, n = n)
+  
+  # An np chart only makes sense when every subgroup is the same size.
+  # If they differ, the fraction defective (p) chart is the right tool.
+  if(length(unique(n)) > 1){
+    warning("ggnp() needs the same sample size n in every subgroup; your n varies, so use ggp() instead.")
+  }
   
   # Get subgroup statistics
   stat_s = data %>%
@@ -981,21 +988,35 @@ ggnp = function(t,x,n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (
 # https://sixsigmastudyguide.com/attribute-chart-np-chart/
 
 #' @name ggu
-#' @title Defects per Product (u) Chart in ggplot
-ggu = function(t,x, xlab = "Time (Subgroups)", ylab = "Number of Defects (u)"){
+#' @title Defects per Unit (u) Chart in ggplot
+#' @param t [numeric] vector of subgroup values (usually time).
+#' @param x [numeric] vector of defects counted (a unit can have several defects).
+#' @param n [numeric] optional vector of units inspected. If left out, each row counts as one unit,
+#'   so with one row per subgroup this is the classic count-of-defects (c) chart.
+#' @note Poisson assumptions: center ubar = total defects / total units; limits ubar +/- 3 * sqrt(ubar / n).
+ggu = function(t, x, n = NULL, xlab = "Time (Subgroups)", ylab = "Defects per Unit (u)"){
   
-  data = tibble(t = t, x = x)
+  # Testing values
+  # t = 1:10; x = c(5, 7, 4, 8, 6, 7, 5, 6, 8, 7); n = NULL
+  
+  # If no units were given, each row is one unit inspected
+  if(is.null(n)){ n = rep(1, length(x)) }
+  
+  data = tibble(t = t, x = x, n = n)
+  
+  # One row per subgroup: total defects and total units inspected
   stat_s = data %>%
     group_by(t) %>%
-    mutate(
-      # get total accidents per time stamp
-      u = sum(x),
-      # within-group sample size
-      nw = n()
+    summarize(
+      c = sum(x),
+      nw = sum(n)
     ) %>%
     ungroup() %>%
-    # Calculate centerline
-    mutate(ubar = sum(u)/ sum(nw)) %>%
+    # Defects per unit in each subgroup
+    mutate(u = c / nw) %>%
+    # Calculate centerline: total defects per total units
+    mutate(ubar = sum(c) / sum(nw)) %>%
+    # Poisson standard error for each subgroup's size
     mutate(se = sqrt(ubar / nw)) %>%
     mutate(lower = ubar - 3*se,
            upper = ubar + 3*se) %>%
@@ -1019,20 +1040,20 @@ ggu = function(t,x, xlab = "Time (Subgroups)", ylab = "Number of Defects (u)"){
       data = stat_s, 
       mapping = aes(x = t, ymin = lower, ymax = upper),
       fill = "steelblue", alpha = 0.2)  +
-    # Draw the grand pbar line
+    # Draw the grand ubar line
     geom_hline(
       data = stat_s,
       mapping = aes(yintercept = ubar),
       linewidth = 1.5, color = "darkgrey"
     ) +
-    # Draw probability over time
+    # Draw defects per unit over time
     geom_line(data = stat_s, mapping = aes(x = t, y = u)) +
-    # Draw probability over time with points
+    # Draw defects per unit over time with points
     geom_point(data = stat_s, mapping = aes(x = t, y = u)) +
     # Add text
     geom_label(data = labels, mapping = aes(x = t, y = value, label = text), hjust = 1) +
     # Add labels
-    labs(x = xlab, y = ylab, subtitle = "Number of Defects (u) Chart")
+    labs(x = xlab, y = ylab, subtitle = "Defects per Unit (u) Chart")
   
   
   return(gg)
