@@ -1,0 +1,37 @@
+characteristic,index,value,note
+A,Cp,2.20,read off scan +/-0.03
+A,Cpk,2.12,read off scan +/-0.03
+A,Pp,2.03,read off scan +/-0.03
+A,Ppk,1.92,read off scan +/-0.03
+B,Cp,2.39,read off scan +/-0.03
+B,Cpk,1.89,read off scan +/-0.03
+B,Pp,2.27,read off scan +/-0.03
+B,Ppk,1.77,read off scan +/-0.03
+C,Cp,2.37,read off scan +/-0.03
+C,Cpk,1.21,read off scan +/-0.03
+C,Pp,2.19,read off scan +/-0.03
+C,Ppk,1.09,read off scan +/-0.03
+D,Cp,0.78,read off scan +/-0.03
+D,Cpk,0.30,read off scan +/-0.03
+D,Pp,0.50,read off scan +/-0.03
+D,Ppk,0.21,read off scan +/-0.03
+E,Cp,0.36,read off scan +/-0.03
+E,Cpk,0.29,read off scan +/-0.03
+E,Pp,0.26,read off scan +/-0.03
+E,Ppk,0.21,read off scan +/-0.03
+F,Cp,2.57,read off scan +/-0.03
+F,Cpk,2.35,read off scan +/-0.03
+F,Pp,1.70,read off scan +/-0.03
+F,Ppk,1.58,read off scan +/-0.03
+G,Cp,1.68,read off scan +/-0.03
+G,Cpk,1.28,read off scan +/-0.03
+G,Pp,0.65,read off scan +/-0.03
+G,Ppk,0.50,read off scan +/-0.03
+H,Cp,2.08,read off scan +/-0.03; H shows only two marks; read as Cp=Cpk (top) and Pp=Ppk (bottom)
+H,Cpk,2.08,read off scan +/-0.03; H shows only two marks; read as Cp=Cpk (top) and Pp=Ppk (bottom)
+H,Pp,0.79,read off scan +/-0.03; H shows only two marks; read as Cp=Cpk (top) and Pp=Ppk (bottom)
+H,Ppk,0.79,read off scan +/-0.03; H shows only two marks; read as Cp=Cpk (top) and Pp=Ppk (bottom)
+I,Cp,0.77,read off scan +/-0.03
+I,Cpk,0.67,read off scan +/-0.03
+I,Pp,0.25,read off scan +/-0.03
+I,Ppk,0.19,read off scan +/-0.03
