@@ -1,9 +1,10 @@
 # slides_lesson_6_examples.py -- Python twin of slides_lesson_6_examples.R
 #
-# Feeds: Lesson 6 slides 28-35 (Examples 1-2, min-Cpk table, design table, index chart).
+# Feeds: Lesson 6 slides 23-29 (Examples 1-2, min-Cpk table, design table, index chart).
 # Run from the top of the repo:  python3 functions/slides_lesson_6_examples.py
 # Reads:  workshops/product_weights.csv, capability_example2.csv, capability_index_chart.csv
-# Writes: docs-v3/images/slides/lesson-6/gen_ex2_xbar_r_py.png, gen_ex_index_plot_py.png
+# Writes: docs-v3/images/slides/lesson-6/gen_ex2_xbar_r_py.png, gen_ex_index_plot_py.png,
+#         gen_ex1_dist_vs_spec_py.png, gen_ex2_dist_vs_spec_py.png
 #         and prints Example 1 / Example 2 results and the two computed tables.
 import pandas as pd
 import numpy as np
@@ -71,12 +72,49 @@ spans = idx.groupby('characteristic')['value'].agg(lo='min', hi='max').reset_ind
 g2 = (ggplot()
       + geom_hline(yintercept=[1, 1.5, 2], linetype='dashed', color='grey')
       + geom_linerange(spans, aes(x='characteristic', ymin='lo', ymax='hi'))
-      + geom_point(idx, aes('characteristic', 'value', shape='index', fill='index'), size=4,
-                   position=position_dodge(width=0.5))
-      + scale_shape_manual(values=['o', 'o', '^', '^'])
-      + scale_fill_manual(values=[red, 'white', '#4d4d4d', 'white'])
+      # one filled circle (shape 21 in R) per index, told apart by fill only
+      + geom_point(idx, aes('characteristic', 'value', fill='index'), shape='o', size=5,
+                   stroke=0.6, color='#262626', position=position_dodge(width=0.5))
+      + scale_fill_manual(values=[red, '#1F4E79', '#E0A526', '#6B8E7F'])
       + scale_y_continuous(limits=(0, 3), breaks=np.arange(0, 3.01, 0.5))
-      + labs(x='Characteristic', y='Capability / performance index', shape='', fill='')
+      + labs(x='Characteristic', y='Capability / performance index', fill='')
       + theme_classic(base_size=20) + theme(legend_position='top'))
-g2.save(f"{outdir}/gen_ex_index_plot_py.png", width=10, height=6.5, dpi=150, verbose=False)
-print("Wrote gen_ex2_xbar_r_py.png, gen_ex_index_plot_py.png")
+g2.save(f"{outdir}/gen_ex_index_plot_py.png", width=7.5, height=5.5, dpi=150, verbose=False)
+
+# Example 1: observed distribution vs the one-sided spec limit (LSL 250 g)
+w['weight'] = 250 + w['x']
+lab1 = pd.DataFrame({'x': [250, mu], 'y': [np.inf, np.inf],
+                     'label': ['LSL 250', f'mean {mu:.2f}'], 'col': [red, '#262626']})
+g3 = (ggplot(w, aes(x='weight'))
+      + annotate('rect', xmin=-np.inf, xmax=250, ymin=-np.inf, ymax=np.inf, fill=red, alpha=0.12)
+      + geom_histogram(binwidth=0.5, boundary=250, fill='#999999', color='white')
+      + geom_vline(xintercept=250, color=red, size=1.6)
+      + geom_vline(xintercept=mu, color='#262626', linetype='dashed', size=1.1)
+      + geom_label(lab1, aes(x='x', y='y', label='label', color='col'), va='top',
+                   size=17, label_size=0, inherit_aes=False)
+      + scale_color_identity()
+      + scale_x_continuous(limits=(248.5, 257), breaks=np.arange(248, 257.1, 1))
+      + scale_y_continuous(expand=(0, 0, 0.2, 0))
+      + labs(x='Weight (g), 110 units', y='Count')
+      + theme_classic(base_size=20))
+g3.save(f"{outdir}/gen_ex1_dist_vs_spec_py.png", width=6, height=4.4, dpi=150, verbose=False)
+
+# Example 2: observed distribution vs LSL 0.5 and USL 0.9, out-of-spec shaded
+lab2 = pd.DataFrame({'x': [lo, up, xb], 'y': [np.inf] * 3,
+                     'label': ['LSL 0.5', 'USL 0.9', f'mean {xb:.3f}'],
+                     'col': [red, red, '#262626']})
+g4 = (ggplot(e, aes(x='x'))
+      + annotate('rect', xmin=-np.inf, xmax=lo, ymin=-np.inf, ymax=np.inf, fill=red, alpha=0.12)
+      + annotate('rect', xmin=up, xmax=np.inf, ymin=-np.inf, ymax=np.inf, fill=red, alpha=0.12)
+      + geom_histogram(binwidth=0.05, center=0.5, fill='#999999', color='white')
+      + geom_vline(xintercept=[lo, up], color=red, size=1.6)
+      + geom_vline(xintercept=xb, color='#262626', linetype='dashed', size=1.1)
+      + geom_label(lab2, aes(x='x', y='y', label='label', color='col'), va='top',
+                   size=17, label_size=0, inherit_aes=False)
+      + scale_color_identity()
+      + scale_x_continuous(limits=(0.4, 1.0), breaks=np.arange(0.4, 1.01, 0.1))
+      + scale_y_continuous(expand=(0, 0, 0.2, 0))
+      + labs(x=f'Measurement, {len(e)} units', y='Count')
+      + theme_classic(base_size=20))
+g4.save(f"{outdir}/gen_ex2_dist_vs_spec_py.png", width=6, height=3.9, dpi=150, verbose=False)
+print("Wrote gen_ex2_xbar_r_py.png, gen_ex_index_plot_py.png, gen_ex1_dist_vs_spec_py.png, gen_ex2_dist_vs_spec_py.png")

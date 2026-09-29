@@ -9,7 +9,9 @@
 #         workshops/capability_index_chart.csv
 # Writes: workshops/capability_min_cpk.csv, workshops/capability_design_targets.csv,
 #         docs-v3/images/slides/lesson-6/gen_ex2_xbar_r.png,
-#         docs-v3/images/slides/lesson-6/gen_ex_index_plot.png
+#         docs-v3/images/slides/lesson-6/gen_ex_index_plot.png,
+#         docs-v3/images/slides/lesson-6/gen_ex1_dist_vs_spec.png,
+#         docs-v3/images/slides/lesson-6/gen_ex2_dist_vs_spec.png
 #         and prints a summary of Example 1 and Example 2 to the console.
 
 library(dplyr)
@@ -167,18 +169,59 @@ idx = read_csv("workshops/capability_index_chart.csv", show_col_types = FALSE) %
   mutate(index = factor(index, levels = c("Cp", "Cpk", "Pp", "Ppk")))
 spans = idx %>% group_by(characteristic) %>% summarize(lo = min(value), hi = max(value))
 
+# One filled circle (shape 21) per index; the four indices differ by fill
+# colour only (course red, dark blue, gold, grey-green), with a thin outline.
+idx_fills = c(Cp = red, Cpk = "#1F4E79", Pp = "#E0A526", Ppk = "#6B8E7F")
 g2 = ggplot() +
   geom_hline(yintercept = c(1, 1.5, 2), linetype = "dashed", color = "grey60") +
   geom_linerange(data = spans, aes(x = characteristic, ymin = lo, ymax = hi), color = "grey30") +
-  geom_point(data = idx, aes(x = characteristic, y = value, shape = index, fill = index),
-             size = 4, position = position_dodge(width = 0.5)) +
-  scale_shape_manual(values = c(21, 21, 24, 24)) +
-  scale_fill_manual(values = c(red, "white", "grey30", "white")) +
+  geom_point(data = idx, aes(x = characteristic, y = value, fill = index),
+             shape = 21, size = 5, stroke = 0.6, color = "grey15",
+             position = position_dodge(width = 0.5)) +
+  scale_fill_manual(values = idx_fills) +
   scale_y_continuous(limits = c(0, 3), breaks = seq(0, 3, 0.5)) +
-  labs(x = "Characteristic", y = "Capability / performance index",
-       shape = NULL, fill = NULL) +
+  labs(x = "Characteristic", y = "Capability / performance index", fill = NULL) +
   theme_classic(base_size = 20) +
   theme(legend.position = "top", plot.margin = margin(4, 8, 4, 4))
-ggsave(file.path(outdir, "gen_ex_index_plot.png"), g2, width = 10, height = 6.5, dpi = 150)
+ggsave(file.path(outdir, "gen_ex_index_plot.png"), g2, width = 7.5, height = 5.5, dpi = 150)
 
-cat("\nWrote", file.path(outdir, c("gen_ex2_xbar_r.png", "gen_ex_index_plot.png")), sep = "\n")
+
+# Figure: Example 1 observed distribution vs the spec limit (slide 24) -----
+# One-sided: the declared weight (LSL = 250 g) is the only limit.
+w_plot = weights %>% mutate(weight = 250 + x)
+g3 = ggplot(w_plot, aes(x = weight)) +
+  annotate("rect", xmin = -Inf, xmax = 250, ymin = -Inf, ymax = Inf, fill = red, alpha = 0.12) +
+  geom_histogram(binwidth = 0.5, boundary = 250, fill = "grey60", color = "white") +
+  geom_vline(xintercept = 250, color = red, linewidth = 1.6) +
+  geom_vline(xintercept = ex1$mu, color = "grey15", linetype = "dashed", linewidth = 1.1) +
+  annotate("label", x = 250, y = Inf, vjust = 1.2, hjust = 0.5, size = 6.5, color = red,
+           fontface = "bold", label = "LSL 250", border.colour = NA) +
+  annotate("label", x = ex1$mu, y = Inf, vjust = 1.2, size = 6.5, color = "grey15",
+           label = sprintf("mean %.2f", ex1$mu), border.colour = NA) +
+  scale_x_continuous(limits = c(248.5, 257), breaks = seq(248, 257, 1)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  labs(x = "Weight (g), 110 units", y = "Count") +
+  theme_classic(base_size = 20) +
+  theme(plot.margin = margin(4, 12, 4, 4))
+ggsave(file.path(outdir, "gen_ex1_dist_vs_spec.png"), g3, width = 6, height = 4.4, dpi = 150)
+
+# Figure: Example 2 observed distribution vs the spec limits (slide 26) ----
+g4 = ggplot(ex2_data, aes(x = x)) +
+  annotate("rect", xmin = -Inf, xmax = lower, ymin = -Inf, ymax = Inf, fill = red, alpha = 0.12) +
+  annotate("rect", xmin = upper, xmax = Inf, ymin = -Inf, ymax = Inf, fill = red, alpha = 0.12) +
+  geom_histogram(binwidth = 0.05, center = 0.5, fill = "grey60", color = "white") +
+  geom_vline(xintercept = c(lower, upper), color = red, linewidth = 1.6) +
+  geom_vline(xintercept = ex2$xbbar, color = "grey15", linetype = "dashed", linewidth = 1.1) +
+  annotate("label", x = c(lower, upper), y = Inf, vjust = 1.2, size = 6.5, color = red,
+           fontface = "bold", label = c("LSL 0.5", "USL 0.9"), border.colour = NA) +
+  annotate("label", x = ex2$xbbar, y = Inf, vjust = 1.2, size = 6.5, color = "grey15",
+           label = sprintf("mean %.3f", ex2$xbbar), border.colour = NA) +
+  scale_x_continuous(limits = c(0.4, 1.0), breaks = seq(0.4, 1.0, 0.1)) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.2))) +
+  labs(x = sprintf("Measurement, %d units", nrow(ex2_data)), y = "Count") +
+  theme_classic(base_size = 20) +
+  theme(plot.margin = margin(4, 12, 4, 4))
+ggsave(file.path(outdir, "gen_ex2_dist_vs_spec.png"), g4, width = 6, height = 3.9, dpi = 150)
+
+cat("\nWrote", file.path(outdir, c("gen_ex2_xbar_r.png", "gen_ex_index_plot.png",
+    "gen_ex1_dist_vs_spec.png", "gen_ex2_dist_vs_spec.png")), sep = "\n")

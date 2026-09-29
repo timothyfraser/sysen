@@ -43,6 +43,48 @@ playground, but then the other playground still has the same issue."*
    contract `packages`, and `WASM_SAFE_R` in `tools/gen_contract.py`. Starters
    may `library(ggpubr)` etc.: the shim answers that call.
 
+## Port only the functions you use
+
+**Tim's standing rule (asked more than once; now written down):** in a browser
+playground, other than the core packages (`dplyr`, `readr`, `broom`,
+`ggplot2`), port in **only the specific functions a starter actually calls**.
+Never `source()` or `download.file()` a whole `functions_*.R` helper, never
+`from functions_... import` / `exec(open(...functions_*.py))` in a Python
+starter, and never pull in a heavy package for one function.
+
+**Why (measured 2026-09-28, Lesson 6 `capability` deck preset).** The starter
+downloaded and sourced the 1,311-line `functions_process_control.R` (which
+itself loads ggplot2, readr, ggpubr and moments) to use seven functions, then
+called `get_index(..., bootstrap_reps = 200)`, whose loop runs dplyr
+`group_by()`/`summarize()` 200 times. Native R: libraries 1.6 s + sourcing
+1.0 s + stats 0.9 s + bootstrap 4.5 s, about **6.3 s** end to end; webR is
+several times slower, so students watched a spinner. The Python track imported
+the helper module, whose top imports scipy and all of plotnine (**9.0 s**
+native). After the fix: R **1.1 s**, Python **0.6 s**, same printed numbers.
+
+**How.**
+
+1. **Inline the functions** the starter calls, copied faithfully from the
+   course helper: same names, same arguments, same behavior (for example the
+   course `cpk()` uses `abs()`; keep it). Trim what the starter never reaches.
+2. **Write loops in vectorized base R**: `replicate()` + `tapply()` for a
+   bootstrap, `matrix(rnorm(n * reps), ncol = n)` + `rowSums()` for a
+   simulated control constant. Not a dplyr pipeline called hundreds of times.
+   Python: numpy / pandas, and `plotnine` only if the starter draws a plot.
+3. **Add a comment line** saying the helpers are defined inline so the
+   playground loads fast, and that in RStudio students can
+   `source("functions/functions_process_control.R")` instead.
+4. **Drop the plumbing** the old approach needed: the `download.file`/`source`
+   lines, the preset's `filesR` entry, and any `packagesPy` entry (`scipy`)
+   only the helper module needed.
+5. **Time it** from the repo root with `Rscript` / `python3` on a scratch copy
+   of the starter. Target: well under ~1.5 s native.
+
+`test_starters_port_only_the_functions_they_use` in
+`tests/test_playground_packages.py` fails, naming the preset, if any deck
+starter's live code sources/downloads a `functions_*.R` file or imports from a
+`functions_*` module. Comment lines pointing students at RStudio are allowed.
+
 ## Current stand-ins
 
 | Package | Stand-in provides | Not provided |
