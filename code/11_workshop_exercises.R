@@ -45,7 +45,7 @@ tidier = function(model, ci = 0.95, digits = 3){
       term = term,  
       # Round numbers to a certain number of 'digits'
       estimate = estimate %>% round(digits),
-      se = statistic %>% round(digits),
+      se = std.error %>% round(digits),
       statistic = statistic %>% round(digits),
       p_value = p.value %>% round(digits),
       # Get stars to show statistical significance

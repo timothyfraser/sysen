@@ -450,10 +450,13 @@ grid = expand_grid(
   art = c("heart", "foamy")
 )
 
-effects = predict(m, newdata = grid, se.fit = TRUE) %>% 
+# Use each prediction's own standard error (se.fit), not the overall
+# factorial standard error computed earlier in this script
+effects = predict(m, newdata = grid, se.fit = TRUE) %>%
   as_tibble() %>%
   mutate(grid) %>%
-  mutate(z = qnorm(0.975),
+  mutate(se = se.fit,
+         z = qnorm(0.975),
          upper = fit + se * z,
          lower = fit - se * z)
 
