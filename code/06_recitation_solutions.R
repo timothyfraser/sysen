@@ -104,3 +104,34 @@ bands
 stat
 
 
+# Why qnorm(0.975) rather than qnorm(0.95)? ###############################
+# A TWO-sided 95% interval splits alpha = 0.05 across both tails
+# (0.025 low + 0.025 high), so each end sits at the 97.5th percentile:
+# qnorm(0.975), about 1.96. That is what `bands` above computes.
+#
+# But the question we actually care about here is ONE-directional:
+# "is Cp below 1?" For that, report a one-sided UPPER bound (a ceiling):
+# put ALL of alpha in the upper tail, so use qnorm(0.95), about 1.645.
+# (A floor - "Cp is at least..." - would be a one-sided LOWER bound,
+# estimate - z * se, with the same qnorm(0.95).)
+# See the chapter's "One-Sided Bounds" subsection:
+# https://timothyfraser.com/sigma/chapters/indices-and-confidence-intervals-for-statistical-process-control-in-r.html#one-sided-bounds
+
+alpha = 0.05 # 95% confidence
+
+ceiling_cp = stat %>%
+  summarize(
+    estimate = cp(sigma_s = sigma_s, lower = 42, upper = 50),
+    v_short = k*(n_w - 1), # degrees of freedom
+    se = estimate * sqrt(1 / (2*v_short)),
+    # ALL of alpha in one tail: the 95th percentile, not the 97.5th
+    z = qnorm(1 - alpha), # about 1.645
+    upper = estimate + z * se) # a ceiling: "Cp is at most..."
+
+ceiling_cp
+# The 95% one-sided upper bound (about 0.735) is still well below 1,
+# so we are 95% confident the true Cp is LESS THAN 1: not capable.
+# It is a little tighter than the two-sided upper end in `bands`
+# (about 0.747), because no alpha was spent on the low tail.
+
+

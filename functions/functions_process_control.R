@@ -431,8 +431,8 @@ limits_avg = function(x,y){
   
   # Calculate upper and lower control limits
   stat_s = stat_s %>%
-    mutate(lower = xbbar + A3 * sbar,
-           upper = xbbar - A3 * sbar)
+    mutate(lower = xbbar - A3 * sbar,
+           upper = xbbar + A3 * sbar)
 
 
   return(stat_s)  
