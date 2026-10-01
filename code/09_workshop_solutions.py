@@ -15,23 +15,18 @@ import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
 import sys
-# Load our R-style distribution helpers: dnorm(), pnorm(), dunif(), dweibull(), pweibull()
+# Load our R-style helpers: hist(), dnorm(), pnorm(), dunif(), dweibull(), pweibull()
 sys.path.append("functions")
-from functions_distributions import dnorm, pnorm, dunif, dweibull, pweibull
+from functions_distributions import hist, dnorm, pnorm, dunif, dweibull, pweibull
 from scipy.optimize import minimize  # optimizer (optim() in R)
 
 # Load data.frame of crops by time to failure metric `days`
 crops = pd.read_csv("workshops/crops.csv")
-
 # View empirical distribution of days
-# (hist() in base R; geom_histogram() in plotnine)
-(ggplot(crops, aes(x = 'days')) + geom_histogram(bins = 10))
-
+hist(crops['days'])
 # Calculate (empirically) lambda
 mylambda = 1 / crops['days'].mean()
-
 print(mylambda)
-
 
 # PROBLEM: What if we can't calculate our parameters empirically?
 # Applicable when multiple parameters, parameters are interdependent, trick distributions, etc.
@@ -40,8 +35,6 @@ print(mylambda)
 
 # 1 parameter = labmda
 # lambda = 1 / mean(t)
-
-
 # Failure Function CDF F(t)
 def f(t, lam):
   return 1 - np.exp(-1 * t * lam)
@@ -51,127 +44,43 @@ def f(t, lam):
 def d(t, lam):
   return lam * np.exp(-t * lam)
 
-
-
-
 # Let's look at our first 3 observations
 print(crops['days'][0:3])
-
-
-
-
-
-
-
 # This is the probability of a lifespan of 72, given this particular lambda value
 print(d(t = 72, lam = mylambda))
-print(d(t = 72, lam = 0.014359))
-print(d(t = 72, lam = 0.015))
-
-
-
-
-
-
-
-# This is the JOINT probability of a lifespan of 72
-# AND another lifespan of 119, given this particular lambda value
+# This is the JOINT probability of a lifespan of 72 AND another lifespan of 119, given this particular lambda value
 print(d(t = 72, lam = mylambda) * d(t = 119, lam = mylambda))
-
-
-
-
-
-
-
-
-
 
 # This is the JOINT probability of ALL these lifespans, given this lambda value
 # np.prod() is product
 # JOINT probability also called LIKELIHOOD
 print(np.prod(d(t = crops['days'], lam = 0.014)))
 
-
-
-
-
-
-
-
-
-
 # But tiny decimals are hard for Python to compute. So we often want to log them.
 print(np.log(np.prod(d(t = crops['days'], lam = 0.014))))
-
-
-
-
-
-
-
-
-
-
-
-
-# Excitingly the log of the product of probabilities
-# is equal to the sum of logged probabilities
+# Excitingly the log of the product of probabilities is equal to the sum of logged probabilities
 print(np.sum(np.log(d(t = crops['days'], lam = 0.014))))
-print(np.log(np.prod(d(t = crops['days'], lam = 0.014))))
-
-
-
-
-
-
-
 # So we often find ourselves calculating:
 # **log-likelihood**
 
 
-
-
-
 # Calculate Log-Likelihood, by summing the log
 def ll(t, lam):
-  return np.sum(np.log(d(t = t, lam = lam)))
-
-
-
-
-
-
-
+  return np.log(d(t = t, lam = lam)).sum(skipna = False)  # NaN stays NaN, as in R
 # Suppose lambda is 0.014.
 # Then the log likelihood of this observed data t is...
-# aka the probability of getting all
-# of these values simultaneously in one sample...
+# aka the probability of getting all these values simultaneously in one sample...
 print(ll(t = crops['days'], lam = 0.014))
-
-
-
-# (plot() of a two-column table in base R is a scatterplot)
-lambdas = np.arange(0.00001, 1, 0.001)
-(ggplot(pd.DataFrame({
-    'lambda': lambdas,
-    'loglik': [ll(t = crops['days'], lam = l) for l in lambdas]}),
-  aes(x = 'lambda', y = 'loglik'))
-  + geom_point())
-
 
 
 
 # Let's hack this manually!
 # We're going to make a sequence of parameters from 0.00001 to 1
 # and get the log likelihood of the crops['days'] vector given each of these parameters.
-manyll = pd.DataFrame({'parameter': np.arange(0.00001, 1, 0.001)})
-# For each of these parameters
-# Calculate a different loglik statistic
-manyll['loglik'] = [ll(t = crops['days'], lam = p) for p in manyll['parameter']]
-
-
-
+manyll = (pd.DataFrame({'parameter': np.arange(0.00001, 1, 0.001)})
+  # For each of these parameters
+  # Calculate a different loglik statistic
+  .assign(loglik = lambda x: [ll(t = crops['days'], lam = p) for p in x['parameter']]))
 
 # Check it out! Some parameters are more or less likely.
 print(manyll.head(3))
@@ -187,18 +96,16 @@ print(mylambda)
 
 
 # We can visualize this process like so!
-p = output['parameter'].iloc[0]
-g = (ggplot()
+(ggplot()
   + geom_line(data = manyll, mapping = aes(x = 'parameter', y = 'loglik'), color = "steelblue")
-  + geom_vline(xintercept = p, linetype = "dashed")
+  + geom_vline(xintercept = output['parameter'].iloc[0], linetype = "dashed")
   + theme_classic(base_size = 14)
   + labs(x = "parameter (lambda)", y = "loglik (Log-Likelihood)",
          subtitle = "Maximizing the Log-Likelihood (Visually)")
   # We can actually adust the x-axis to work better with log-scales here
   + scale_x_log10()
   # We can also annnotate our visuals like so.
-  + annotate("text", x = 0.1, y = -2000, label = str(round(p, 5))))
-g
+  + annotate("text", x = 0.1, y = -2000, label = str(round(output['parameter'].iloc[0], 5))))
 
 
 
@@ -214,6 +121,8 @@ g
 q = minimize(lambda par: -ll(t = crops['days'], lam = par[0]),
              x0 = [0.01], method = "Nelder-Mead")
 
+q = minimize(fun = lambda par: -ll(t = crops['days'], lam = par[0]), x0 = [0.01], method = "Nelder-Mead")
+
 # q is an OptimizeResult object - a dictionary with named parts.
 # We've learned several types of objects
 pd.DataFrame()
@@ -228,9 +137,6 @@ print(q)
 # The optimized parameters live in q.x (q$par in R)
 # Once we have our optimized parameters, we can pipe it into functions like this!
 print(f(t = np.arange(1, 101), lam = q.x[0]))
-
-
-
 
 
 # We could also write MULTI-PARAMETER loglikelihood functions!
@@ -254,39 +160,24 @@ def ll(t, par):
   # par[0] gives the first value, the mean (Python counts from 0)
   # par[1] gives the second value, the standard deviation
   return np.log(dnorm(t, mean = par[0], sd = par[1])).sum(skipna = False)  # NaN stays NaN, as in R
-
 # Let's try it out!
 # Heads up: this next line is SUPPOSED to fail. dnorm(days, 0, 1)
 # underflows to 0, log(0) is -inf, and the optimizer cannot search.
-# R's optim() stops with an error; minimize() just gives back a useless answer
-# (success False, or the starting values unchanged). Read it - diagnosing it
-# is the next twenty lines of this script.
+# R's optim() stops with an error; minimize() just hands back a useless answer
+# (success False, the starting values unchanged). Read it - the two lines
+# below show you exactly why.
 with np.errstate(divide = 'ignore'):
-  bad = minimize(lambda par: -ll(t = crops['days'], par = par),
-                 x0 = [0, 1], method = "Nelder-Mead")
-print(bad.success, bad.x, bad.fun)
-# Why doesn't it work?
+  print(minimize(lambda par: -ll(t = crops['days'], par = par), x0 = [0, 1], method = "Nelder-Mead"))
+  print(dnorm(crops['days'], mean = 0, sd = 1))
+  print(np.log(dnorm(crops['days'], mean = 0, sd = 1)).sum(skipna = False))
 
-# Well, we're giving it super weird starting parameters. (0,1)
-# What densities would they produce?
-print(dnorm(crops['days'], mean = 0, sd = 1))
-# What loglikelihood would they produce?
-with np.errstate(divide = 'ignore'):
-  print(np.sum(np.log(dnorm(crops['days'], mean = 0, sd = 1))))
-
-# Let's look at our real values...
 print(crops['days'].values)
 
-
-# What if we picked more representative starting parameters?
-q2 = minimize(lambda par: -ll(t = crops['days'], par = par),
-              x0 = [90, 15], method = "Nelder-Mead")
+q2 = minimize(lambda par: -ll(t = crops['days'], par = par), x0 = [90, 15], method = "Nelder-Mead")
 print(q2.x)
-# Yay! It works!
 
 
 print(pnorm(np.arange(1, 11), mean = q2.x[0], sd = q2.x[1]))
-
 
 # Let's try a weibull!
 print(pweibull(1, shape = 2, scale = 1))
@@ -299,8 +190,6 @@ q3 = minimize(lambda par: -llweibull(t = crops['days'], par = par),
               x0 = [1, 1000], method = "Nelder-Mead")
 
 print(q3.x)
-
-
 
 # You might want to hang on to this
 # Chunk of helper code
