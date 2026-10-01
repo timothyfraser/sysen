@@ -1,0 +1,9 @@
+id,event,type
+1,Breach,top
+2,G1,or
+3,G2,and
+4,G3,or
+5,Phishing,not
+6,Credential,not
+7,Insider,not
+8,Unauthorized,not

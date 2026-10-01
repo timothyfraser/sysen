@@ -1,0 +1,14 @@
+id,event,type
+1,T,top
+2,G1,or
+3,G2,and
+4,G3,or
+5,G4,and
+6,DC,not
+7,AF,not
+8,SF,not
+9,BF,not
+10,NF,not
+11,AUF,not
+12,HF,not
+13,MF,not

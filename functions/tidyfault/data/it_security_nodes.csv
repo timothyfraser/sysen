@@ -1,0 +1,17 @@
+id,event,type
+1,DE,top
+2,BP,or
+3,EA,and
+4,UE,and
+5,IE,and
+6,CC,or
+7,PC,not
+8,LR,not
+9,MN,not
+10,PM,not
+11,VS,not
+12,PO,not
+13,WB,not
+14,IM,not
+15,DA,not
+16,EP,not

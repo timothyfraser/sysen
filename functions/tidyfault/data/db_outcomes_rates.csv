@@ -1,0 +1,9 @@
+event,lambda,time_unit
+DC,0.0001,hours
+AF,0.0002,hours
+SF,0.00015,hours
+BF,0.0003,hours
+NF,0.00025,hours
+AUF,0.00012,hours
+HF,8e-05,hours
+MF,0.0004,hours

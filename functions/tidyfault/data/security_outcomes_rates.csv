@@ -1,0 +1,8 @@
+event,lambda,time_unit
+VE,0.005,days
+ES,0.0025,days
+PH,0.004,days
+MW,0.0035,days
+UA,0.002,days
+WP,0.006,days
+N2F,0.0045,days
