@@ -372,21 +372,19 @@ def dn(n, reps=10000):
     --------
     >>> dn(n=12)
     """
-    sims = pd.DataFrame({'rep': pd.Series(range(reps)) + 1, 'n': n})
-    
-    # For each replicate, simulate the ranges of n values
-    def calc_range(g):
-        r = rnorm(n=int(g['n'].iloc[0]), mean=0, sd=1)
-        return pd.Series({'r': r.max() - r.min()})
-    
-    sims = sims.groupby('rep').apply(calc_range).reset_index(drop=True)
-    
+    # For each of the reps replicates, simulate n standard normal values:
+    # one row per replicate, drawn in a single block (same global numpy
+    # RNG as rnorm(), so np.random.seed() still makes it reproducible).
+    draws = stats.norm.rvs(loc=0, scale=1, size=(int(reps), int(n)))
+    # The range of each replicate (row): max minus min
+    r = pd.Series(draws.max(axis=1) - draws.min(axis=1))
+
     # Calculate statistics
     stats_df = pd.DataFrame({
         # mean range
-        'd2': [sims['r'].mean()],
+        'd2': [r.mean()],
         # standard deviation of ranges
-        'd3': [sims['r'].std()]
+        'd3': [r.std()]
     })
     
     # and constants for obtaining lower and upper ci for rbar
@@ -426,21 +424,19 @@ def bn(n, reps=10000):
     >>> # Upper control limit
     >>> sbar * stat['B4'].iloc[0]
     """
-    sims = pd.DataFrame({'rep': pd.Series(range(reps)) + 1, 'n': n})
-    
-    # For each replicate, simulate the standard deviations of n values
-    def calc_sd(g):
-        s = rnorm(n=int(g['n'].iloc[0]), mean=0, sd=1)
-        return pd.Series({'s': s.std()})
-    
-    sims = sims.groupby('rep').apply(calc_sd).reset_index(drop=True)
-    
+    # For each of the reps replicates, simulate n standard normal values:
+    # one row per replicate, drawn in a single block (same global numpy
+    # RNG as rnorm(), so np.random.seed() still makes it reproducible).
+    draws = stats.norm.rvs(loc=0, scale=1, size=(int(reps), int(n)))
+    # The standard deviation of each replicate (row), ddof=1 like R's sd()
+    s = pd.Series(draws.std(axis=1, ddof=1))
+
     # Calculate statistics
     stats_df = pd.DataFrame({
         # mean standard deviation
-        'b2': [sims['s'].mean()],
+        'b2': [s.mean()],
         # standard deviation of standard deviations
-        'b3': [sims['s'].std()]
+        'b3': [s.std()]
     })
     
     stats_df['C4'] = stats_df['b2']  # sometimes called C4

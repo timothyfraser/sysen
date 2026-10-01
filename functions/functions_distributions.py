@@ -330,28 +330,30 @@ def rbinom(n, size = 1, prob = 0.5):
     return output
 
 ## Uniform Distribution ##########################
+# scipy's uniform runs from loc to loc + scale, so R's (min, max) is
+# loc = min, scale = max - min. (scale = max is only right when min = 0.)
 def dunif(x, min=0, max=1):
     from scipy.stats import uniform
     from pandas import Series
-    output = uniform.pdf(x, loc=min, scale=max)
+    output = uniform.pdf(x, loc=min, scale=max - min)
     output = Series(output)
     return output
 def punif(x, min=0, max=1):
     from scipy.stats import uniform
     from pandas import Series
-    output = uniform.cdf(x, loc=min, scale=max)
+    output = uniform.cdf(x, loc=min, scale=max - min)
     output = Series(output)
     return output
 def qunif(x, min=0, max=1):
     from scipy.stats import uniform
     from pandas import Series
-    output = uniform.ppf(x, loc=min, scale=max)
+    output = uniform.ppf(x, loc=min, scale=max - min)
     output = Series(output)
     return output
 def runif(n, min=0, max=1):
     from scipy.stats import uniform
     from pandas import Series
-    output = uniform.rvs(loc=min, scale=max, size = n)
+    output = uniform.rvs(loc=min, scale=max - min, size = n)
     output = Series(output)
     return output
 
