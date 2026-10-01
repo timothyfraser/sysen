@@ -24,7 +24,14 @@
         "cutsets": 1,
         "failures": 3,
         "coverage": "0.33333333333333331"
-      }
+      },
+      "mocus_r": [
+        ["A", "B"]
+      ],
+      "mocus_rcpp": [
+        ["A", "B"]
+      ],
+      "concentrate_mocus_r": "A*B"
     },
     "fake": {
       "curate": {
@@ -54,7 +61,20 @@
         "cutsets": [2, 4],
         "failures": [5, 5],
         "coverage": ["0.40000000000000002", "0.80000000000000004"]
-      }
+      },
+      "mocus_r": [
+        ["B", "A", "C"],
+        ["B", "A", "D"],
+        ["B", "C"],
+        ["B", "C", "D"]
+      ],
+      "mocus_rcpp": [
+        ["B", "A", "C"],
+        ["B", "A", "D"],
+        ["B", "C"],
+        ["B", "C", "D"]
+      ],
+      "concentrate_mocus_r": ["B*C", "A*B*D"]
     },
     "db": {
       "curate": {
@@ -84,7 +104,37 @@
         "cutsets": [4, 4, 4, 4],
         "failures": [247, 247, 247, 247],
         "coverage": ["0.016194331983805668", "0.016194331983805668", "0.016194331983805668", "0.016194331983805668"]
-      }
+      },
+      "mocus_r": [
+        ["SF", "BF", "HF", "MF", "DC", "NF"],
+        ["SF", "BF", "HF", "MF", "DC", "AUF"],
+        ["SF", "BF", "HF", "MF", "AF", "NF"],
+        ["SF", "BF", "HF", "MF", "AF", "AUF"]
+      ],
+      "mocus_rcpp": [
+        ["SF", "BF", "HF", "MF", "DC", "NF"],
+        ["SF", "BF", "HF", "MF", "DC", "AUF"],
+        ["SF", "BF", "HF", "MF", "AF", "NF"],
+        ["SF", "BF", "HF", "MF", "AF", "AUF"]
+      ],
+      "concentrate_mocus_r": ["AF*AUF*BF*HF*MF*SF", "AF*BF*HF*MF*NF*SF", "AUF*BF*DC*HF*MF*SF", "BF*DC*HF*MF*NF*SF"],
+      "quantify_binary": [true, true, true, true, true, true, true, false, true, true],
+      "quantify_binary_fast": [true, true, true, true, true, true, true, false, true, true],
+      "quantify_binary_row1": true,
+      "quantify_prob_scenarios": {
+        "AF": ["0.10000000000000001", "0.050000000000000003", "0.20000000000000001"],
+        "AUF": ["0.059999999999999998", "0.029999999999999999", "0.12"],
+        "BF": ["0.14999999999999999", "0.074999999999999997", "0.29999999999999999"],
+        "DC": ["0.050000000000000003", "0.025000000000000001", "0.10000000000000001"],
+        "HF": ["0.040000000000000001", "0.02", "0.080000000000000002"],
+        "MF": ["0.20000000000000001", "0.10000000000000001", "0.40000000000000002"],
+        "NF": ["0.12", "0.059999999999999998", "0.23999999999999999"],
+        "SF": ["0.080000000000000002", "0.040000000000000001", "0.16"]
+      },
+      "quantify_prob_one": "0.30682122342399998",
+      "quantify_prob_one_fast": "0.30682122342400009",
+      "quantify_prob_multi": ["0.30682122342399998", "0.1596629564215", "0.556247240704"],
+      "quantify_prob_multi_fast": ["0.30682122342400009", "0.15966295642150002", "0.55624724070400056"]
     },
     "ai": {
       "curate": {
@@ -111,7 +161,31 @@
         "cutsets": [4, 4, 4],
         "failures": [15, 15, 15],
         "coverage": ["0.26666666666666666", "0.26666666666666666", "0.26666666666666666"]
-      }
+      },
+      "mocus_r": [
+        ["CWE", "AF"],
+        ["CWE", "TO"],
+        ["CWE", "RL"]
+      ],
+      "mocus_rcpp": [
+        ["CWE", "AF"],
+        ["CWE", "TO"],
+        ["CWE", "RL"]
+      ],
+      "concentrate_mocus_r": ["AF*CWE", "CWE*RL", "CWE*TO"],
+      "quantify_binary": [true, true, true, true, true, true, true, true, true, true],
+      "quantify_binary_fast": [true, true, true, true, true, true, true, true, true, true],
+      "quantify_binary_row1": true,
+      "quantify_prob_scenarios": {
+        "AF": ["0.14999999999999999", "0.074999999999999997", "0.29999999999999999"],
+        "CWE": ["0.14000000000000001", "0.070000000000000007", "0.28000000000000003"],
+        "RL": ["0.25", "0.125", "0.5"],
+        "TO": ["0.20000000000000001", "0.10000000000000001", "0.40000000000000002"]
+      },
+      "quantify_prob_one": "0.56140000000000001",
+      "quantify_prob_one_fast": "0.5613999999999999",
+      "quantify_prob_multi": ["0.56140000000000001", "0.322553125", "0.8488"],
+      "quantify_prob_multi_fast": ["0.5613999999999999", "0.32255312500000005", "0.84880000000000011"]
     },
     "security": {
       "curate": {
@@ -140,7 +214,34 @@
         "cutsets": [4, 4, 4],
         "failures": [119, 119, 119],
         "coverage": ["0.033613445378151259", "0.033613445378151259", "0.033613445378151259"]
-      }
+      },
+      "mocus_r": [
+        ["VE", "ES", "WP", "N2F", "PH"],
+        ["VE", "ES", "WP", "N2F", "MW"],
+        ["VE", "ES", "WP", "N2F", "UA"]
+      ],
+      "mocus_rcpp": [
+        ["VE", "ES", "WP", "N2F", "PH"],
+        ["VE", "ES", "WP", "N2F", "MW"],
+        ["VE", "ES", "WP", "N2F", "UA"]
+      ],
+      "concentrate_mocus_r": ["ES*MW*N2F*VE*WP", "ES*N2F*PH*VE*WP", "ES*N2F*UA*VE*WP"],
+      "quantify_binary": [true, true, true, true, true, true, true, true, true, true],
+      "quantify_binary_fast": [true, true, true, true, true, true, true, true, true, true],
+      "quantify_binary_row1": true,
+      "quantify_prob_scenarios": {
+        "ES": ["0.12", "0.059999999999999998", "0.23999999999999999"],
+        "MW": ["0.17999999999999999", "0.089999999999999997", "0.35999999999999999"],
+        "N2F": ["0.22", "0.11", "0.44"],
+        "PH": ["0.20000000000000001", "0.10000000000000001", "0.40000000000000002"],
+        "UA": ["0.10000000000000001", "0.050000000000000003", "0.20000000000000001"],
+        "VE": ["0.25", "0.125", "0.5"],
+        "WP": ["0.29999999999999999", "0.14999999999999999", "0.59999999999999998"]
+      },
+      "quantify_prob_one": "0.46510940800000006",
+      "quantify_prob_one_fast": "0.46510940799999995",
+      "quantify_prob_multi": ["0.46510940800000006", "0.24052691631249998", "0.80103270400000004"],
+      "quantify_prob_multi_fast": ["0.46510940799999995", "0.24052691631249989", "0.80103270400000026"]
     },
     "it_security": {
       "curate": {
@@ -191,7 +292,18 @@
         "cutsets": [4, 8, 8],
         "failures": [13, 13, 13],
         "coverage": ["0.30769230769230771", "0.61538461538461542", "0.61538461538461542"]
-      }
+      },
+      "mocus_r": [
+        ["Phishing", "Credential"],
+        "Insider",
+        "Unauthorized"
+      ],
+      "mocus_rcpp": [
+        ["Phishing", "Credential"],
+        "Insider",
+        "Unauthorized"
+      ],
+      "concentrate_mocus_r": ["Insider", "Unauthorized", "Credential*Phishing"]
     }
   },
   "populate_db": {

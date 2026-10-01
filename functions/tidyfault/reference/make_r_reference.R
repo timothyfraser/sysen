@@ -1,11 +1,13 @@
 # make_r_reference.R -- regenerate r_reference.json, the R outputs that the
-# Python port of tidyfault is tested against (tests/test_tidyfault_core.py).
+# Python port of tidyfault is tested against (tests/test_tidyfault_core.py,
+# tests/test_tidyfault_mocus.py).
 #
 # R is the reference. This script SOURCES the R functions the port mirrors
 # straight from a tidyfault source checkout (https://github.com/timothyfraser/tidyfault),
 # so the fixtures describe exactly that source, not whatever build is installed.
-# The installed tidyfault is used for one thing only: concentrate() (compiled
-# MOCUS), whose minimal cutsets feed tabulate().
+# The installed tidyfault is used only for what needs its compiled routines:
+# concentrate() and mocus_rcpp() (compiled MOCUS) and quantify(prob = TRUE,
+# fast = TRUE) (compiled quantify_prob_fast()).
 #
 # Usage (from this folder):
 #   Rscript make_r_reference.R <path-to-tidyfault-source> r_reference.json
@@ -20,9 +22,12 @@ suppressPackageStartupMessages({
   library(scales); library(jsonlite)
 })
 for (f in c("curate", "equate", "formulate", "calculate", "tabulate", "populate",
-            "quantify_prob", "gate", "gate_and", "gate_or", "gate_top", "get_gate")) {
+            "quantify_prob", "gate", "gate_and", "gate_or", "gate_top", "get_gate",
+            "mocus_fast_r", "quantify_binary", "quantify_binary_fast")) {
   source(file.path(src, "R", paste0(f, ".R")))
 }
+# mocus_rcpp(), quantify_prob_fast() and quantify(prob = TRUE, fast = TRUE) need
+# the compiled routines, so they come from the installed tidyfault.
 ld <- function(name) { e <- new.env(); load(file.path(src, "data", paste0(name, ".rda")), envir = e); e[[name]] }
 num <- function(x) sprintf("%.17g", x)   # full double precision, parsed back with float()
 
@@ -79,6 +84,27 @@ for (nm in names(trees)) {
     rec$concentrate <- cuts
     rec$tabulate <- list(mincut = tab$mincut, query = tab$query, cutsets = tab$cutsets,
                          failures = tab$failures, coverage = num(tab$coverage))
+    # every (non-minimal) cut set, in R's order: the pure-R queue and the compiled one.
+    # R expands the TOP event as AND; the Python default follows the equation (OR).
+    rec$mocus_r <- lapply(mocus_r(gates), as.character)
+    rec$mocus_rcpp <- lapply(tidyfault::mocus_rcpp(gates), as.character)
+    rec$concentrate_mocus_r <- tidyfault::concentrate(gates, method = "mocus_r")
+  }
+  ob <- tryCatch(ld(paste0(sub("^minimal$", "none", nm), "_outcomes_binary")), error = function(e) NULL)
+  op <- tryCatch(ld(paste0(sub("^minimal$", "none", nm), "_outcomes_prob")), error = function(e) NULL)
+  if (!is.null(ob)) {
+    rec$quantify_binary <- quantify_binary(f, ob)
+    rec$quantify_binary_fast <- quantify_binary_fast(f, ob)
+    rec$quantify_binary_row1 <- quantify_binary(f, unlist(ob[1, fa]))   # one unnamed scenario
+  }
+  if (!is.null(op)) {
+    p2 <- setNames(op$probability, op$event)[fa]
+    scen <- as.data.frame(rbind(p2, p2 / 2, pmin(p2 * 2, 1)))
+    rec$quantify_prob_scenarios <- lapply(as.list(scen), num)
+    rec$quantify_prob_one <- num(quantify_prob(f, newdata = p2))
+    rec$quantify_prob_one_fast <- num(tidyfault::quantify(f, p2, prob = TRUE, fast = TRUE))
+    rec$quantify_prob_multi <- num(quantify_prob(f, newdata = scen))
+    rec$quantify_prob_multi_fast <- num(tidyfault::quantify(f, scen, prob = TRUE, fast = TRUE))
   }
   res$trees[[nm]] <- rec
 }
