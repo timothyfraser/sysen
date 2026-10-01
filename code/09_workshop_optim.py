@@ -17,11 +17,11 @@
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # scipy distributions, for dunif() below
+from scipy import stats        # scipy distributions, for the .fit() check below
 import sys
-# Load our R-style distribution helpers: dnorm(), pnorm(), dweibull(), pweibull()
+# Load our R-style distribution helpers: dnorm(), pnorm(), dunif(), dweibull(), pweibull()
 sys.path.append("functions")
-from functions_distributions import dnorm, pnorm, dweibull, pweibull
+from functions_distributions import dnorm, pnorm, dunif, dweibull, pweibull
 from scipy.optimize import minimize  # optimizer (optim() in R)
 
 # Load data.frame of crops by time to failure metric `days`
@@ -83,9 +83,8 @@ crops = pd.read_csv("workshops/crops.csv")
 ## uniform ##############################################################
 
 # We could also write MULTI-PARAMETER loglikelihood functions!
-# (dunif(t, min, max) in R is stats.uniform.pdf(t, loc = min, scale = max - min))
 def ll(t, par):
-  return np.sum(np.log(stats.uniform.pdf(t, loc = par[0], scale = par[1] - par[0])))
+  return np.log(dunif(t, min = par[0], max = par[1])).sum(skipna = False)  # NaN stays NaN, as in R
 
 print(crops['days'].min(), crops['days'].max())
 # Let's try it!

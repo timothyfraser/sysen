@@ -3,9 +3,7 @@
 # Extra: attribute control charts (p, np, c and u charts)
 # Chapter: Statistical Process Control in Python
 #
-#
-# The R version writes workshops/inventory.csv, bulbs.csv and accidents.csv;
-# those csvs are shared, so this Python twin builds the same data but never writes them.
+# Data note: the R version writes the three workshops/*.csv files below; this twin never does.
 
 import numpy as np
 import pandas as pd
@@ -21,14 +19,17 @@ from plotnine import *
 # inventory example
 inventory = pd.DataFrame({
   't': list(range(1, 18)),
-  'n': [100, 60, 84, 122, 100, 50, 67, 100, 115, 75, 82, 100, 130, 67, 45, 100, 134],
-  'x': [10, 4, 7, 12, 6, 4, 5, 5, 9, 3, 6, 7, 7, 5, 2, 4, 8]
+  'n': [100, 60, 84, 122, 100, 50, 67, 100, 115,
+        75, 82, 100, 130, 67, 45, 100, 134],
+  'x': [10, 4, 7, 12, 6, 4, 5, 5, 9,
+        3, 6, 7, 7, 5, 2, 4, 8]
 })
 # inventory.to_csv("workshops/inventory.csv", index = False)
 
 bulbs = pd.DataFrame({
   'n': [200] * 20,
-  'x': [4, 8, 6, 6, 4, 8, 2, 1, 9, 6, 8, 1, 2, 9, 4, 3, 9, 6, 2, 7]
+  'x': [4, 8, 6, 6, 4, 8, 2, 1, 9, 6,
+        8, 1, 2, 9, 4, 3, 9, 6, 2, 7]
 }).assign(t = lambda d: range(1, len(d) + 1))[['t', 'x', 'n']]
 # bulbs.to_csv("workshops/bulbs.csv", index = False)
 
@@ -46,8 +47,7 @@ accidents = pd.DataFrame({
 
 # If X represents the # of defective items in n items,
 # then the probability of finding x defective in n items is:
-# from math import factorial
-# def px(x, n, p): return factorial(n) / (factorial(x) * factorial(n - x)) * p**x * (1 - p)**(n - x)
+# def px(x, n, p): return math.factorial(n) / (math.factorial(x) * math.factorial(n - x)) * p**x * (1 - p)**(n - x)
 
 # px(x = 5, n = 150, p = 0.50)
 
@@ -62,7 +62,6 @@ def ggp(t, x, n, xlab = "Time (Subgroup)", ylab = "Fraction Defective"):
   data = pd.DataFrame({'t': list(t), 'x': list(x), 'n': list(n)})
 
   # Get subgroup statistics
-  # (one row per subgroup t, so these are row-by-row in pandas)
   stat_s = data.copy()
   # Get probability
   stat_s['p'] = stat_s.x / stat_s.n
@@ -134,7 +133,6 @@ def ggnp(t, x, n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (np)")
   stat_s['xsum'] = stat_s.x.sum()
   stat_s['nsum'] = stat_s.n.sum()
   # calculate centerline
-  # (R's n() is the number of rows, len() in Python)
   stat_s['npbar'] = (stat_s.n * stat_s.p).sum() / len(stat_s)
   stat_s['pbar'] = (stat_s.n * stat_s.p).sum() / stat_s.n.sum()
   # calculate standard error
@@ -172,7 +170,6 @@ def ggnp(t, x, n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (np)")
     # Draw probability over time with points
     geom_point(data = stat_s, mapping = aes(x = 't', y = 'np')) +
     # Add text
-    # NOTE: R's hjust = 1 (right-aligned) is ha = 'right' in plotnine.
     geom_label(data = labels, mapping = aes(x = 't', y = 'value', label = 'text'), ha = 'right') +
     # Add labels
     labs(x = xlab, y = ylab, subtitle = "Mean Defective (np) Chart"))
@@ -194,7 +191,6 @@ def ggnp(t, x, n, xlab = "Time (Subgroups)", ylab = "Number of Defectives (np)")
 def ggu(t, x, xlab = "Time (Subgroups)", ylab = "Number of Defects (u)"):
 
   data = pd.DataFrame({'t': list(t), 'x': list(x)})
-  # For each time stamp...
   stat_s = data.copy()
   # get total accidents per time stamp
   stat_s['u'] = stat_s.groupby('t').x.transform('sum')

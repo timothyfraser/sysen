@@ -33,25 +33,22 @@ def r(t, lambda_):
 
 
 
-# The literal mean time to fail
-# in our observed distribution is this
-mttf = masks["left_earloop"].mean()
-# And lambda is this...
-lambda_ = 1 / mttf
-stat = pd.DataFrame({
-    "mttf": [mttf],
-    "lambda_": [lambda_],
+stat = (pd.DataFrame({
+    # The literal mean time to fail
+    # in our observed distribution is this
+    "mttf": [masks["left_earloop"].mean()]})
+  .assign(
+    # And lambda is this...
+    lambda_ = lambda x: 1 / x["mttf"],
     # The observed median is this....
-    "median": [masks["left_earloop"].median()],
+    median = masks["left_earloop"].median(),
     # But if we assume it's an exponential distribution
     # and calculate the median from lambda,
     # we get t50, which is very close.
-    "t50": [np.log(2) / lambda_]
-})
+    t50 = lambda x: np.log(2) / x["lambda_"]))
 
 # hist() in R draws a quick histogram; here we use plotnine
-gg = ggplot(masks, aes(x="left_earloop")) + geom_histogram(bins=30)
-gg
+ggplot(masks, aes(x="left_earloop")) + geom_histogram(bins=30)
 
 print(stat["lambda_"][0])
 
@@ -102,13 +99,11 @@ def r(t, lambda_):
     return np.exp(-1 * t * lambda_)
 print(r(t=100, lambda_=0.01))
 
-t_, lam_, u_ = sp.symbols("t lambda u", positive=True)
-mttf_expr = sp.integrate(sp.exp(-1 * u_ * lam_), (u_, 0, t_))
-mttf = sp.lambdify((t_, lam_), mttf_expr, "numpy")
+# (antiD() in R: sympy integrates R(t) from 0 to t; lambdify() makes it a function)
+t_, lambda_ = sp.symbols("t lambda", positive=True)
+mttf = sp.lambdify((t_, lambda_), sp.integrate(sp.exp(-1 * t_ * lambda_), (t_, 0, t_)), "numpy")
 
 # mttf(1000, 0.001)
-# (sympy can also take the limit as t -> infinity exactly)
-print(sp.limit(mttf_expr.subs(lam_, sp.Rational(1, 1000)), t_, sp.oo))
 print(mttf(np.inf, 0.001))
 
 print(1 / 0.001)

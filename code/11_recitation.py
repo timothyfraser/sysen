@@ -27,10 +27,9 @@ import sys
 import numpy as np                        # math (base R in R)
 import pandas as pd                       # data wrangling (dplyr + readr + tidyr in R)
 from plotnine import *                    # visuals (ggplot2 + viridis + metR in R)
-import statsmodels.formula.api as smf     # lm() in R
 from patsy import stateful_transform      # lets us build R's poly() for formulas
 sys.path.append("functions")
-from functions_models import tidy, glance # tidy() and glance() (broom in R)
+from functions_models import lm, tidy, glance  # lm(), plus tidy() and glance() from broom in R
 
 
 # R's poly(x, 2) makes ORTHOGONAL polynomial columns (x and x^2, rescaled so
@@ -82,7 +81,7 @@ print(cookies["yum"].min(), cookies["yum"].max())   # range() in R
 # 2. First order model #########################################
 
 # Every ingredient gets one straight-line slope.
-m0 = smf.ols("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies).fit()
+m0 = lm("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies)
 
 print(m0.params)
 # yum_predicted = 10.7652 + 5.4716 * molasses +
@@ -92,12 +91,11 @@ print(m0.params)
 # -0.32 * flour
 
 
-# (R counts sigma as one more parameter, so R's AIC and BIC read a bit higher.)
 print(glance(m0))
 
 
 
-print(glance(smf.ols("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies).fit()))
+print(glance(lm("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies)))
 
 
 # 3. Why go to second order? ###################################
@@ -125,19 +123,19 @@ print(np.corrcoef(cookies["yum"], cookies["molasses"])[0, 1])
 print(np.corrcoef(cookies["yum"], cookies["butter"])[0, 1])
 print(np.corrcoef(cookies["yum"], cookies["flour"])[0, 1])
 
-print(smf.ols("yum ~ molasses", data=cookies).fit().params)
+print(lm("yum ~ molasses", data=cookies).params)
 
-print(smf.ols("yum ~ poly(molasses, 2)", data=cookies).fit().params)
+print(lm("yum ~ poly(molasses, 2)", data=cookies).params)
 # y = 18.66 +
 # 672.81 * molasses +
 # 179.33 * molasses^2
 
-print(glance(smf.ols("yum ~ poly(molasses, 2)", data=cookies).fit()))
+print(glance(lm("yum ~ poly(molasses, 2)", data=cookies)))
 
 # 5. Full second order model, and predicting from it ###########
 
-m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
-            "poly(butter, 2) + poly(flour, 2)", data=cookies).fit()
+m = lm("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
+       "poly(butter, 2) + poly(flour, 2)", data=cookies)
 print(cookies.head())
 print(pd.DataFrame({
   "molasses": [0.75],
@@ -151,8 +149,8 @@ print(pd.DataFrame({
 # 6. Adding an interaction term ################################
 
 # I(molasses * cinnamon) says the effect of molasses depends on cinnamon.
-m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
-            "poly(butter, 2) + poly(flour, 2) + I(molasses * cinnamon)", data=cookies).fit()
+m = lm("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
+       "poly(butter, 2) + poly(flour, 2) + I(molasses * cinnamon)", data=cookies)
 
 
 # Second order polynomial with interactions
@@ -164,8 +162,8 @@ print(glance(m))
 
 
 
-m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + I(molasses * ginger)",
-            data=cookies).fit()
+m = lm("yum ~ poly(molasses, 2) + poly(ginger, 2) + I(molasses * ginger)",
+       data=cookies)
 print(glance(m))
 
 
@@ -221,7 +219,7 @@ data["band2"] = np.floor(data["yhat"] / 2) * 2
 
 # EXAMPLES FROM PAST YEARS ##########################################
 
-print(smf.ols("yum ~ molasses + ginger * cinnamon + butter + flour", data=cookies).fit().params)
+print(lm("yum ~ molasses + ginger * cinnamon + butter + flour", data=cookies).params)
 
 # ginger = +0.63402
 # cinnamon = +0.42118
@@ -248,24 +246,24 @@ print(10.32645 + 5.47159 * 0 +
 # -0.156 * ginger * cinnamon
 
 
-print(tidy(smf.ols("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies).fit()))
+print(tidy(lm("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies)))
 
 
-print(tidy(smf.ols("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies).fit()))
+print(tidy(lm("yum ~ molasses + ginger + cinnamon + butter + flour", data=cookies)))
 
 
 
 
 # First order model - direct effects
-print(smf.ols("yum ~ molasses + ginger", data=cookies).fit().params)
+print(lm("yum ~ molasses + ginger", data=cookies).params)
 
 
 
 # Interaction model
-print(smf.ols("yum ~ molasses * ginger", data=cookies).fit().params)
+print(lm("yum ~ molasses * ginger", data=cookies).params)
 
 # First order interaction model
-print(smf.ols("yum ~ molasses + ginger + I(molasses * ginger)", data=cookies).fit().params)
+print(lm("yum ~ molasses + ginger + I(molasses * ginger)", data=cookies).params)
 
 
 
@@ -274,7 +272,7 @@ print(smf.ols("yum ~ molasses + ginger + I(molasses * ginger)", data=cookies).fi
 
 # Second order model
 # (R's I(molasses^2) is I(molasses**2) in Python)
-print(smf.ols("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2)", data=cookies).fit().params)
+print(lm("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2)", data=cookies).params)
 
 
 
@@ -285,8 +283,8 @@ print(smf.ols("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2)", data=co
 
 
 # Second order interaction model (**Second order model**)
-m1 = smf.ols("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2) + "
-             "I(molasses * ginger)", data=cookies).fit()
+m1 = lm("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2) + "
+        "I(molasses * ginger)", data=cookies)
 
 print(glance(m1))
 print(m1.params)
@@ -365,8 +363,8 @@ print(grid
 
 
 # Second order interaction model (**Second order model**)
-m1 = smf.ols("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2) + "
-             "I(molasses * ginger)", data=cookies).fit()
+m1 = lm("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2) + "
+        "I(molasses * ginger)", data=cookies)
 
 
 # Miniature example
@@ -413,10 +411,10 @@ mygrid["band"] = np.floor(mygrid["yhat"] / 5) * 5
 
 
 # Second order interaction model (**Second order model**)
-m2 = smf.ols("yum ~ molasses + ginger + cinnamon + butter + flour + "
-             "I(molasses**2) + I(ginger**2) + I(cinnamon**2) + "
-             "I(butter**2) + I(flour**2) + "
-             "molasses * ginger * cinnamon * butter * flour", data=cookies).fit()
+m2 = lm("yum ~ molasses + ginger + cinnamon + butter + flour + "
+        "I(molasses**2) + I(ginger**2) + I(cinnamon**2) + "
+        "I(butter**2) + I(flour**2) + "
+        "molasses * ginger * cinnamon * butter * flour", data=cookies)
 
 print(glance(m2))
 

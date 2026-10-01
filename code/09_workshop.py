@@ -145,11 +145,9 @@ print(ll(t = crops['days'], lam = 0.014))
 
 
 # (plot() of a two-column table in base R is a scatterplot)
-lambdas = np.arange(0.00001, 1, 0.001)
-(ggplot(pd.DataFrame({
-    'lambda': lambdas,
-    'loglik': [ll(t = crops['days'], lam = l) for l in lambdas]}),
-  aes(x = 'lambda', y = 'loglik'))
+(pd.DataFrame({'lambda': np.arange(0.00001, 1, 0.001)})
+  .assign(loglik = lambda x: [ll(t = crops['days'], lam = l) for l in x['lambda']])
+  .pipe(ggplot, aes(x = 'lambda', y = 'loglik'))
   + geom_point())
 
 
@@ -180,15 +178,13 @@ print(mylambda)
 
 
 # We can visualize this process like so!
-p = output['parameter'].iloc[0]
-g = (ggplot()
+(ggplot()
   + geom_line(data = manyll, mapping = aes(x = 'parameter', y = 'loglik'), color = "steelblue")
-  + geom_vline(xintercept = p, linetype = "dashed")
+  + geom_vline(xintercept = output['parameter'].iloc[0], linetype = "dashed")
   + theme_classic(base_size = 14)
   + labs(x = "parameter (lambda)", y = "loglik (Log-Likelihood)",
          subtitle = "Maximizing the Log-Likelihood (Visually)")
   # We can actually adust the x-axis to work better with log-scales here
   + scale_x_log10()
   # We can also annnotate our visuals like so.
-  + annotate("text", x = 0.1, y = -2000, label = str(round(p, 5))))
-g
+  + annotate("text", x = 0.1, y = -2000, label = str(round(output['parameter'].iloc[0], 5))))

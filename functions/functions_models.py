@@ -34,13 +34,17 @@ def lm(formula, data):
     Parameters:
       formula: a string of the shape 'y ~ x + z'. Can perform most all the same syntax as formulas in R.
       data: a pandas DataFrame containing all vectors referenced in the formula.
-      
-    Returns: 
+
+    Returns:
       statsmodels.regression.linear_model.RegressionResultsWrapper: A model object
     """
     import statsmodels.api as sm
+    from patsy import EvalEnvironment
+    # Read the formula where lm() was CALLED, the way R does: so
+    # 'np.log(price) ~ carat', or a poly() your own script defines, just work.
+    env = EvalEnvironment.capture(eval_env = 1)
     # Create an OLS model
-    m = sm.formula.ols(formula = formula, data = data).fit()
+    m = sm.formula.ols(formula = formula, data = data, eval_env = env).fit()
     return m
 
 # sm.api.formula.ols
@@ -91,8 +95,12 @@ def glance(x):
         pandas.DataFrame: A DataFrame containing the goodness of fit statistics for model.
     """
     # Dependencies
+    from numpy import log
     from pandas import DataFrame, Series
     from statsmodels.api import OLS
+    # R counts sigma (the residual standard deviation) as one more estimated
+    # parameter; statsmodels does not. Count it, so aic and bic match R.
+    k = x.nobs - x.df_resid + 1   # coefficients estimated, plus sigma
     # Extract values as series from model into data.frame
     output = DataFrame({
         'rsq' : Series(x.rsquared),
@@ -102,8 +110,8 @@ def glance(x):
         'p_value' : Series(x.f_pvalue),
         'df': Series(x.df_model),
         'loglik': Series(x.llf),
-        'aic': Series(x.aic),
-        'bic': Series(x.bic),
+        'aic': Series(-2 * x.llf + 2 * k),
+        'bic': Series(-2 * x.llf + log(x.nobs) * k),
         'df.residual': Series(x.df_resid),
         'nobs': Series(x.nobs)
       })

@@ -127,14 +127,13 @@ dat = dat[["interval", "r_obs", "p_fail", "n_total", "r_exp"]]
 
 
 
-g1 = (ggplot() +
+(ggplot() +
   geom_col(data=dat, mapping=aes(x="interval", y="r_obs")) +
   geom_point(data=dat, mapping=aes(x="interval", y="r_obs")) +
   geom_col(data=dat, mapping=aes(x="interval", y="r_exp"),
            alpha=0.5, fill="darksalmon") +
   geom_point(data=dat, mapping=aes(x="interval", y="r_exp"),
              alpha=0.5, fill="darksalmon"))
-g1
 
 
 print(pd.DataFrame({"chisq": [((dat["r_obs"] - dat["r_exp"]) ** 2 / dat["r_exp"]).sum()]}))
@@ -163,17 +162,15 @@ print(get_chisq(t=masks["fabric"], binwidth=750,
 
 
 # rchisq() in R is stats.chi2.rvs() in Python
-g2 = (ggplot(pd.DataFrame({"x": stats.chi2.rvs(df=3, size=1000)}), aes(x="x")) +
-      geom_histogram(bins=30))
-g2
+(ggplot(pd.DataFrame({"x": stats.chi2.rvs(df=3, size=1000)}), aes(x="x")) +
+  geom_histogram(bins=30))
 
 
 
-g3 = (ggplot() +
+(ggplot() +
   geom_histogram(data=pd.DataFrame({"x": stats.chi2.rvs(df=3, size=1000)}),
                  mapping=aes(x="x"), bins=30) +
   geom_vline(xintercept=10, color="red"))
-g3
 
 
 

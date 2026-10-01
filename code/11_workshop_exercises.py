@@ -98,9 +98,7 @@ print(tidier(m))
 # controlling for damage rates.
 # Compare this against a model without the natural log.
 m1 = lm(formula="income_per_capita ~  damage_rate + by_tsunami", data=cities)
-# (log() goes inside the formula in R; here we log the outcome as a column first)
-m2 = lm(formula="log_income ~  damage_rate + by_tsunami",
-        data=cities.assign(log_income=np.log(cities["income_per_capita"])))
+m2 = lm(formula="np.log(income_per_capita) ~  damage_rate + by_tsunami", data=cities)
 
 print(screenreg(l=[m1, m2]))
 # Do your slopes change? Do your units change?
