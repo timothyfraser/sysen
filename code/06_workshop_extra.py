@@ -6,7 +6,9 @@
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # qnorm() in R is stats.norm.ppf() here
+import sys
+sys.path.append("functions")
+from functions_distributions import qnorm  # R-style helper: qnorm() works just like in R
 
 
 # EXERCISE 1 - Writing a Function #####################3
@@ -68,8 +70,6 @@ print(pd.DataFrame({"sigma_t": [water["temp"].std()]}))
 # We need 1000 water datasets --- x
 # We need a dataframe of 1000 ids -- x
 
-# For each rep, draw len(water) rows WITH replacement,
-# then stack all 1000 resampled datasets into one tall data frame.
 boot = pd.concat(
     [water.sample(n=len(water), replace=True).assign(rep=rep)
      for rep in range(1, 1001)],
@@ -79,15 +79,10 @@ stat = (boot.groupby("rep")
         .agg(sigma_t=("temp", "std"))
         .reset_index())
 
-# hist() in R draws a quick histogram; here we use plotnine
-gg = ggplot(stat, aes(x="sigma_t")) + geom_histogram(bins=30)
-gg
+ggplot(stat, aes(x="sigma_t")) + geom_histogram(bins=30)
 
-estimate = stat["sigma_t"].mean()
-se = stat["sigma_t"].std()
 print(pd.DataFrame({
-    "estimate": [estimate],
-    "se": [se],
-    "upper": [estimate + se * stats.norm.ppf(0.975)],
-    "lower": [estimate - se * stats.norm.ppf(0.975)]
-}))
+    "estimate": [stat["sigma_t"].mean()],
+    "se": [stat["sigma_t"].std()]})
+    .assign(upper=lambda d: d["estimate"] + d["se"] * qnorm(0.975),
+            lower=lambda d: d["estimate"] - d["se"] * qnorm(0.975)))

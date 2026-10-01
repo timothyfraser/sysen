@@ -3,24 +3,13 @@
 # Extra: attribute control charts (p, np, c and u charts)
 # Chapter: Statistical Process Control in Python
 #
-# Data note: the R version of this script (00_attribute_charts.R) GENERATES
-# its own data - its tribbles write workshops/inventory.csv,
-# workshops/bulbs.csv and workshops/accidents.csv. The csvs in workshops/
-# are the canonical copies, shared by the R and Python versions, so this
-# Python twin does NOT overwrite them. By default it READS the existing
-# csvs. The generating code is kept below so you can see where the numbers
-# came from; set WRITE_CSV = True to write fresh copies to a local folder
-# (LOCAL_DIR) instead - never into workshops/.
-# Run it from the repo root so the paths resolve.
+#
+# The R version writes workshops/inventory.csv, bulbs.csv and accidents.csv;
+# those csvs are shared, so this Python twin builds the same data but never writes them.
 
-import os
 import numpy as np
-import pandas as pd            # data wrangling (dplyr + readr in R)
-from plotnine import *         # visuals (ggplot2 in R)
-
-# Leave this False. The R version regenerates the shared data in workshops/.
-WRITE_CSV = False
-LOCAL_DIR = "attribute_data"   # where WRITE_CSV = True writes its copies
+import pandas as pd
+from plotnine import *
 
 # Fraction defection (p) chart
 # # of defective items
@@ -29,41 +18,29 @@ LOCAL_DIR = "attribute_data"   # where WRITE_CSV = True writes its copies
 # into 2 categories: defective or not defective
 # the probability p of a defective item is constant for every item.
 
-if WRITE_CSV:
-  os.makedirs(LOCAL_DIR, exist_ok = True)
+# inventory example
+inventory = pd.DataFrame({
+  't': list(range(1, 18)),
+  'n': [100, 60, 84, 122, 100, 50, 67, 100, 115, 75, 82, 100, 130, 67, 45, 100, 134],
+  'x': [10, 4, 7, 12, 6, 4, 5, 5, 9, 3, 6, 7, 7, 5, 2, 4, 8]
+})
+# inventory.to_csv("workshops/inventory.csv", index = False)
 
-  # inventory example
-  inventory = pd.DataFrame({
-    't': list(range(1, 18)),
-    'n': [100, 60, 84, 122, 100, 50, 67, 100, 115, 75, 82, 100, 130, 67, 45, 100, 134],
-    'x': [10, 4, 7, 12, 6, 4, 5, 5, 9, 3, 6, 7, 7, 5, 2, 4, 8]
-  })
-  inventory.to_csv(os.path.join(LOCAL_DIR, "inventory.csv"), index = False)
+bulbs = pd.DataFrame({
+  'n': [200] * 20,
+  'x': [4, 8, 6, 6, 4, 8, 2, 1, 9, 6, 8, 1, 2, 9, 4, 3, 9, 6, 2, 7]
+}).assign(t = lambda d: range(1, len(d) + 1))[['t', 'x', 'n']]
+# bulbs.to_csv("workshops/bulbs.csv", index = False)
 
-  bulbs = pd.DataFrame({
-    'n': [200] * 20,
-    'x': [4, 8, 6, 6, 4, 8, 2, 1, 9, 6, 8, 1, 2, 9, 4, 3, 9, 6, 2, 7]
-  })
-  bulbs['t'] = range(1, len(bulbs) + 1)
-  bulbs = bulbs[['t', 'x', 'n']]
-  bulbs.to_csv(os.path.join(LOCAL_DIR, "bulbs.csv"), index = False)
-
-  # Defect per product (u) chart
-  # Assumes # of defects per product follows Poisson Distribution
-  accidents = pd.DataFrame({
-    't': list(range(1, 31)),
-    'x': [9, 7, 10, 11, 7, 5, 9, 10, 8, 13,
-          8, 3, 4, 14, 10, 12, 15, 9, 6, 14,
-          9, 15, 11, 8, 4, 2, 8, 5, 3, 2]
-  })
-  accidents.to_csv(os.path.join(LOCAL_DIR, "accidents.csv"), index = False)
-else:
-  # Read the canonical copies in workshops/
-  inventory = pd.read_csv("workshops/inventory.csv")
-  bulbs = pd.read_csv("workshops/bulbs.csv")
-  # Defect per product (u) chart
-  # Assumes # of defects per product follows Poisson Distribution
-  accidents = pd.read_csv("workshops/accidents.csv")
+# Defect per product (u) chart
+# Assumes # of defects per product follows Poisson Distribution
+accidents = pd.DataFrame({
+  't': list(range(1, 31)),
+  'x': [9, 7, 10, 11, 7, 5, 9, 10, 8, 13,
+        8, 3, 4, 14, 10, 12, 15, 9, 6, 14,
+        9, 15, 11, 8, 4, 2, 8, 5, 3, 2]
+})
+# accidents.to_csv("workshops/accidents.csv", index = False)
 
 
 

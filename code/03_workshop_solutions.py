@@ -5,8 +5,6 @@
 
 # Below, please find the following content for our recitation class from Friday.
 
-# Getting Started ---------------------------------------------------------
-
 import sys
 import numpy as np
 import pandas as pd            # data wrangling
@@ -18,8 +16,6 @@ import sympy as sp             # derivatives and integrals
 # sp.integrate() is our antiD() (PDF -> CDF)
 # sp.diff() is our D()              (CDF -> PDF)
 
-# Our course functions live in functions/ at the repo root.
-# (Run this script from the root of the sigma repo.)
 sys.path.append("functions")
 from functions_distributions import (
     hist, density, tidy_density, approxfun,
@@ -64,8 +60,6 @@ dat = pd.DataFrame({'hours': range(0, 51)}).assign(
     prob=lambda df: d(x=df['hours']))
 
 dat
-
-## Plotting it ------------------------------------------------------------
 
 # How might I plot that?
 
@@ -197,8 +191,7 @@ del dat, gg, obs, dobs, p, pobs, toasters, mu
 
 # Pick 2!
 
-## Q1 ---------------------------------------------------------------------
-# What is the probability [density] the component will cost exactly $60?
+# Q1. What is the probability [density] the component will cost exactly $60?
 
 # PDF
 dnorm(x=60, mean=50, sd=5)
@@ -207,28 +200,24 @@ dnorm(x=60.5, mean=50, sd=5)
 dnorm(np.arange(0, 51), mean=50, sd=5)
 
 
-## Q2 ---------------------------------------------------------------------
-# What is the probability the component costs less than $60?
+# Q2. What is the probability the component costs less than $60?
 
 # CDF
 pnorm(60, mean=50, sd=5)
 
 
-## Q3 ---------------------------------------------------------------------
-# What is the probability that the component costs more than $60?
+# Q3. What is the probability that the component costs more than $60?
 
 1 - pnorm(60, mean=50, sd=5)
 
 
-## Q4 ---------------------------------------------------------------------
-# What price is greater than 75% of all sales?
+# Q4. What price is greater than 75% of all sales?
 
 # quantiles
 qnorm(0.75, mean=50, sd=5)
 
 
-## Q5 ---------------------------------------------------------------------
-# What is the probability it costs between $45 and $55?
+# Q5. What is the probability it costs between $45 and $55?
 
 pnorm(45, mean=50, sd=5)
 

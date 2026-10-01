@@ -84,14 +84,14 @@ print(centerlines.round(3))
 # The sd and range charts use control constants (B3/B4, D3/D4).
 # The helpers estimate them by simulation, so their limits can wobble
 # in the second decimal from run to run. One row each:
-ls = limits_s(x=water['time'], y=water['ph'])
-print(ls[['sbar', 'lower', 'upper']].mean().to_frame().T)
-lr = limits_r(x=water['time'], y=water['ph'])
-print(lr[['rbar', 'lower', 'upper']].mean().to_frame().T)
+print(limits_s(x=water['time'], y=water['ph'])
+      [['sbar', 'lower', 'upper']].mean().to_frame().T)
+print(limits_r(x=water['time'], y=water['ph'])
+      [['rbar', 'lower', 'upper']].mean().to_frame().T)
 
 # How many subgroup averages fall outside the averages-chart limits?
-out_of_control = ((stat['xbar'] > stat['upper']) | (stat['xbar'] < stat['lower'])).sum()
-print(pd.DataFrame({'out_of_control': [out_of_control]}))
+print(pd.DataFrame({'out_of_control': [
+    ((stat['xbar'] > stat['upper']) | (stat['xbar'] < stat['lower'])).sum()]}))
 
 # Describe the process under study.
 

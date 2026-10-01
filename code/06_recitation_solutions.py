@@ -9,7 +9,10 @@
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # qnorm() in R is stats.norm.ppf() here
+import sys
+# Load our R-style distribution helpers (qnorm() works just like in R)
+sys.path.append("functions")
+from functions_distributions import qnorm
 
 
 water = pd.read_csv("workshops/onsen.csv")
@@ -98,7 +101,7 @@ bands["v_short"] = bands["k"] * (bands["n_w"] - 1)  # get degrees of freedom
 # Get standard error for estimate
 bands["se"] = bands["estimate"] * np.sqrt(1 / (2 * bands["v_short"]))
 # Get z score
-bands["z"] = stats.norm.ppf(0.975)  # get position of 97.5th percentile in normal distribution
+bands["z"] = qnorm(0.975)  # get position of 97.5th percentile in normal distribution
 bands["lower"] = bands["estimate"] - bands["z"] * bands["se"]
 bands["upper"] = bands["estimate"] + bands["z"] * bands["se"]
 # (summarize() in R keeps only the new columns)
@@ -109,19 +112,18 @@ print(bands)
 print(stat)
 
 
-# Why stats.norm.ppf(0.975) rather than stats.norm.ppf(0.95)? #############
-# (stats.norm.ppf() is Python's qnorm().)
+# Why qnorm(0.975) rather than qnorm(0.95)? ###############################
 # A TWO-sided 95% interval splits alpha = 0.05 across both tails
 # (0.025 low + 0.025 high), so each end sits at the 97.5th percentile:
-# stats.norm.ppf(0.975), about 1.96. That is what `bands` above computes.
+# qnorm(0.975), about 1.96. That is what `bands` above computes.
 #
 # But the question we actually care about here is ONE-directional:
 # "is Cp below 1?" For that, report a one-sided UPPER bound (a ceiling):
-# put ALL of alpha in the upper tail, so use stats.norm.ppf(0.95), about 1.645.
+# put ALL of alpha in the upper tail, so use qnorm(0.95), about 1.645.
 # (A floor - "Cp is at least..." - would be a one-sided LOWER bound,
-# estimate - z * se, with the same stats.norm.ppf(0.95).)
+# estimate - z * se, with the same qnorm(0.95).)
 # See the chapter's "One-Sided Bounds" subsection:
-# https://timothyfraser.com/sigma/chapters/indices-and-confidence-intervals-for-statistical-process-control-in-r.html#one-sided-bounds
+# https://timothyfraser.com/sigma/chapters/indices-and-confidence-intervals-for-statistical-process-control-in-python.html#one-sided-bounds
 
 alpha = 0.05  # 95% confidence
 
@@ -131,7 +133,7 @@ ceiling_cp = pd.DataFrame({
 ceiling_cp["v_short"] = stat["k"] * (stat["n_w"] - 1)  # degrees of freedom
 ceiling_cp["se"] = ceiling_cp["estimate"] * np.sqrt(1 / (2 * ceiling_cp["v_short"]))
 # ALL of alpha in one tail: the 95th percentile, not the 97.5th
-ceiling_cp["z"] = stats.norm.ppf(1 - alpha)  # about 1.645
+ceiling_cp["z"] = qnorm(1 - alpha)  # about 1.645
 ceiling_cp["upper"] = ceiling_cp["estimate"] + ceiling_cp["z"] * ceiling_cp["se"]  # a ceiling: "Cp is at most..."
 
 print(ceiling_cp)

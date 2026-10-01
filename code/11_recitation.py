@@ -18,24 +18,27 @@
 # Inputs: workshops/gingerbread_test3.csv
 #         (the gingerbread cookie experiment, read from the repo).
 # Packages: numpy, pandas, plotnine, statsmodels, patsy
+#           (+ the course helpers in functions/functions_models.py)
 
 # Heads up: in R, one line in section 3 is deliberately pseudo-code.
 # Here it is commented out, so this script runs top to bottom.
 
+import sys
 import numpy as np                        # math (base R in R)
 import pandas as pd                       # data wrangling (dplyr + readr + tidyr in R)
 from plotnine import *                    # visuals (ggplot2 + viridis + metR in R)
 import statsmodels.formula.api as smf     # lm() in R
 from patsy import stateful_transform      # lets us build R's poly() for formulas
+sys.path.append("functions")
+from functions_models import tidy, glance # tidy() and glance() (broom in R)
 
-
-# Helpers: R's poly(), broom's glance() and tidy() ##############
 
 # R's poly(x, 2) makes ORTHOGONAL polynomial columns (x and x^2, rescaled so
 # they don't overlap). statsmodels formulas have no poly(), so we build one
 # that gives the exact same numbers as R, and remembers the training data so
 # that predict() on new data works just like R's predict().
-class Poly:
+@stateful_transform
+class poly:
     def __init__(self):
         self.x = []
 
@@ -59,24 +62,6 @@ class Poly:
         for i in range(1, degree):
             z.append((x - self.alpha[i]) * z[i] - (self.norm2[i + 1] / self.norm2[i]) * z[i - 1])
         return np.column_stack([z[j] / np.sqrt(self.norm2[j + 1]) for j in range(1, degree + 1)])
-
-poly = stateful_transform(Poly)
-
-# glance() in R: one row of model-level statistics
-# (R counts sigma as one more parameter in AIC and BIC, so we add it back
-#  to statsmodels' m.aic and m.bic to get R's numbers.)
-def glance(m):
-    return pd.DataFrame({"r_squared": [m.rsquared], "adj_r_squared": [m.rsquared_adj],
-                         "sigma": [np.sqrt(m.scale)], "statistic": [m.fvalue],
-                         "p_value": [m.f_pvalue], "df": [m.df_model], "logLik": [m.llf],
-                         "AIC": [m.aic + 2], "BIC": [m.bic + np.log(m.nobs)],
-                         "df_residual": [m.df_resid], "nobs": [int(m.nobs)]})
-
-# tidy() in R: one row per coefficient
-def tidy(m):
-    return pd.DataFrame({"term": m.params.index, "estimate": m.params.values,
-                         "std_error": m.bse.values, "statistic": m.tvalues.values,
-                         "p_value": m.pvalues.values})
 
 
 # 1. Load the cookie data ######################################
@@ -107,6 +92,7 @@ print(m0.params)
 # -0.32 * flour
 
 
+# (R counts sigma as one more parameter, so R's AIC and BIC read a bit higher.)
 print(glance(m0))
 
 
@@ -153,13 +139,13 @@ print(glance(smf.ols("yum ~ poly(molasses, 2)", data=cookies).fit()))
 m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
             "poly(butter, 2) + poly(flour, 2)", data=cookies).fit()
 print(cookies.head())
-newdata = pd.DataFrame({
+print(pd.DataFrame({
   "molasses": [0.75],
   "ginger": [1],
   "cinnamon": [1],
   "butter": [0.75],
-  "flour": [2.75]})
-print(newdata.assign(yhat=m.predict(newdata)))
+  "flour": [2.75]
+}).assign(yhat=lambda d: m.predict(d)))
 
 
 # 6. Adding an interaction term ################################
@@ -216,16 +202,15 @@ data["band1"] = np.floor(data["yhat"] / 1) * 1
   geom_tile(data=data, mapping=aes(x="molasses", y="ginger", fill="band1")) +
   scale_fill_cmap("plasma"))
 
-# Contour bands of width 2, with one label per band (geom_text_contour() in R)
+# Contour bands of width 2, with one label per band (geom_text_contour() in R);
+# each label sits on one tile picked from inside its band.
 data["band2"] = np.floor(data["yhat"] / 2) * 2
-labels = data.groupby("band2", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band2"] = np.floor(labels["yhat"] / 2) * 2
 
 (ggplot() +
   geom_tile(data=data, mapping=aes(x="molasses", y="ginger", fill="band2")) +
   scale_fill_cmap("plasma") +
-  geom_label(data=labels, mapping=aes(x="molasses", y="ginger", label="band2"),
+  geom_label(data=data.groupby("band2").sample(n=1, random_state=1),
+             mapping=aes(x="molasses", y="ginger", label="band2"),
              color="black", fill="white", size=8))
 
 
@@ -309,13 +294,11 @@ print(m1.params)
 # Built in function
 # (R's rsm package draws contour(m1, ~molasses + ginger, image = TRUE).
 #  Python has no rsm, so we predict over the observed range and tile it.)
-quick = pd.MultiIndex.from_product(
-  [np.linspace(cookies["molasses"].min(), cookies["molasses"].max(), 50),
-   np.linspace(cookies["ginger"].min(), cookies["ginger"].max(), 50)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-quick["yhat"] = m1.predict(quick)
-(ggplot() +
-  geom_tile(data=quick, mapping=aes(x="molasses", y="ginger", fill="yhat")) +
+(ggplot(pd.MultiIndex.from_product(
+    [np.linspace(cookies["molasses"].min(), cookies["molasses"].max(), 50),
+     np.linspace(cookies["ginger"].min(), cookies["ginger"].max(), 50)],
+    names=["molasses", "ginger"]).to_frame(index=False).assign(yhat=lambda d: m1.predict(d))) +
+  geom_tile(mapping=aes(x="molasses", y="ginger", fill="yhat")) +
   scale_fill_cmap("plasma"))
 
 
@@ -361,14 +344,13 @@ print(grid[grid["yhat"] == grid["yhat"].max()])
 
 
 # cut_interval(yhat, length = 10) in R: bins 10 yum points wide
-edges = np.arange(np.floor(grid["yhat"].min() / 10) * 10,
-                  np.ceil(grid["yhat"].max() / 10) * 10 + 10, 10)
-bins = (grid.assign(bin=pd.cut(grid["yhat"], bins=edges, include_lowest=True))
-        .groupby("bin", observed=True, as_index=False)
-        .agg(count=("yhat", "size")))
-bins["total"] = bins["count"].sum()
-bins["percent"] = bins["count"] / bins["total"]
-print(bins)
+print(grid
+  .assign(bin=lambda d: pd.cut(d["yhat"], include_lowest=True, bins=np.arange(
+    np.floor(d["yhat"].min() / 10) * 10, np.ceil(d["yhat"].max() / 10) * 10 + 10, 10)))
+  .groupby("bin", observed=True, as_index=False)
+  .agg(count=("yhat", "size"))
+  .assign(total=lambda d: d["count"].sum(),
+          percent=lambda d: d["count"] / d["total"]))
 
 
 
@@ -396,29 +378,25 @@ mygrid["yhat"] = m1.predict(mygrid)
 # Contour bands of 5 yum points stand in for geom_contour_fill();
 # one label per band stands in for geom_text_contour().
 grid["band"] = np.floor(grid["yhat"] / 5) * 5
-labels = grid.groupby("band", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band"] = np.floor(labels["yhat"] / 5) * 5
 
 (ggplot() +
   geom_tile(data=grid, mapping=aes(x="ginger", y="molasses", fill="band"),
             color="white", size=0.1) +
-  geom_label(data=labels, mapping=aes(x="ginger", y="molasses", label="band"),
+  geom_label(data=grid.groupby("band").sample(n=1, random_state=1),
+             mapping=aes(x="ginger", y="molasses", label="band"),
              fill="white", size=8) +
   scale_fill_cmap("plasma"))
 
 
 # Extended example
 mygrid["band"] = np.floor(mygrid["yhat"] / 5) * 5
-labels = mygrid.groupby("band", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band"] = np.floor(labels["yhat"] / 5) * 5
 
 (ggplot() +
   # Real code
   geom_tile(data=mygrid, mapping=aes(x="molasses", y="ginger", fill="band"),
             color="white", size=0.75) +
-  geom_label(data=labels, mapping=aes(x="molasses", y="ginger", label="band"),
+  geom_label(data=mygrid.groupby("band").sample(n=1, random_state=1),
+             mapping=aes(x="molasses", y="ginger", label="band"),
              fill="white", size=8) +
   # fluff
   scale_fill_cmap("plasma") +

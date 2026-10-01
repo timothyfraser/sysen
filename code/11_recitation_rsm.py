@@ -9,15 +9,17 @@
 # Heads up: in R, one line under POLYNOMIALS is deliberately pseudo-code.
 # Here it is commented out, so this script runs top to bottom.
 
+## SETUP ---------------------------------
+
+import sys
 import numpy as np                        # math (base R in R)
 import pandas as pd                       # data wrangling (dplyr + readr + tidyr in R)
 from plotnine import *                    # visuals (ggplot2 + viridis + metR in R)
-from scipy import stats                   # qnorm() and qt() in R
 import statsmodels.formula.api as smf     # lm() in R
 from patsy import stateful_transform      # lets us build R's poly() for formulas
-
-
-# Helpers: R's poly(), broom's glance() and tidy() ##############
+sys.path.append("functions")
+from functions_models import tidy, glance            # broom's tidy() and glance() in R
+from functions_distributions import qnorm, qt, rnorm  # qnorm(), qt(), rnorm() in R
 
 # R's poly(x, 2) makes ORTHOGONAL polynomial columns (x and x^2, rescaled so
 # they don't overlap). statsmodels formulas have no poly(), so we build one
@@ -49,25 +51,6 @@ class Poly:
         return np.column_stack([z[j] / np.sqrt(self.norm2[j + 1]) for j in range(1, degree + 1)])
 
 poly = stateful_transform(Poly)
-
-# glance() in R: one row of model-level statistics
-# (R counts sigma as one more parameter in AIC and BIC, so we add it back
-#  to statsmodels' m.aic and m.bic to get R's numbers.)
-def glance(m):
-    return pd.DataFrame({"r_squared": [m.rsquared], "adj_r_squared": [m.rsquared_adj],
-                         "sigma": [np.sqrt(m.scale)], "statistic": [m.fvalue],
-                         "p_value": [m.f_pvalue], "df": [m.df_model], "logLik": [m.llf],
-                         "AIC": [m.aic + 2], "BIC": [m.bic + np.log(m.nobs)],
-                         "df_residual": [m.df_resid], "nobs": [int(m.nobs)]})
-
-# tidy() in R: one row per coefficient
-def tidy(m):
-    return pd.DataFrame({"term": m.params.index, "estimate": m.params.values,
-                         "std_error": m.bse.values, "statistic": m.tvalues.values,
-                         "p_value": m.pvalues.values})
-
-
-## SETUP ---------------------------------
 
 link = "workshops/gingerbread_test3.csv"
 cookies = pd.read_csv(link)
@@ -135,13 +118,13 @@ print(glance(smf.ols("yum ~ poly(molasses, 2)", data=cookies).fit()))
 m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
             "poly(butter, 2) + poly(flour, 2)", data=cookies).fit()
 print(cookies.head())
-newdata = pd.DataFrame({
+print(pd.DataFrame({
   "molasses": [0.75],
   "ginger": [1],
   "cinnamon": [1],
   "butter": [0.75],
-  "flour": [2.75]})
-print(newdata.assign(yhat=m.predict(newdata)))
+  "flour": [2.75]
+  }).assign(yhat=lambda d: m.predict(d)))
 
 
 m = smf.ols("yum ~ poly(molasses, 2) + poly(ginger, 2) + poly(cinnamon, 2) + "
@@ -169,8 +152,8 @@ print(glance(m))
 # expand_grid() in R; pd.MultiIndex.from_product() here
 data = pd.MultiIndex.from_product(
   [np.round(np.arange(0, 3.01, 0.1), 1), np.round(np.arange(0, 3.01, 0.1), 1)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-data["yhat"] = m.predict(data)
+  names=["molasses", "ginger"]).to_frame(index=False).assign(
+  yhat=lambda d: m.predict(d))
 
 print(data)
 
@@ -188,22 +171,26 @@ newdata = pd.MultiIndex.from_product(
 
 # Extract a standard error for each prediction
 # (predict(m, se.fit = TRUE) in R; get_prediction() in statsmodels)
-p = m.get_prediction(newdata)
-print(newdata.assign(fit=p.predicted_mean, se_fit=p.se_mean,
-                     df=m.df_resid, residual_scale=np.sqrt(m.scale)))
+print(newdata.join(
+  m.get_prediction(newdata).summary_frame()[["mean", "mean_se"]]
+    # Needs to return a data.frame, so rename to R's names
+    .rename(columns={"mean": "fit", "mean_se": "se_fit"})
+  ).assign(df=m.df_resid, residual_scale=np.sqrt(m.scale)))
 # fit = yhat
 # se_fit = standard error for that prediction
 
 # Make a confidence interval for each prediction
-ci = newdata.assign(fit=p.predicted_mean, se_fit=p.se_mean,
-                    df=m.df_resid, residual_scale=np.sqrt(m.scale))
-# Use a z-score from normal distribution to get 95% CIs
-ci["lower"] = ci["fit"] - ci["se_fit"] * stats.norm.ppf(0.975)
-ci["upper"] = ci["fit"] + ci["se_fit"] * stats.norm.ppf(0.975)
-# Notice that you could use a t-score from t-distribution,
-# but it's usually very very very very close to the z-score
-ci["lower2"] = ci["fit"] - ci["se_fit"] * stats.t.ppf(0.975, df=ci["df"])
-print(ci)
+print(newdata.join(
+  m.get_prediction(newdata).summary_frame()[["mean", "mean_se"]]
+    # Needs to return a data.frame, so rename to R's names
+    .rename(columns={"mean": "fit", "mean_se": "se_fit"})
+  ).assign(df=m.df_resid, residual_scale=np.sqrt(m.scale)).assign(
+  # Use a z-score from normal distribution to get 95% CIs
+  lower=lambda d: d["fit"] - d["se_fit"] * qnorm(0.975),
+  upper=lambda d: d["fit"] + d["se_fit"] * qnorm(0.975),
+  # Notice that you could use a t-score from t-distribution,
+  # but it's usually very very very very close to the z-score
+  lower2=lambda d: d["fit"] - d["se_fit"] * qt(0.975, df=d["df"]).values))
 
 ### TRANSFORMATIONS ----------------------------
 
@@ -214,20 +201,20 @@ print(glance(mlog))
 
 # Now, our predictions and se come back in logs!
 # We must simulate, backtransform, and recompute confidence intervals
-p = mlog.get_prediction(newdata)
-print(newdata.assign(fit=p.predicted_mean, se_fit=p.se_mean))
+print(newdata.join(
+  mlog.get_prediction(newdata).summary_frame()[["mean", "mean_se"]]
+    .rename(columns={"mean": "fit", "mean_se": "se_fit"})))
 
-rng = np.random.default_rng()
-back = newdata.assign(fit=p.predicted_mean, se_fit=p.se_mean)
-back["id"] = np.arange(1, len(back) + 1)
-# Simulate, backtransform, and grab the standard deviation of that sampling distribution (se)
-# (one row per prediction, 1000 simulated draws per row)
-sims = rng.normal(loc=back["fit"].values[:, None], scale=back["se_fit"].values[:, None],
-                  size=(len(back), 1000))
-back["se"] = (sims**2).std(axis=1, ddof=1)
-back["lower"] = back["fit"] - back["se"] * stats.norm.ppf(0.975)
-back["upper"] = back["fit"] + back["se"] * stats.norm.ppf(0.975)
-print(back)
+print(newdata.join(
+  mlog.get_prediction(newdata).summary_frame()[["mean", "mean_se"]]
+    .rename(columns={"mean": "fit", "mean_se": "se_fit"})
+  ).assign(id=lambda d: np.arange(1, len(d) + 1)).assign(
+  # Simulate, backtransform, and grab the standard deviation of that sampling distribution (se)
+  # (one id at a time, like group_by(id) in R: 1000 draws per prediction)
+  se=lambda d: [(rnorm(n=1000, mean=fit, sd=se_fit)**2).std()
+                for fit, se_fit in zip(d["fit"], d["se_fit"])]
+  ).assign(lower=lambda d: d["fit"] - d["se"] * qnorm(0.975),
+           upper=lambda d: d["fit"] + d["se"] * qnorm(0.975)))
 
 
 ## RSM HEATMAP ---------------------------------
@@ -235,7 +222,6 @@ print(back)
 # plotnine has no geom_contour() (or metR's geom_contour_fill()), so we
 # cut yhat into bands of 1 or 2 yum points and fill the tiles by band -
 # each colour edge is a contour line.
-data["band1"] = np.floor(data["yhat"] / 1) * 1
 
 (ggplot() +
   geom_tile(data=data, mapping=aes(x="molasses", y="ginger", fill="yhat")) +
@@ -243,19 +229,20 @@ data["band1"] = np.floor(data["yhat"] / 1) * 1
 
 # Contour bands of width 1 (geom_contour_fill(binwidth = 1) in R)
 (ggplot() +
-  geom_tile(data=data, mapping=aes(x="molasses", y="ginger", fill="band1")) +
+  geom_tile(data=data.assign(band1=np.floor(data["yhat"] / 1) * 1),
+            mapping=aes(x="molasses", y="ginger", fill="band1")) +
   scale_fill_cmap("plasma"))
 
 # Contour bands of width 2, with one label per band (geom_text_contour() in R)
-data["band2"] = np.floor(data["yhat"] / 2) * 2
-labels = data.groupby("band2", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band2"] = np.floor(labels["yhat"] / 2) * 2
-
 (ggplot() +
-  geom_tile(data=data, mapping=aes(x="molasses", y="ginger", fill="band2")) +
+  geom_tile(data=data.assign(band2=np.floor(data["yhat"] / 2) * 2),
+            mapping=aes(x="molasses", y="ginger", fill="band2")) +
   scale_fill_cmap("plasma") +
-  geom_label(data=labels, mapping=aes(x="molasses", y="ginger", label="band2"),
+  # label the middle tile of each band
+  geom_label(data=data.assign(band2=np.floor(data["yhat"] / 2) * 2).loc[
+               lambda d: d.groupby("band2").cumcount() ==
+                         d.groupby("band2")["yhat"].transform("size") // 2],
+             mapping=aes(x="molasses", y="ginger", label="band2"),
              color="black", fill="white", size=8))
 
 
@@ -339,13 +326,13 @@ print(m1.params)
 # Built in function
 # (R's rsm package draws contour(m1, ~molasses + ginger, image = TRUE).
 #  Python has no rsm, so we predict over the observed range and tile it.)
-quick = pd.MultiIndex.from_product(
-  [np.linspace(cookies["molasses"].min(), cookies["molasses"].max(), 50),
-   np.linspace(cookies["ginger"].min(), cookies["ginger"].max(), 50)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-quick["yhat"] = m1.predict(quick)
 (ggplot() +
-  geom_tile(data=quick, mapping=aes(x="molasses", y="ginger", fill="yhat")) +
+  geom_tile(data=pd.MultiIndex.from_product(
+              [np.linspace(cookies["molasses"].min(), cookies["molasses"].max(), 50),
+               np.linspace(cookies["ginger"].min(), cookies["ginger"].max(), 50)],
+              names=["molasses", "ginger"]).to_frame(index=False).assign(
+              yhat=lambda d: m1.predict(d)),
+            mapping=aes(x="molasses", y="ginger", fill="yhat")) +
   scale_fill_cmap("plasma"))
 
 
@@ -371,16 +358,16 @@ print(m1.params)
 
 mygrid = pd.MultiIndex.from_product(
   [np.arange(0, 3.01, 0.25), np.arange(0, 4.01, 0.25)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-mygrid["yhat"] = m1.predict(mygrid)
+  names=["molasses", "ginger"]).to_frame(index=False).assign(
+  yhat=lambda d: m1.predict(d))
 
 
 # expand_grid (tidyr in R; pd.MultiIndex.from_product() here)
 
 grid = pd.MultiIndex.from_product(
   [np.round(np.arange(0, 3.01, 0.1), 1), np.round(np.arange(0, 3.01, 0.1), 1)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-grid["yhat"] = m1.predict(grid)
+  names=["molasses", "ginger"]).to_frame(index=False).assign(
+  yhat=lambda d: m1.predict(d))
 
 
 print(cookies["molasses"].min(), cookies["molasses"].max())
@@ -391,14 +378,14 @@ print(grid[grid["yhat"] == grid["yhat"].max()])
 
 
 # cut_interval(yhat, length = 10) in R: bins 10 yum points wide
-edges = np.arange(np.floor(grid["yhat"].min() / 10) * 10,
-                  np.ceil(grid["yhat"].max() / 10) * 10 + 10, 10)
-bins = (grid.assign(bin=pd.cut(grid["yhat"], bins=edges, include_lowest=True))
-        .groupby("bin", observed=True, as_index=False)
-        .agg(count=("yhat", "size")))
-bins["total"] = bins["count"].sum()
-bins["percent"] = bins["count"] / bins["total"]
-print(bins)
+print(grid.assign(
+  bin=lambda d: pd.cut(d["yhat"], include_lowest=True,
+                       bins=np.arange(np.floor(d["yhat"].min() / 10) * 10,
+                                      np.ceil(d["yhat"].max() / 10) * 10 + 10, 10))
+  ).groupby("bin", observed=True, as_index=False).agg(
+  count=("yhat", "size")
+  ).assign(total=lambda d: d["count"].sum(),
+           percent=lambda d: d["count"] / d["total"]))
 
 
 
@@ -420,35 +407,33 @@ m1 = smf.ols("yum ~ molasses + I(molasses**2) + ginger + I(ginger**2) + "
 # Miniature example
 mygrid = pd.MultiIndex.from_product(
   [np.arange(0, 3.01, 0.25), np.arange(0, 4.01, 0.25)],
-  names=["molasses", "ginger"]).to_frame(index=False)
-mygrid["yhat"] = m1.predict(mygrid)
+  names=["molasses", "ginger"]).to_frame(index=False).assign(
+  yhat=lambda d: m1.predict(d))
 
 # Contour bands of 5 yum points stand in for geom_contour_fill();
-# one label per band stands in for geom_text_contour().
-grid["band"] = np.floor(grid["yhat"] / 5) * 5
-labels = grid.groupby("band", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band"] = np.floor(labels["yhat"] / 5) * 5
-
+# one label per band (its middle tile) stands in for geom_text_contour().
 (ggplot() +
-  geom_tile(data=grid, mapping=aes(x="ginger", y="molasses", fill="band"),
+  geom_tile(data=grid.assign(band=np.floor(grid["yhat"] / 5) * 5),
+            mapping=aes(x="ginger", y="molasses", fill="band"),
             color="white", size=0.1) +
-  geom_label(data=labels, mapping=aes(x="ginger", y="molasses", label="band"),
+  geom_label(data=grid.assign(band=np.floor(grid["yhat"] / 5) * 5).loc[
+               lambda d: d.groupby("band").cumcount() ==
+                         d.groupby("band")["yhat"].transform("size") // 2],
+             mapping=aes(x="ginger", y="molasses", label="band"),
              fill="white", size=8) +
   scale_fill_cmap("plasma"))
 
 
 # Extended example
-mygrid["band"] = np.floor(mygrid["yhat"] / 5) * 5
-labels = mygrid.groupby("band", as_index=False).apply(
-  lambda d: d.iloc[[len(d) // 2]], include_groups=False).reset_index(drop=True)
-labels["band"] = np.floor(labels["yhat"] / 5) * 5
-
 (ggplot() +
   # Real code
-  geom_tile(data=mygrid, mapping=aes(x="molasses", y="ginger", fill="band"),
+  geom_tile(data=mygrid.assign(band=np.floor(mygrid["yhat"] / 5) * 5),
+            mapping=aes(x="molasses", y="ginger", fill="band"),
             color="white", size=0.75) +
-  geom_label(data=labels, mapping=aes(x="molasses", y="ginger", label="band"),
+  geom_label(data=mygrid.assign(band=np.floor(mygrid["yhat"] / 5) * 5).loc[
+               lambda d: d.groupby("band").cumcount() ==
+                         d.groupby("band")["yhat"].transform("size") // 2],
+             mapping=aes(x="molasses", y="ginger", label="band"),
              fill="white", size=8) +
   # fluff
   scale_fill_cmap("plasma") +
@@ -478,14 +463,14 @@ print(tidy(m2))
 
 mygrid = pd.MultiIndex.from_product(
   [np.arange(0, 5.01, 0.5), np.arange(0, 4.01, 0.5), [0, 1, 2], [1], [1]],
-  names=["molasses", "ginger", "cinnamon", "butter", "flour"]).to_frame(index=False)
-mygrid["yhat"] = m2.predict(mygrid)
-mygrid["band"] = np.floor(mygrid["yhat"] / 5) * 5
+  names=["molasses", "ginger", "cinnamon", "butter", "flour"]).to_frame(index=False).assign(
+  yhat=lambda d: m2.predict(d))
 
 
 (ggplot() +
   # Real code
-  geom_tile(data=mygrid, mapping=aes(x="molasses", y="ginger", fill="band"),
+  geom_tile(data=mygrid.assign(band=np.floor(mygrid["yhat"] / 5) * 5),
+            mapping=aes(x="molasses", y="ginger", fill="band"),
             color="white", size=0.75) +
 
   facet_wrap("~cinnamon") +

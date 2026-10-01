@@ -8,22 +8,13 @@
 # Packages
 import numpy as np                     # math (base R in R)
 import pandas as pd                    # data wrangling (dplyr + tidyr in R)
-import statsmodels.formula.api as smf  # linear models (lm() + broom in R)
-from scipy.stats import weibull_min    # Weibull quantiles (qweibull() in R)
+import statsmodels.formula.api as smf  # linear models (lm() in R)
 from scipy.optimize import minimize    # optimization (optim() in R)
 from plotnine import *                 # visualization (ggplot2 in R)
-
-# NOTE: R's broom gives us tidy() (a table of coefficients) and glance()
-# (a table of goodness-of-fit stats). In Python, we build those tables
-# by hand from the fitted statsmodels model.
-def tidy(m):
-    return pd.DataFrame({"estimate": m.params, "std_error": m.bse,
-                         "statistic": m.tvalues, "p_value": m.pvalues})
-
-def glance(m):
-    return pd.DataFrame({"r_squared": [m.rsquared], "adj_r_squared": [m.rsquared_adj],
-                         "sigma": [np.sqrt(m.scale)], "statistic": [m.fvalue],
-                         "p_value": [m.f_pvalue], "nobs": [int(m.nobs)]})
+import sys
+sys.path.append("functions")
+from functions_models import tidy, glance        # broom's tidy() and glance() in R
+from functions_distributions import qweibull     # qweibull() in R
 
 # STEP 1: FIND THIS DATA
 # STEP 2: LOAD THIS DATA
@@ -95,12 +86,12 @@ print(glance(m))
 # 1.0 = perfect
 
 
-print(glance(m)[['r_squared']])
+print(glance(m)[['rsq']])
 
 
 # What is the acceleration factor for characteristic life
 # as temperature increases?
-print(tidy(m).loc[['temp']])
+print(tidy(m).query("term == 'temp'"))
 
 print(m.params)
 print(m.params.iloc[1])
@@ -112,9 +103,8 @@ print(pd.DataFrame({
     'temp': [50, 100, 150],
     'chat': m.predict(pd.DataFrame({'temp': [50, 100, 150]}))}))
 
-tmp = pd.DataFrame({'temp': [50, 100, 150]})
-tmp['chat'] = m.predict(tmp)
-print(tmp)
+print(pd.DataFrame({'temp': [50, 100, 150]})
+      .assign(chat=lambda d: m.predict(d)))
 
 dat = pd.DataFrame({'temp': [50, 100, 150]})
 print(m.predict(dat))
@@ -146,7 +136,7 @@ print(m2.params)
 
 m1 = smf.ols("c ~ temp", data=alt).fit()
 print(m1.params)
-print(glance(m1)[['r_squared']])
+print(glance(m1)[['rsq']])
 # r.squared
 
 m2 = smf.ols("np.log(c) ~ temp", data=alt).fit()
@@ -157,9 +147,8 @@ print(np.exp(8.794759 + -0.009739 * 30))
 print(glance(m2))
 
 
-tmp = pd.DataFrame({'temp': np.arange(0, 200 + 1, 10)})   # seq(0, 200, by = 10) in R
-tmp['chat'] = np.exp(m2.predict(tmp))
-print(tmp)
+print(pd.DataFrame({'temp': np.arange(0, 200 + 1, 10)})   # seq(0, 200, by = 10) in R
+      .assign(chat=lambda d: np.exp(m2.predict(d))))
 
 
 def chat(temp):
@@ -184,9 +173,8 @@ print(smf.ols("c ~ temp", data=alt).fit().params)
 print(smf.ols("c ~ temp + volts", data=alt).fit().params)
 m3 = smf.ols("np.log(c) ~ temp + volts", data=alt).fit()
 
-tmp = pd.DataFrame({'temp': [0, 50, 100], 'volts': [5, 10, 15]})
-tmp['chat'] = np.exp(m3.predict(tmp))
-print(tmp)
+print(pd.DataFrame({'temp': [0, 50, 100], 'volts': [5, 10, 15]})
+      .assign(chat=lambda d: np.exp(m3.predict(d))))
 
 
 # (tidyr's expand_grid() in R; pandas builds every combination with a cross merge)
@@ -211,7 +199,7 @@ dat['label'] = dat['chat'].round()
 # Let's write ourselves a speedy weibull density function 'd()'
 def d(t, m, c):
     return (m / t) * (t / c)**m * np.exp(-1 * (t / c)**m)
-    # or weibull_min.pdf(t, m, scale = c)
+    # or dweibull(t, scale = c, shape = m)
 
 # Suppose the lifespans under normal usage are just off by a factor of ~2.5
 # then we could project the PDF under normal usage like:
@@ -237,7 +225,7 @@ airbags['d_usage'] = d(t=airbags['t'] / 2.5, c=4100, m=1.25) / 2.5
 
 # Let's write a weibull quantile function
 def q(p, c, m):
-    return weibull_min.ppf(p, m, scale=c)
+    return qweibull(p, scale=c, shape=m)
 
 # Get median under stress
 median_s = q(0.5, c=4100, m=1.25)
@@ -284,7 +272,7 @@ g
 
 
 m1 = smf.ols("np.log(c) ~ tf", data=alt).fit()
-print(glance(m1)[['r_squared']])
+print(glance(m1)[['rsq']])
 print(m1.params)
 # Interpreting our model
 # If the temperature factor tf = 0, we predict log(c) = 3.1701

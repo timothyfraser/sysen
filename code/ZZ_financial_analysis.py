@@ -8,14 +8,11 @@
 # Run it from the top of the sysen folder, so the file paths below work.
 
 # Load packages!
+import sys
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
-
-# NOTE: the R version calls get_stat_s() from functions_process_control.R.
-# functions/functions_process_control.py has the same get_stat_s(), but it is
-# slow enough that 4,000 bootstrap calls take minutes. So ggxbar2() below
-# writes out the same subgroup statistics in a few lean lines (it gives
-# identical control limits), and the group-by bootstrap is fully vectorized.
+sys.path.append("functions")
+from functions_process_control import get_stat_s
 
 
 # Get my data
@@ -27,28 +24,19 @@ data.info()  # glimpse() in R
 
 # Create some function that will perform an analysis and return a data.frame....
 
+# ggxbar2(): Modified Average Control Chart
+# x: [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+# y: [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+# Dependency: get_stat_s() from functions_process_control
 def ggxbar2(x, y, xlab="Time (Subgroups)", ylab="Average"):
-    """
-    Modified Average Control Chart
-    x: vector of subgroup values (usually time). Must be same length as `y`.
-    y: vector of metric values (eg. performance). Must be same length as `x`.
-    Same statistics as get_stat_s() in functions_process_control.py
-    """
+
     # Testing values
     # water = pd.read_csv("workshops/onsen.csv")
     # x = water["time"]; y = water["temp"]; xlab = "Time (Subgroups)"; ylab = "Average"
     data = pd.DataFrame({"x": np.asarray(x), "y": np.asarray(y)})
 
     # Get statistics for each subgroup
-    stat_s = (data.groupby("x", as_index=False)
-              .agg(xbar=("y", "mean"), s=("y", "std"), nw=("y", "count")))
-    stat_s["df"] = stat_s["nw"] - 1
-    # grand mean, pooled within-group sigma_s, and standard error per subgroup
-    stat_s["xbbar"] = stat_s["xbar"].mean()
-    stat_s["sigma_s"] = np.sqrt((stat_s["df"] * stat_s["s"]**2).sum() / stat_s["df"].sum())
-    stat_s["se"] = stat_s["sigma_s"] / np.sqrt(stat_s["nw"])
-    stat_s["upper"] = stat_s["xbbar"] + 3 * stat_s["se"]
-    stat_s["lower"] = stat_s["xbbar"] - 3 * stat_s["se"]
+    stat_s = get_stat_s(x=data["x"], y=data["y"])
 
     return stat_s
 
@@ -86,7 +74,8 @@ boot = holder
 # Alternatively, stack 1000 copies of the data with a rep id,
 # resample within each rep, and let groupby do f() for every rep at once.
 
-# f(), vectorized over reps: same steps, grouped by rep (and rep + time)
+# f(), vectorized over reps: the same get_stat_s() limits, grouped by rep
+# (and rep + time), so 1000 reps take one pass instead of 1000 calls
 def f_reps(boot):
     stat = (boot.groupby(["rep", "time"], as_index=False)
             .agg(xbar=("temp", "mean"), s=("temp", "std"), nw=("temp", "count")))

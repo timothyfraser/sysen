@@ -1,197 +1,269 @@
 # 01_workshop.py
 # Tim Fraser
-# Workshop 1: Coding in Python
+# Workshop 1: Introduction - basic operations in Python
 # Chapter: Coding in Python
-
-
-# Getting Started ---------------------------------------------------------
-
-## Installing packages ----
-# Upgrade pip
-# !python -m pip install --upgrade pip
 #
-# This course pins its Python packages in functions/requirements.txt.
-# Install them all at once:
-# !pip install -r functions/requirements.txt
+# HOW TO RUN: run this script LINE BY LINE, not all at once - it contains three
+# DELIBERATE errors (they are the point: they teach you to read Python's error
+# messages). Here each one sits inside try/except, so the whole file still runs.
 #
-# Or install the main packages for this course one at a time:
-# !pip install pandas==2.3.3
-# !pip install scipy==1.16.3
-# !pip install statsmodels==0.14.5
-# !pip install patsy==1.0.2
-# !pip install plotnine==0.15.1
-# !pip install dfply==0.3.3
+# Check out timothyfraser.com/sigma for more.
 
-# Print hello world!
-print("hello world")
+# Let's load some packages
+# !pip install pandas # install pandas
+# !pip install dfply # install dfply
+import pandas as p # turn on pandas
+from dfply import * # turn on dfply
 
-## Importing packages ----
-import pandas as p # Import pandas
-from dfply import * # Import all dfply functions
-from plotnine import * # Import all plotnine functions
+# Comments!
+# This is addition!
+1+2
 
+1+2
+1*5
+2**3
+(2*3)
+((2*2)+3)
 
-# Basic Calculations ------------------------------------------------------
-
-# Addition
-print(1+2)
-
-# Vector
-print([1,2,3,4,5])
-
-# Subtraction
-print(5 - 2)
-
-# Multiplication
-print(2 * 3)
-
-# Division
-print(15 / 5)
-
-# Exponents
-print(2**2)
-
-# Square Root
-print(16**0.5)
-
-# Order of Operations
-print(2 * 2 - 5)
-
-# Use parentheses!
-print(2 * (2 - 5))
+4**0.5
+4**(1/2)
+4**(1/3)
+p.Series([4]).pow(0.5)
 
 
-# Eg.
-print(64**.5)
-print(64**(1/3))
-print(8**2)
 
 
-# Types of Data in Python -------------------------------------------------
 
-## Values and variables ----
+myobject = p.Series([1,2,3,4,5])
 
-print(2) # this is a value
-print("x") # this is a value
+myobject
 
-myvalue = 2
+myobject + 1
 
-secondvalue = myvalue + 2
+myobject *2
 
-# In Positron, you can just print the values to console,
-# without using the print() command.
-print(secondvalue)
-
-
-## Lists (like R vectors) ----
-print([1,2,3])
-print(["Boston", "New York", "Los Angeles"])
+# Heads up: this next line is SUPPOSED to fail. Run it anyway, and read what Python
+# says back to you - you can't add 1 to words. That error message is the lesson.
+try:
+    p.Series(["corgi", "dalmatian", "terriers"]) + 1
+except TypeError as e:
+    print(e)
+["corgi", "dalmatian", "terriers", 1]
 
 
-# Here's a vector of (hypothetical) seawall heights in 10 towns.
-myheights = [4, 4.5, 5, 5, 5, 5.5, 5.5, 6, 6.5, 6.5]
 
-# And here's a list of hypothetical names for those towns
-mytowns = ["Gloucester", "Newburyport", "Provincetown",
-             "Plymouth", "Marblehead", "Chatham", "Salem",
-             "Ipswich", "Falmouth", "Boston"]
+d = p.DataFrame({
+  'doggies': ["corgis", "dalmatians", "terriers"],
+  'count': [5, 3, 2]
+})
 
-# And here's a list of years when those seawalls were each built.
-myyears = [1990, 1980, 1970, 1930, 1975, 1975, 1980, 1920, 1995, 2000]
+d['count']
+d['count'] + 1
+d['count'] + d['count']
 
-# To manipulate them, we'll need to bundle them into pandas objects.
+d['count'] = d['count'] + 1
 
+# Not this!
+# d = d['count'] + 1
 
-## DataFrames with pandas ----
+# dataframe.iloc[row,column]
+d.iloc[0,0]
+d.iloc[2,1]
+d.iloc[2, :]
+d.iloc[:, 1]
 
-# let's bundle them into a data.frame with pandas.
-sw = p.DataFrame({'height': myheights, 'town': mytowns, 'year':myyears})
-# Add 2 to all the heights
-print(sw.height + 2)
+# adding columns
+d['weight'] = [100, 40, 20]
 
-# Or just make it a series, and then add 2.
-print(p.Series(myheights) + 2)
+d['weight2'] = [100, 40, None]
 
-
-# Element-wise multiplication
-print(p.Series(myheights) * p.Series(myheights))
- # or
-print(sw.height * sw.height)
-
-# Matrix Multiplication...
-print(sw.height.dot(sw.height))
-
-
-# Common Functions in Python ----------------------------------------------
-
-# Descriptive Stats
-print(sw.height.mean())
-print(sw.height.median())
-print(sw.height.min())
-print(sw.height.max())
-print(sw.height.mode())
-print(sw.height.quantile(q = 0.5))
+# using pandas function concat()
+p.concat([
+  p.DataFrame({'x': [1,2], 'y': [3,4]}),
+  p.DataFrame({'x': [3,4], 'y': [5,6]})
+])
+p.concat([
+  p.DataFrame({'x': [1,2], 'y': [3,4], 'z': [3,4]}),
+  p.DataFrame({'x': [3,4], 'y': [5,6]})
+])
+# from pandas package
+p.DataFrame(
+  {'x': [1,2], 'y': [3,4], 'z': [3,4]}
+)
 
 
-# The Pipeline ------------------------------------------------------------
+d = d.drop(columns = 'weight2')
+
+# Heads up: this next line is SUPPOSED to fail too. We just deleted weight2
+# above, so there is nothing left to drop. Python tells you exactly that:
+# "not found in axis." Deleting a column is permanent -
+# that error is how you find out you already did it.
+try:
+    d.drop(columns = 'weight2')
+except KeyError as e:
+    print(e)
+
+
+
+
+
+
+[1,2,3,4]
+
+# Heads up: this next line is SUPPOSED to fail, for the same reason as the one
+# up at the top. Dividing is arithmetic, and these are words - it fails
+# no matter what. Compare it to the line just below it.
+try:
+    p.Series(["corgi", "dalmatian"]) / 2
+except TypeError as e:
+    print(e)
+
+p.Series([1,2,3,4]) * 2
+
+p.Series([1,2,3,4]) * p.Series([1,2,3,4])
+
+p.Series([1,2,3,4]).dot(p.Series([1,2,3,4]))
+
+
+64**0.5
+64**(1/3)
+8**2
+
+
+
+
+
+
+coffee = p.Series([2, 4, 5, 6, 7, 3,2, 3,4])
+coffee
+
+sales = p.Series([3.4,2.5, 3.2, 6.3, 4, 3, 6, 7, 8])
+sales
+
+coffee * 2
+
+# coffees per dollar
+coffee / sales
+# dollars per coffee
+sales / coffee
+
+
+
+# Let's try working with DataFrames.
+
+p.DataFrame({'coffee': coffee, 'sales': sales})
+
+dat = p.DataFrame({'coffee': coffee, 'sales': sales})
+
+dat
+
+# We can index specific values, rows, and columns...
+dat.iloc[:,0]
+dat.iloc[0,:]
+dat.iloc[0:3,:]
+dat.iloc[:, 0:2]
+
+
+
+
+# And we can use dfply functions to do actions to dataframes.
+#    >>
+
+
+
+dat[['coffee']]
+dat >> select(X.coffee)
+
+dat.head(2)
+dat >> select(X.coffee) >> head(2)
+
+
+dat >> \
+  select(X.coffee) >> \
+  head(2)
+
+
+dat >> \
+  select(X.coffee) >> \
+  row_slice([0, 1])
+
+dat >> \
+  select(X.coffee) >> \
+  mask(X.coffee > 4)
+
+
+dat >> \
+  mask(X.coffee == 4)
+dat >> \
+  mask(X.coffee >= 4)
+dat >> \
+  mask(X.coffee <= 4)
+
+dat >> \
+  mask(X.coffee.isin([4, 5]))
+
+dat >> \
+  summarize(avg = mean(X.coffee))
+
+# find the average and the standard deviation - yeah!
+dat >> \
+  summarize(avg = mean(X.coffee),
+            stdev = sd(X.coffee))
+
+p.DataFrame({
+  'adorable': [1, 0],
+  'glasses': ["yes", "no"]
+})
+
+# get 2000 values
+nums = p.DataFrame({'x': range(1, 2001)})
+nums # only shows the first and last few values
+# if you assign you get no output...
+num2 = nums >> row_slice(list(range(999, 1003)))
+
+
+# Clear my environment
+# WARNING: this WIPES everything you have made so far. Skip it if you want to
+# keep the objects above.
+globals().clear()
 
 # Here's a brief test of using dplyr-style functions
 # with dfply
 # diamonds is a dataset loaded within dfply
-
-## Select, mutate, summarize ----
-
-# Select just one column
-print(sw >> \
-  select(X.height))
-
-# Mutate a column
-print(sw >> \
-  mutate(y = X.height ** X.height))
-
-
-# Summarize a data.frame
-print(sw >>\
-  summarize(mean_value = mean(X.height) ))
-
-## Grouping, arranging, filtering ----
+import pandas as p
+from dfply import *
 
 # Get the mean price per diamond cut
-print(diamonds >>\
-  group_by(X.cut) >>\
-  summarize(price = mean(X.price )))
+diamonds >> \
+  group_by(X.cut) >> \
+  summarize(price = mean(X.price ))
 
-print(diamonds >>\
-  arrange(X.price, ascending=False) >>\
-  head())
+# Arranging
+diamonds >> \
+  arrange(X.price) >> \
+  head()
 
 
 # Filtering
-print(diamonds >>\
-  mask(X.carat < 0.23) >>\
-  head())
+diamonds >> \
+  mask(X.carat < 0.23) >> \
+  head()
 
 
-print(diamonds >>\
-  rename(CUT=X.cut, COLOR='color'))
+diamonds >> \
+  rename(CUT = X.cut, COLOR='color')
 
 
-print(diamonds >>\
-  arrange('color'))
+diamonds >> \
+  arrange(X.color)
 
-print(diamonds >>\
-  group_by('cut') >>\
-  summarize(price = mean(X.price)))
-
-## Reshaping ----
-
-# gather() stacks several columns into key-value pairs.
-# Unlike R's tidyr, dfply's gather() requires you to name
-# the key column, the value column, and the columns to stack.
-print(diamonds >>\
-  gather('measure', 'value', ['x', 'y', 'z']) >>\
-  head())
+diamonds >> \
+  group_by(X.cut) >> \
+  summarize(price = mean(X.price))
 
 
-# Clear environment
+
+# We can clean up using globals().clear()
+# WARNING: this WIPES everything you have made so far. Skip it if you want to
+# keep the objects above.
 globals().clear()

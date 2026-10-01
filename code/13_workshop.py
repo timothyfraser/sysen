@@ -6,13 +6,15 @@
 # It mirrors 13_workshop.R section by section.
 # Run it from the top of the sysen folder, so the file paths below work.
 
+import os, sys, re
 import itertools                          # expand_grid() in R
 import numpy as np                        # math (base R in R)
 import pandas as pd                       # data wrangling (dplyr + readr in R)
 from plotnine import *                    # visuals (ggplot2 in R)
-from scipy import stats                   # qnorm() in R
 import statsmodels.formula.api as smf     # lm() in R
 from statsmodels.stats.oneway import anova_oneway  # oneway.test() in R
+sys.path.append(os.path.abspath('functions'))
+from functions_distributions import qnorm # qnorm() in R
 
 # Load in data!
 # If you upload it to your workshops folder, read it in like this...
@@ -33,10 +35,10 @@ print(lattes["milk"].unique())
 
 
 # Calculate a standard error the tastiness metric in this factorial experiment
-cells = (lattes.groupby(["machine", "syrup", "art"], as_index=False)
-         .agg(s=("y", "std"), n=("y", "size")))
-se = np.sqrt((cells["s"]**2 / cells["n"]).sum())
-# (In R, with() pulls the se value out of the data.frame. Here it's already a number.)
+se = (lattes.groupby(["machine", "syrup", "art"], as_index=False)
+      .agg(s=("y", "std"), n=("y", "size"))
+      # A trick - .pipe() hands the table to a function, like with() in R
+      .pipe(lambda df: np.sqrt((df["s"]**2 / df["n"]).sum())))
 
 print(se)
 
@@ -46,37 +48,41 @@ print(se)
 
 # Calculate the direct effect of having a heart vs. foam in your latte
 
-# A tiny helper, like y[condition] in R: the y values where condition is True
-def yw(df, condition):
-  return df.loc[condition, "y"].to_numpy()
-
-print(pd.DataFrame({"dbar": [yw(lattes, lattes["machine"] == "a").mean() -
-                             yw(lattes, lattes["machine"] == "b").mean()]}))
+# .loc[condition, "y"] is like y[condition] in R: the y values where condition is True
+print(pd.DataFrame({"dbar": [lattes.loc[lattes["machine"] == "a", "y"].mean() -
+                             lattes.loc[lattes["machine"] == "b", "y"].mean()]}))
 
 # reframe() in R gives the same single row here
-print(pd.DataFrame({"dbar": [yw(lattes, lattes["machine"] == "a").mean() -
-                             yw(lattes, lattes["machine"] == "b").mean()]}))
+print(pd.DataFrame({"dbar": [lattes.loc[lattes["machine"] == "a", "y"].mean() -
+                             lattes.loc[lattes["machine"] == "b", "y"].mean()]}))
 
 
 # Without mean(), you get one difference per pair of rows (120 of them)
-print(pd.DataFrame({"dbar": yw(lattes, lattes["machine"] == "a") -
-                            yw(lattes, lattes["machine"] == "b")}))
+print(pd.DataFrame({"dbar": lattes.loc[lattes["machine"] == "a", "y"].to_numpy() -
+                            lattes.loc[lattes["machine"] == "b", "y"].to_numpy()}))
 
 
 
-myse = pd.DataFrame({"se": [np.sqrt((cells["s"]**2 / cells["n"]).sum())]})
+myse = (lattes.groupby(["machine", "syrup", "art"], as_index=False)
+        .agg(s=("y", "std"),
+             n=("y", "size"))
+        .pipe(lambda df: pd.DataFrame({"se": [np.sqrt((df["s"]**2 / df["n"]).sum())]})))
 # myse %>% {.$se} and myse %>% with(se) in R both pull out the value
 print(myse["se"].iloc[0])
 
 se = myse["se"].iloc[0]
 
 
-dbar = yw(lattes, lattes["machine"] == "a").mean() - yw(lattes, lattes["machine"] == "b").mean()
-z = stats.norm.ppf(0.975)                 # qnorm(0.975) in R
-stat = pd.DataFrame({"dbar": [dbar], "se": [se], "name": ["Machine A - B"], "z": [z],
-                     "upper": [dbar + z * se], "lower": [dbar - z * se]})
+stat = (pd.DataFrame({"dbar": [lattes.loc[lattes["machine"] == "a", "y"].mean() -
+                               lattes.loc[lattes["machine"] == "b", "y"].mean()]})
+        .assign(se=se)
+        .assign(
+          name="Machine A - B",
+          z=qnorm(0.975),
+          upper=lambda df: df["dbar"] + df["z"] * df["se"],
+          lower=lambda df: df["dbar"] - df["z"] * df["se"]))
 
-# stats.norm.cdf(3)
+# pnorm(3)
 print(stat)
 
 # colors() in R lists the named colors; plotnine uses matplotlib's named colors
@@ -120,26 +126,16 @@ print(stat)
 # When doing really nitty-gritty calculations like this,
 # functions will become our friends.
 
-# model.frame(formula, data) in R: pull the y column and the x columns named
-# in a formula string like "y ~ machine * syrup", in that order.
-def model_frame(formula, data):
-  lhs, rhs = formula.replace(" ", "").split("~")
-  xvars = rhs.replace("*", "+").split("+")
-  return data[[lhs] + xvars]
-
-# factor(x) %>% as.integer() - 1 in R: levels sorted alphabetically, coded 0, 1, ...
-def code(x):
-  levels = sorted(x.unique())
-  return x.map({lev: i for i, lev in enumerate(levels)})
-
 # Let's construct ourselves some functions
 def dbar_oneway(formula, data):
   # formula = "y ~ machine"
   # data = lattes
 
-  frame = model_frame(formula, data)
+  # model.frame(formula, data) in R: the y column, then the x columns named in the formula
+  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
   frame.columns = ["y", "a"]
-  frame = frame.assign(a=code(frame["a"]))
+  # factor(a) %>% as.integer() - 1 in R: levels sorted alphabetically, coded 0, 1, ...
+  frame = frame.assign(a=pd.Categorical(frame["a"]).codes)
 
   # R subtracts y[a==0] from y[a==1] element by element, recycling the shorter
   # vector; for balanced groups that is the same as a difference of means.
@@ -153,11 +149,11 @@ def dbar_twoway(formula, data):
   # data = lattes
 
   # Extract model frame
-  frame = model_frame(formula, data)
+  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
   frame.columns = ["y", "a", "b"]
 
   # (R codes the levels 1 and 2; we code them 0 and 1)
-  a, b = code(frame["a"]), code(frame["b"])
+  a, b = pd.Categorical(frame["a"]).codes, pd.Categorical(frame["b"]).codes
 
   x1 = frame.loc[((a == 1) & (b == 1)) | ((a == 0) & (b == 0)), "y"]
   x0 = frame.loc[((a == 0) & (b == 1)) | ((a == 1) & (b == 0)), "y"]
@@ -170,9 +166,10 @@ def dbar_threeway(formula, data):
   # formula = "y ~  machine * syrup * art"
   # data = lattes
 
-  frame = model_frame(formula, data)
+  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
   frame.columns = ["y", "a", "b", "c"]
-  a, b, c = code(frame["a"]), code(frame["b"]), code(frame["c"])
+  a, b, c = (pd.Categorical(frame["a"]).codes, pd.Categorical(frame["b"]).codes,
+             pd.Categorical(frame["c"]).codes)
 
   def ycell(aa, bb, cc):
     return frame.loc[(a == aa) & (b == bb) & (c == cc), "y"].to_numpy()
@@ -197,7 +194,7 @@ def se_factorial(formula="y ~ machine + syrup + art", data=None):
   # data = lattes
 
   # Get frame of data
-  frame = model_frame(formula, data)
+  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
   frame = frame.rename(columns={frame.columns[0]: "y"})
   # Get names of xvaraiables
   xvars = list(frame.columns[1:])
@@ -243,8 +240,7 @@ print(dbar_threeway(formula="y ~ machine * syrup * art", data=lattes))
 print(se_factorial(formula="y ~ machine + syrup + art", data=lattes))
 
 
-se_all = se_factorial(formula="y ~ machine + syrup + art", data=lattes)
-effects = pd.DataFrame({
+effects = (pd.DataFrame({
   "name": ["Torani - Monin", "Heart - Foam", "Machine B - A",
            "Machine * Art", "Machine * Syrup", "Syrup * Art",
            "Machine * Syrup * Art"],
@@ -255,10 +251,10 @@ effects = pd.DataFrame({
                dbar_twoway(formula="y ~ machine * syrup", data=lattes),
                dbar_twoway(formula="y ~ syrup * art", data=lattes),
                dbar_threeway(formula="y ~ machine * syrup * art", data=lattes)],
-  "se": se_all})
-effects["z"] = stats.norm.ppf(0.975)
-effects["upper"] = effects["estimate"] + effects["se"] * effects["z"]
-effects["lower"] = effects["estimate"] - effects["se"] * effects["z"]
+  "se": se_factorial(formula="y ~ machine + syrup + art", data=lattes)})
+  .assign(z=qnorm(0.975),
+          upper=lambda df: df["estimate"] + df["se"] * df["z"],
+          lower=lambda df: df["estimate"] - df["se"] * df["z"]))
 
 print(effects)
 gg = (ggplot() +
@@ -361,23 +357,26 @@ print(m.params)
 # Tastiness = 54 + -26 * (1) + 15 * (1) - 8 * (1)(1)
 # Tastiness = 54 + -26 * (0) + 15 * (0) - 8 * (0)(0)
 
-newdata = pd.DataFrame({"machine": ["b"], "art": ["heart"]})
-print(newdata.assign(y=m.predict(newdata).to_numpy()))
+print(pd.DataFrame({"machine": ["b"], "art": ["heart"]})
+      .assign(y=lambda df: m.predict(df).to_numpy()))
 
 
 # predict(..., se.fit = TRUE) in R: get_prediction() gives the fit and its standard error
-pred = m.get_prediction(newdata).summary_frame()
-print(pred[["mean", "mean_se"]].rename(columns={"mean": "yhat", "mean_se": "se"}))
+print(m.get_prediction(pd.DataFrame({"machine": ["b"], "art": ["heart"]})).summary_frame()
+      [["mean", "mean_se"]].rename(columns={"mean": "yhat", "mean_se": "se"}))
 
 
 grid = pd.DataFrame(
   list(itertools.product(["a", "b"], ["heart", "foamy"])),
   columns=["machine", "art"])
 
-pred = m.get_prediction(grid).summary_frame()
-effects = grid.assign(fit=pred["mean"].to_numpy(), se=pred["mean_se"].to_numpy())
-effects["z"] = stats.norm.ppf(0.975)
-effects["upper"] = effects["fit"] + effects["se"] * effects["z"]
-effects["lower"] = effects["fit"] - effects["se"] * effects["z"]
+# Use each prediction's own standard error (se.fit), not the overall
+# factorial standard error computed earlier in this script
+effects = (m.get_prediction(grid).summary_frame()
+  # mean is fit, mean_se is se.fit; put them next to the grid
+  .pipe(lambda pred: grid.assign(fit=pred["mean"].to_numpy(), se=pred["mean_se"].to_numpy()))
+  .assign(z=qnorm(0.975),
+          upper=lambda df: df["fit"] + df["se"] * df["z"],
+          lower=lambda df: df["fit"] - df["se"] * df["z"]))
 
 print(effects)

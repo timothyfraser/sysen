@@ -15,20 +15,15 @@
 #   rates (lambdas) -> lambdas that are themselves uncertain and simulated.
 
 # Inputs: none. Every number is typed into the script; no data files are read.
-# Packages: numpy, pandas, plotnine, scipy
+# Packages: numpy, pandas, plotnine (plus our functions_distributions helpers)
 
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # distributions (pexp in R)
-
-# A random number generator (R uses its own global one)
-rng = np.random.default_rng()
-
-# In R, pexp(t, rate = lambda) is the exponential CDF.
-# In scipy, the same thing is stats.expon.cdf(t, scale = 1 / lambda).
-def pexp(t, rate):
-  return stats.expon.cdf(t, scale = 1 / rate)
+import sys
+# Load our R-style distribution helpers: pexp() and rnorm() work just like in R
+sys.path.append("functions")
+from functions_distributions import pexp, rnorm
 
 # 1. A top event function ######################################
 
@@ -144,13 +139,13 @@ myprobs.info()
 
 # What if lambdas vary?
 
-n = 1000
 mylambdas = pd.DataFrame({
-  'b_lambda': rng.normal(loc = 0.0000001, scale = 0.00000001, size = n),
-  's_lambda': rng.normal(loc = 0.002, scale = 0.00001, size = n),
-  'h_lambda': rng.normal(loc = 0.00001, scale = 0.00000001, size = n),
-  'o_lambda': rng.normal(loc = 0.001, scale = 0.00001, size = n),
-  'n_lambda': rng.normal(loc = 0.00001, scale = 0.00000002, size = n)
+  'n': 1000,
+  'b_lambda': rnorm(n = 1000, mean = 0.0000001, sd = 0.00000001),
+  's_lambda': rnorm(n = 1000, mean = 0.002, sd = 0.00001),
+  'h_lambda': rnorm(n = 1000, mean = 0.00001, sd = 0.00000001),
+  'o_lambda': rnorm(n = 1000, mean = 0.001, sd = 0.00001),
+  'n_lambda': rnorm(n = 1000, mean = 0.00001, sd = 0.00000002)
 })
 
 

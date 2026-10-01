@@ -9,10 +9,10 @@
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # distributions (pexp, qnorm in R)
-
-# A random number generator (R uses its own global one)
-rng = np.random.default_rng()
+import sys
+# Load our R-style distribution helpers: pexp(), rbinom(), rnorm(), qnorm()
+sys.path.append("functions")
+from functions_distributions import pexp, rbinom, rnorm, qnorm
 
 # PART 1: Using Raw Probabilities #################################
 def f1(m, c, d, k):
@@ -29,11 +29,6 @@ print(probs1)
 
 # But if we knew the failure rate of each event,
 # we could calculate the probability of the top event at any time t!
-
-# In R, pexp(t, rate = lambda) is the exponential CDF.
-# In scipy, the same thing is stats.expon.cdf(t, scale = 1 / lambda).
-def pexp(t, rate):
-  return stats.expon.cdf(t, scale = 1 / rate)
 
 def f2(t, lambda_m, lambda_c, lambda_d, lambda_k):
   # Get probability at time t...
@@ -54,12 +49,12 @@ print(probs2.head(3))
 
 
 # PART 3: Simulating Uncertainty in Probabilities ###################
-n = 1000
 probs3 = pd.DataFrame({
-  'prob_m': rng.binomial(n = 1, p = 0.50, size = n),
-  'prob_c': rng.binomial(n = 1, p = 0.99, size = n),
-  'prob_d': rng.binomial(n = 1, p = 0.25, size = n),
-  'prob_k': rng.binomial(n = 1, p = 0.01, size = n)
+  'n': 1000,
+  'prob_m': rbinom(n = 1000, size = 1, prob = 0.50),
+  'prob_c': rbinom(n = 1000, size = 1, prob = 0.99),
+  'prob_d': rbinom(n = 1000, size = 1, prob = 0.25),
+  'prob_k': rbinom(n = 1000, size = 1, prob = 0.01)
 })
 # Calculate probability of top event for each simulation
 probs3['prob_top'] = f1(m = probs3['prob_m'], c = probs3['prob_c'],
@@ -78,10 +73,10 @@ print(pd.DataFrame({
 
 
 def f4(t, lambda_m, lambda_c, lambda_d, lambda_k):
-  sim_lambda_m = rng.normal(loc = lambda_m, scale = 0.0001)
-  sim_lambda_c = rng.normal(loc = lambda_c, scale = 0.00001)
-  sim_lambda_d = rng.normal(loc = lambda_d, scale = 0.000002)
-  sim_lambda_k = rng.normal(loc = lambda_k, scale = 0.000002)
+  sim_lambda_m = rnorm(n = 1, mean = lambda_m, sd = 0.0001)
+  sim_lambda_c = rnorm(n = 1, mean = lambda_c, sd = 0.00001)
+  sim_lambda_d = rnorm(n = 1, mean = lambda_d, sd = 0.000002)
+  sim_lambda_k = rnorm(n = 1, mean = lambda_k, sd = 0.000002)
 
   # Get probability at time t...
   sim_prob_m = pexp(t, rate = sim_lambda_m)
@@ -102,12 +97,11 @@ probs4['prob'] = f4(t = probs4['t'], lambda_m = 0.01, lambda_c = 0.001,
 # But we really probably want MANY random simulations per time period.
 # In R, reframe() returns MANY rows per group; in Python we build one
 # 100-row frame per replicate and stack them with pd.concat().
-t = np.arange(1, 101)
 probs5 = pd.concat([
   pd.DataFrame({
     'reps': r,
-    't': t,
-    'prob': f4(t = t, lambda_m = 0.01, lambda_c = 0.001,
+    't': np.arange(1, 101),
+    'prob': f4(t = np.arange(1, 101), lambda_m = 0.01, lambda_c = 0.001,
                lambda_d = 0.025, lambda_k = 0.00005)})
   for r in range(1, 1001)], ignore_index = True)
 
@@ -125,7 +119,7 @@ probs6 = (probs5
     upper = lambda x: x.quantile(0.975))
   .reset_index())
 # Approximated lower and upper 95% confidence intervals
-probs6['lower_approx'] = probs6['mu'] - stats.norm.ppf(0.025) * probs6['sigma']
-probs6['upper_approx'] = probs6['mu'] + stats.norm.ppf(0.975) * probs6['sigma']
+probs6['lower_approx'] = probs6['mu'] - qnorm(0.025) * probs6['sigma']
+probs6['upper_approx'] = probs6['mu'] + qnorm(0.975) * probs6['sigma']
 
 print(probs6.head(3))

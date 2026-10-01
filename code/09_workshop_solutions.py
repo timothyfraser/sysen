@@ -14,7 +14,11 @@
 import numpy as np             # math (base R in R)
 import pandas as pd            # data wrangling (dplyr + readr in R)
 from plotnine import *         # visuals (ggplot2 in R)
-from scipy import stats        # distributions (dunif, dnorm, dweibull in R)
+from scipy import stats        # scipy distributions, for dunif() below
+import sys
+# Load our R-style distribution helpers: dnorm(), pnorm(), dweibull(), pweibull()
+sys.path.append("functions")
+from functions_distributions import dnorm, pnorm, dweibull, pweibull
 from scipy.optimize import minimize  # optimizer (optim() in R)
 
 # Load data.frame of crops by time to failure metric `days`
@@ -251,10 +255,10 @@ def ll(t, par):
   # Our parameters input is now going to be vector of 2 values
   # par[0] gives the first value, the mean (Python counts from 0)
   # par[1] gives the second value, the standard deviation
-  return np.sum(np.log(stats.norm.pdf(t, loc = par[0], scale = par[1])))
+  return np.log(dnorm(t, mean = par[0], sd = par[1])).sum(skipna = False)  # NaN stays NaN, as in R
 
 # Let's try it out!
-# Heads up: this next line is SUPPOSED to fail. stats.norm.pdf(days, 0, 1)
+# Heads up: this next line is SUPPOSED to fail. dnorm(days, 0, 1)
 # underflows to 0, log(0) is -inf, and the optimizer cannot search.
 # R's optim() stops with an error; minimize() just gives back a useless answer
 # (success False, or the starting values unchanged). Read it - diagnosing it
@@ -267,10 +271,10 @@ print(bad.success, bad.x, bad.fun)
 
 # Well, we're giving it super weird starting parameters. (0,1)
 # What densities would they produce?
-print(stats.norm.pdf(crops['days'], loc = 0, scale = 1))
+print(dnorm(crops['days'], mean = 0, sd = 1))
 # What loglikelihood would they produce?
 with np.errstate(divide = 'ignore'):
-  print(np.sum(np.log(stats.norm.pdf(crops['days'], loc = 0, scale = 1))))
+  print(np.sum(np.log(dnorm(crops['days'], mean = 0, sd = 1))))
 
 # Let's look at our real values...
 print(crops['days'].values)
@@ -283,16 +287,15 @@ print(q2.x)
 # Yay! It works!
 
 
-print(stats.norm.cdf(np.arange(1, 11), loc = q2.x[0], scale = q2.x[1]))
+print(pnorm(np.arange(1, 11), mean = q2.x[0], sd = q2.x[1]))
 
 
 # Let's try a weibull!
-# (pweibull(q, shape, scale) in R is stats.weibull_min.cdf(q, c = shape, scale = scale))
-print(stats.weibull_min.cdf(1, c = 2, scale = 1))
+print(pweibull(1, shape = 2, scale = 1))
 
 
 def llweibull(t, par):
-  return np.sum(np.log(stats.weibull_min.pdf(t, c = par[0], scale = par[1])))
+  return np.log(dweibull(t, shape = par[0], scale = par[1])).sum(skipna = False)  # NaN stays NaN, as in R
 
 q3 = minimize(lambda par: -llweibull(t = crops['days'], par = par),
               x0 = [1, 1000], method = "Nelder-Mead")
