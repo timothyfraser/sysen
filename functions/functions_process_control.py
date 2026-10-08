@@ -1522,3 +1522,289 @@ def get_index(x, y, index="cp", upper=None, lower=None,
     
     return output
     
+
+
+# Tests for special causes ----------------------------------------------------
+#
+# A control chart can flag trouble even when every point sits inside the
+# control limits. The course reads a chart with 8 tests for special causes
+# (the Western Electric and Nelson rules), numbered and worded exactly as in
+# the chapter "Statistical Process Control", section "Reading a Control Chart:
+# The 8 Tests for Special Causes":
+#
+#   Test 1. One point beyond zone A (outside the control limits)
+#   Test 2. Two out of three points in a row beyond zone B (same side)
+#   Test 3. Four out of five points in a row beyond zone C (same side)
+#   Test 4. Eight points in a row on the same side of the centerline
+#   Test 5. Six points in a row steadily increasing or decreasing
+#   Test 6. Fifteen points in a row in zone C (above and below the centerline)
+#   Test 7. Eight points in a row on both sides of the centerline, none in zone C
+#   Test 8. Fourteen points in a row alternating up and down
+#
+# ZONES. Zone C is the first third of the distance from the centerline to a
+# control limit, zone B the second third, zone A the last third. The distance
+# is measured to the limit ON THAT SIDE, so a chart whose limits are not
+# symmetric (an s, R or moving range chart, whose lower limit is often
+# floored at 0) still gets three equal zones on each side. For a symmetric
+# chart this is the usual 1, 2 and 3 sigma.
+#   - "beyond zone C" = more than 1/3 of the way to the limit
+#   - "beyond zone B" = more than 2/3 of the way to the limit
+#   - "in zone C"     = not beyond zone C (a point ON the 1/3 line is in zone C)
+#   - "beyond zone A" = strictly above the upper limit or below the lower one
+#   - a point exactly ON the centerline is on neither side, so it ends a
+#     Test 4 run and does not count toward Tests 2, 3 or 7.
+#   - "steadily increasing" (Test 5) and "alternating" (Test 8) need every
+#     step to go strictly up or down; a tie ends the run.
+#
+# WHERE. Each test slides a window of its own length along the points in the
+# order given (1 point for Test 1, 3 for Test 2, 5 for Test 3, 8 for Test 4,
+# 6 for Test 5, 15 for Test 6, 8 for Test 7, 14 for Test 8). The `where`
+# column lists every subgroup in every window that trips the test, in time
+# order, separated by ", ". So a 2-out-of-3 signal lists all 3 subgroups of
+# its window, and a 9-point run on one side lists all 9 subgroups.
+#
+# EDGE CASES.
+#   - Fewer points than a test's window: that test cannot fire, so it passes
+#     (passed = True, where = "").
+#   - A missing (NaN / None) statistic or limit breaks every run: no window
+#     that contains it can trip a test, and it is never listed in `where`.
+
+SPC_TEST_DESCRIPTIONS = [
+    "One point beyond zone A (outside the control limits)",
+    "Two out of three points in a row beyond zone B (same side)",
+    "Four out of five points in a row beyond zone C (same side)",
+    "Eight points in a row on the same side of the centerline",
+    "Six points in a row steadily increasing or decreasing",
+    "Fifteen points in a row in zone C (above and below the centerline)",
+    "Eight points in a row on both sides of the centerline, none in zone C",
+    "Fourteen points in a row alternating up and down",
+]
+
+
+def _spc_format_id(v):
+    # Write a subgroup id the same way R does ("5", "2.5", "2024-01-01")
+    if isinstance(v, (bool, np.bool_)):
+        return "TRUE" if v else "FALSE"
+    if isinstance(v, (int, float, np.integer, np.floating)):
+        return format(float(v), ".15g")
+    if isinstance(v, pd.Timestamp) and v == v.normalize():
+        return v.strftime("%Y-%m-%d")
+    return str(v)
+
+
+def spc_tests_from(x, stat, center, lower=None, upper=None, sigma=None, description=True):
+    """
+    Run the 8 Tests for Special Causes on Any Control Chart
+
+    Runs the 8 tests for special causes on a control chart you have already
+    computed: the subgroups, the statistic plotted for each subgroup, the
+    centerline, and either the control limits or sigma (the standard error of
+    the plotted statistic). See the notes above for exactly how the zones and
+    the `where` column are defined.
+
+    Parameters
+    ----------
+    x : array-like
+        Subgroup ids (usually time), in time order. Must be same length as stat.
+    stat : array-like
+        The statistic plotted for each subgroup (e.g. xbar, s, r, or mr).
+    center : float or array-like
+        The centerline. One value, or one per subgroup.
+    lower : float or array-like, optional
+        The lower control limit. One value, or one per subgroup.
+        Supply lower and upper, OR sigma.
+    upper : float or array-like, optional
+        The upper control limit. One value, or one per subgroup.
+    sigma : float or array-like, optional
+        The standard error of the plotted statistic. If given instead of lower
+        and upper, the limits are center -/+ 3 * sigma.
+    description : bool, optional
+        Include the plain-text description column? Default is True.
+
+    Returns
+    -------
+    pd.DataFrame
+        8 rows, one per test, with columns: test_id (1 to 8), passed (True when
+        the test finds NO signal), description (what the test looks for), where
+        (the subgroup ids where the signal occurs, e.g. "5, 6, 7"; "" when passed).
+
+    Examples
+    --------
+    >>> spc_tests_from(x=range(1, 13),
+    ...                stat=[10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10],
+    ...                center=10, lower=7, upper=13)
+    >>> # The same chart, described by sigma instead of limits
+    >>> spc_tests_from(x=range(1, 13),
+    ...                stat=[10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10],
+    ...                center=10, sigma=1)
+    """
+    x = list(x)
+    stat = np.array(pd.to_numeric(pd.Series(list(stat), dtype=object), errors="raise"), dtype=float)
+    n = len(stat)
+    if len(x) != n:
+        raise ValueError("x and stat must be the same length")
+
+    # Work out the control limits: either lower AND upper, or sigma
+    if lower is None and upper is None:
+        if sigma is None:
+            raise ValueError("supply either lower and upper, or sigma")
+        center_arr = np.asarray(center, dtype=float)
+        sigma_arr = np.asarray(sigma, dtype=float)
+        lower = center_arr - 3 * sigma_arr
+        upper = center_arr + 3 * sigma_arr
+    elif lower is None or upper is None:
+        raise ValueError("supply both lower and upper (or sigma instead of both)")
+    elif sigma is not None:
+        raise ValueError("supply lower and upper, OR sigma, not both")
+
+    # Let center, lower and upper be one value, or one value per subgroup
+    def stretch(v, name):
+        v = np.atleast_1d(np.asarray(pd.Series(np.atleast_1d(v)).astype(float), dtype=float))
+        if len(v) == 1:
+            return np.repeat(v, n)
+        if len(v) == n:
+            return v
+        raise ValueError(name + " must have length 1 or the same length as stat")
+    center = stretch(center, "center")
+    lower = stretch(lower, "lower")
+    upper = stretch(upper, "upper")
+
+    # Which points can be tested? (a missing value breaks every run)
+    ok = ~(np.isnan(stat) | np.isnan(center) | np.isnan(lower) | np.isnan(upper))
+
+    with np.errstate(invalid="ignore"):
+        # Distance from the centerline, and the distance to the limit on that side
+        dev = stat - center
+        span = np.where(dev >= 0, upper - center, center - lower)
+        # Which side of the centerline? (+1 above, -1 below, 0 on it)
+        side = np.sign(dev)
+        # Beyond zone C = more than 1/3 of the way to the limit;
+        # beyond zone B = more than 2/3 of the way to the limit
+        beyond_c = 3 * np.abs(dev) > span
+        beyond_b = 3 * np.abs(dev) > 2 * span
+        # Beyond zone A = outside the control limits
+        beyond_a = (stat > upper) | (stat < lower)
+
+    # For one test: slide a window of `size` points along the chart, and mark
+    # every point in every window where trips(i) is True (i = the window's points)
+    def flag(size, trips):
+        hit = np.zeros(n, dtype=bool)
+        for start in range(0, n - size + 1):
+            i = np.arange(start, start + size)
+            if ok[i].all() and trips(i):
+                hit[i] = True
+        return hit
+
+    def trend(i):
+        d = np.diff(stat[i])
+        return bool((d > 0).all() or (d < 0).all())
+
+    def alternating(i):
+        d = np.sign(np.diff(stat[i]))
+        return bool((d != 0).all() and (d[1:] == -d[:-1]).all())
+
+    hits = [
+        # Test 1: one point beyond zone A
+        flag(1, lambda i: bool(beyond_a[i].all())),
+        # Test 2: two out of three points in a row beyond zone B, on one side
+        flag(3, lambda i: bool((beyond_b[i] & (side[i] == 1)).sum() >= 2
+                               or (beyond_b[i] & (side[i] == -1)).sum() >= 2)),
+        # Test 3: four out of five points in a row beyond zone C, on one side
+        flag(5, lambda i: bool((beyond_c[i] & (side[i] == 1)).sum() >= 4
+                               or (beyond_c[i] & (side[i] == -1)).sum() >= 4)),
+        # Test 4: eight points in a row on the same side of the centerline
+        flag(8, lambda i: bool((side[i] == 1).all() or (side[i] == -1).all())),
+        # Test 5: six points in a row steadily increasing or decreasing
+        flag(6, trend),
+        # Test 6: fifteen points in a row in zone C
+        flag(15, lambda i: bool((~beyond_c[i]).all())),
+        # Test 7: eight points in a row on both sides of the centerline, none in zone C
+        flag(8, lambda i: bool(beyond_c[i].all() and (side[i] == 1).any()
+                               and (side[i] == -1).any())),
+        # Test 8: fourteen points in a row alternating up and down
+        flag(14, alternating),
+    ]
+
+    ids = [_spc_format_id(v) for v in x]
+
+    output = pd.DataFrame({
+        'test_id': list(range(1, 9)),
+        'passed': [bool(not h.any()) for h in hits],
+        'description': SPC_TEST_DESCRIPTIONS,
+        'where': [", ".join(ids[j] for j in np.flatnonzero(h)) for h in hits],
+    })
+
+    if not description:
+        output = output.drop(columns='description')
+
+    return output
+
+
+def spc_tests(x, y, chart="xbar", description=True):
+    """
+    Is This Process Stable? The 8 Tests for Special Causes
+
+    Draws no chart: it works out the same centerline and control limits as
+    ggxbar(), ggs(), ggr() or ggmr(), then runs the 8 tests for special causes
+    on that chart with spc_tests_from().
+
+    Parameters
+    ----------
+    x : array-like
+        Vector of subgroup values (usually time). Must be same length as y.
+    y : array-like
+        Vector of metric values (e.g., performance). Must be same length as x.
+    chart : str, optional
+        Which chart to test: "xbar" (averages; the same limits as ggxbar(),
+        from get_stat_s()), "s" (standard deviation; limits_s()), "r" (range;
+        limits_r()), or "mr" (moving range; limits_mr(), one measurement per
+        subgroup). Default is "xbar".
+    description : bool, optional
+        Include the plain-text description column? Default is True.
+
+    Returns
+    -------
+    pd.DataFrame
+        8 rows, one per test: test_id, passed, description, where.
+        See spc_tests_from().
+
+    Notes
+    -----
+    The s, R and moving range limits come from SIMULATED control constants
+    (bn(), dn()), so run np.random.seed() first if you need the exact same
+    answer twice.
+
+    Examples
+    --------
+    >>> import pandas as pd
+    >>> water = pd.read_csv("workshops/onsen.csv")
+    >>> spc_tests(x=water['time'], y=water['temp'], chart="xbar")
+    >>> spc_tests(x=water['time'], y=water['temp'], chart="s")
+    """
+    if chart not in ("xbar", "s", "r", "mr"):
+        raise ValueError("chart must be one of: xbar, s, r, mr")
+
+    if chart == "xbar":
+        # Averages chart: the grand mean, -/+ 3 standard errors (as in ggxbar())
+        stat = get_stat_s(x=x, y=y)
+        value, center = 'xbar', 'xbbar'
+    elif chart == "s":
+        # Standard deviation chart: sbar, with limits B3 * sbar and B4 * sbar
+        stat = limits_s(x=x, y=y)
+        value, center = 's', 'sbar'
+    elif chart == "r":
+        # Range chart: rbar, with limits D3 * rbar and D4 * rbar
+        stat = limits_r(x=x, y=y)
+        value, center = 'r', 'rbar'
+    else:
+        # A moving range chart needs ONE measurement per subgroup
+        if pd.Series(list(x)).duplicated().any():
+            raise ValueError("chart = 'mr' needs one measurement per subgroup, but x repeats "
+                             "some values; use chart = 'xbar', 's' or 'r' for subgroups")
+        # Moving range chart: mrbar, with limits 0 and mrbar + 3 * sigma_s
+        stat = limits_mr(x=x, y=y)
+        value, center = 'mr', 'mrbar'
+
+    return spc_tests_from(x=stat['x'], stat=stat[value], center=stat[center],
+                          lower=stat['lower'], upper=stat['upper'],
+                          description=description)

@@ -100,6 +100,8 @@ Each name links to the source, if you're curious how it works.
 | [`cpk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Capability Index (for uncentered, stable processes) |
 | [`ppk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Process Performance Index (for uncentered, unstable processes) |
 | [`get_index`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Bootstrap Process Capability/Performance Index with Confidence Intervals |
+| [`spc_tests_from`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Run the 8 Tests for Special Causes on Any Control Chart |
+| [`spc_tests`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.R) | Is This Process Stable? The 8 Tests for Special Causes |
 
 ### `functions_k.R`
 
@@ -200,6 +202,8 @@ Each name links to the source, if you're curious how it works.
 | [`cpk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Capability Index (for uncentered, stable processes) |
 | [`ppk`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Process Performance Index (for uncentered, unstable processes) |
 | [`get_index`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Bootstrap Process Capability/Performance Index with Confidence Intervals |
+| [`spc_tests_from`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Run the 8 Tests for Special Causes on Any Control Chart |
+| [`spc_tests`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_process_control.py) | Is This Process Stable? The 8 Tests for Special Causes |
 
 ### `functions_factorial.py`
 

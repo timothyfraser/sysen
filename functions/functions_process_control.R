@@ -1309,3 +1309,230 @@ get_index = function(x, y, index = "cp", upper, lower,
   
   return(output)
 }
+
+
+# Tests for special causes ----------------------------------------------------
+#
+# A control chart can flag trouble even when every point sits inside the
+# control limits. The course reads a chart with 8 tests for special causes
+# (the Western Electric and Nelson rules), numbered and worded exactly as in
+# the chapter "Statistical Process Control", section "Reading a Control Chart:
+# The 8 Tests for Special Causes":
+#
+#   Test 1. One point beyond zone A (outside the control limits)
+#   Test 2. Two out of three points in a row beyond zone B (same side)
+#   Test 3. Four out of five points in a row beyond zone C (same side)
+#   Test 4. Eight points in a row on the same side of the centerline
+#   Test 5. Six points in a row steadily increasing or decreasing
+#   Test 6. Fifteen points in a row in zone C (above and below the centerline)
+#   Test 7. Eight points in a row on both sides of the centerline, none in zone C
+#   Test 8. Fourteen points in a row alternating up and down
+#
+# ZONES. Zone C is the first third of the distance from the centerline to a
+# control limit, zone B the second third, zone A the last third. The distance
+# is measured to the limit ON THAT SIDE, so a chart whose limits are not
+# symmetric (an s, R or moving range chart, whose lower limit is often
+# floored at 0) still gets three equal zones on each side. For a symmetric
+# chart this is the usual 1, 2 and 3 sigma.
+#   - "beyond zone C" = more than 1/3 of the way to the limit
+#   - "beyond zone B" = more than 2/3 of the way to the limit
+#   - "in zone C"     = not beyond zone C (a point ON the 1/3 line is in zone C)
+#   - "beyond zone A" = strictly above the upper limit or below the lower one
+#   - a point exactly ON the centerline is on neither side, so it ends a
+#     Test 4 run and does not count toward Tests 2, 3 or 7.
+#   - "steadily increasing" (Test 5) and "alternating" (Test 8) need every
+#     step to go strictly up or down; a tie ends the run.
+#
+# WHERE. Each test slides a window of its own length along the points in the
+# order given (1 point for Test 1, 3 for Test 2, 5 for Test 3, 8 for Test 4,
+# 6 for Test 5, 15 for Test 6, 8 for Test 7, 14 for Test 8). The `where`
+# column lists every subgroup in every window that trips the test, in time
+# order, separated by ", ". So a 2-out-of-3 signal lists all 3 subgroups of
+# its window, and a 9-point run on one side lists all 9 subgroups.
+#
+# EDGE CASES.
+#   - Fewer points than a test's window: that test cannot fire, so it passes
+#     (passed = TRUE, where = "").
+#   - A missing (NA) statistic or limit breaks every run: no window that
+#     contains it can trip a test, and it is never listed in `where`.
+
+#' @name spc_tests_from
+#' @title Run the 8 Tests for Special Causes on Any Control Chart
+#' @description Runs the 8 tests for special causes on a control chart you have already computed: the subgroups, the statistic plotted for each subgroup, the centerline, and either the control limits or sigma (the standard error of the plotted statistic). See the notes above for exactly how the zones and the `where` column are defined.
+#' @param x [vector] subgroup ids (usually time), in time order. Must be same length as `stat`.
+#' @param stat [numeric] the statistic plotted for each subgroup (e.g. xbar, s, r, or mr). Must be same length as `x`.
+#' @param center [numeric] the centerline. One value, or one per subgroup.
+#' @param lower [numeric] the lower control limit. One value, or one per subgroup. Supply `lower` and `upper`, OR `sigma`.
+#' @param upper [numeric] the upper control limit. One value, or one per subgroup.
+#' @param sigma [numeric] the standard error of the plotted statistic. If given instead of `lower` and `upper`, the limits are center -/+ 3 * sigma.
+#' @param description [logical] include the plain-text `description` column? Default is TRUE.
+#' @return [data.frame] A tibble with 8 rows, one per test, and columns: test_id (1 to 8), passed (TRUE when the test finds NO signal), description (what the test looks for), where (the subgroup ids where the signal occurs, e.g. "5, 6, 7"; "" when passed).
+#' @examples
+#' # Twelve subgroup averages around a centerline of 10, with limits 7 and 13
+#' spc_tests_from(x = 1:12, stat = c(10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10),
+#'                center = 10, lower = 7, upper = 13)
+#' # The same chart, described by sigma instead of limits
+#' spc_tests_from(x = 1:12, stat = c(10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10),
+#'                center = 10, sigma = 1)
+spc_tests_from = function(x, stat, center, lower = NULL, upper = NULL, sigma = NULL, description = TRUE){
+
+  # Testing values
+  # x = 1:12; stat = c(10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10);
+  # center = 10; lower = 7; upper = 13; sigma = NULL; description = TRUE
+
+  n = length(stat)
+  if(length(x) != n){ stop("x and stat must be the same length") }
+
+  # Work out the control limits: either lower AND upper, or sigma
+  if(is.null(lower) && is.null(upper)){
+    if(is.null(sigma)){ stop("supply either lower and upper, or sigma") }
+    lower = center - 3 * sigma
+    upper = center + 3 * sigma
+  }else if(is.null(lower) || is.null(upper)){
+    stop("supply both lower and upper (or sigma instead of both)")
+  }else if(!is.null(sigma)){
+    stop("supply lower and upper, OR sigma, not both")
+  }
+
+  # Let center, lower and upper be one value, or one value per subgroup
+  stretch = function(v, name){
+    if(length(v) == 1){ return(rep(v, n)) }
+    if(length(v) == n){ return(v) }
+    stop(paste0(name, " must have length 1 or the same length as stat"))
+  }
+  center = as.numeric(stretch(center, "center"))
+  lower = as.numeric(stretch(lower, "lower"))
+  upper = as.numeric(stretch(upper, "upper"))
+  stat = as.numeric(stat)
+
+  # Which points can be tested? (a missing value breaks every run)
+  ok = !is.na(stat) & !is.na(center) & !is.na(lower) & !is.na(upper)
+
+  # Distance from the centerline, and the distance to the limit on that side
+  dev = stat - center
+  span = if_else(dev >= 0, upper - center, center - lower)
+  # Which side of the centerline? (+1 above, -1 below, 0 on it)
+  side = sign(dev)
+  # Beyond zone C = more than 1/3 of the way to the limit;
+  # beyond zone B = more than 2/3 of the way to the limit
+  beyond_c = 3 * abs(dev) > span
+  beyond_b = 3 * abs(dev) > 2 * span
+  # Beyond zone A = outside the control limits
+  beyond_a = stat > upper | stat < lower
+
+  # For one test: slide a window of `size` points along the chart, and mark
+  # every point in every window where `trips(i)` is TRUE (i = the window's points)
+  flag = function(size, trips){
+    hit = rep(FALSE, n)
+    if(n >= size){
+      for(start in 1:(n - size + 1)){
+        i = start:(start + size - 1)
+        if(all(ok[i]) && trips(i)){ hit[i] = TRUE }
+      }
+    }
+    return(hit)
+  }
+
+  hits = list(
+    # Test 1: one point beyond zone A
+    flag(1, function(i){ beyond_a[i] }),
+    # Test 2: two out of three points in a row beyond zone B, on one side
+    flag(3, function(i){ sum(beyond_b[i] & side[i] == 1) >= 2 | sum(beyond_b[i] & side[i] == -1) >= 2 }),
+    # Test 3: four out of five points in a row beyond zone C, on one side
+    flag(5, function(i){ sum(beyond_c[i] & side[i] == 1) >= 4 | sum(beyond_c[i] & side[i] == -1) >= 4 }),
+    # Test 4: eight points in a row on the same side of the centerline
+    flag(8, function(i){ all(side[i] == 1) | all(side[i] == -1) }),
+    # Test 5: six points in a row steadily increasing or decreasing
+    flag(6, function(i){ d = diff(stat[i]); all(d > 0) | all(d < 0) }),
+    # Test 6: fifteen points in a row in zone C
+    flag(15, function(i){ all(!beyond_c[i]) }),
+    # Test 7: eight points in a row on both sides of the centerline, none in zone C
+    flag(8, function(i){ all(beyond_c[i]) & any(side[i] == 1) & any(side[i] == -1) }),
+    # Test 8: fourteen points in a row alternating up and down
+    flag(14, function(i){ d = sign(diff(stat[i])); all(d != 0) & all(d[-1] == -d[-length(d)]) })
+  )
+
+  # Write subgroup ids the same way in R and Python ("5", "2.5", "2024-01-01")
+  ids = if(is.numeric(x)){ sprintf("%.15g", as.numeric(x)) }else{ as.character(x) }
+
+  output = tibble(
+    test_id = 1:8,
+    passed = sapply(hits, function(h){ !any(h) }),
+    description = c(
+      "One point beyond zone A (outside the control limits)",
+      "Two out of three points in a row beyond zone B (same side)",
+      "Four out of five points in a row beyond zone C (same side)",
+      "Eight points in a row on the same side of the centerline",
+      "Six points in a row steadily increasing or decreasing",
+      "Fifteen points in a row in zone C (above and below the centerline)",
+      "Eight points in a row on both sides of the centerline, none in zone C",
+      "Fourteen points in a row alternating up and down"),
+    where = sapply(hits, function(h){ paste(ids[h], collapse = ", ") })
+  )
+
+  if(!description){ output = output %>% dplyr::select(-description) }
+
+  return(output)
+}
+
+# Example
+# spc_tests_from(x = 1:12, stat = c(10, 11, 9, 14, 10, 9, 11, 10, 10, 9, 11, 10),
+#                center = 10, lower = 7, upper = 13)
+
+
+#' @name spc_tests
+#' @title Is This Process Stable? The 8 Tests for Special Causes
+#' @description Draws no chart: it works out the same centerline and control limits as ggxbar(), ggs(), ggr() or ggmr(), then runs the 8 tests for special causes on that chart with spc_tests_from().
+#' @param x [numeric] vector of subgroup values (usually time). Must be same length as `y`.
+#' @param y [numeric] vector of metric values (eg. performance). Must be same length as `x`.
+#' @param chart [string] which chart to test: "xbar" (averages; the same limits as ggxbar(), from get_stat_s()), "s" (standard deviation; limits_s()), "r" (range; limits_r()), or "mr" (moving range; limits_mr(), one measurement per subgroup). Default is "xbar".
+#' @param description [logical] include the plain-text `description` column? Default is TRUE.
+#' @return [data.frame] A tibble with 8 rows, one per test: test_id, passed, description, where. See spc_tests_from().
+#' @note Dependency: `spc_tests_from()`, `get_stat_s()`, `limits_s()`, `limits_r()`, `limits_mr()` functions. The s, R and moving range limits come from SIMULATED control constants (bn(), dn()), so run set.seed() first if you need the exact same answer twice.
+#' @examples
+#' water = read_csv("workshops/onsen.csv")
+#' spc_tests(x = water$time, y = water$temp, chart = "xbar")
+#' spc_tests(x = water$time, y = water$temp, chart = "s")
+spc_tests = function(x, y, chart = "xbar", description = TRUE){
+
+  # Testing values
+  # water = read_csv("workshops/onsen.csv");
+  # x = water$time; y = water$temp; chart = "xbar"; description = TRUE
+
+  if(!chart %in% c("xbar", "s", "r", "mr")){
+    stop("chart must be one of: xbar, s, r, mr")
+  }
+
+  if(chart == "xbar"){
+    # Averages chart: the grand mean, -/+ 3 standard errors (as in ggxbar())
+    stat = get_stat_s(x = x, y = y)
+    output = spc_tests_from(x = stat$x, stat = stat$xbar, center = stat$xbbar,
+                            lower = stat$lower, upper = stat$upper, description = description)
+  }else if(chart == "s"){
+    # Standard deviation chart: sbar, with limits B3 * sbar and B4 * sbar
+    stat = limits_s(x = x, y = y)
+    output = spc_tests_from(x = stat$x, stat = stat$s, center = stat$sbar,
+                            lower = stat$lower, upper = stat$upper, description = description)
+  }else if(chart == "r"){
+    # Range chart: rbar, with limits D3 * rbar and D4 * rbar
+    stat = limits_r(x = x, y = y)
+    output = spc_tests_from(x = stat$x, stat = stat$r, center = stat$rbar,
+                            lower = stat$lower, upper = stat$upper, description = description)
+  }else if(chart == "mr"){
+    # A moving range chart needs ONE measurement per subgroup
+    if(any(duplicated(x))){
+      stop("chart = 'mr' needs one measurement per subgroup, but x repeats some values; use chart = 'xbar', 's' or 'r' for subgroups")
+    }
+    # Moving range chart: mrbar, with limits 0 and mrbar + 3 * sigma_s
+    stat = limits_mr(x = x, y = y)
+    output = spc_tests_from(x = stat$x, stat = stat$mr, center = stat$mrbar,
+                            lower = stat$lower, upper = stat$upper, description = description)
+  }
+
+  return(output)
+}
+
+# Example
+# water = read_csv("workshops/onsen.csv")
+# spc_tests(x = water$time, y = water$temp, chart = "xbar")
+# set.seed(1); spc_tests(x = water$time, y = water$temp, chart = "r")
