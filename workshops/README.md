@@ -76,6 +76,16 @@ diamonds = read_csv("https://raw.githubusercontent.com/timothyfraser/sysen/main/
 
 Same numbers either way. Use whichever one the chapter shows you.
 
+## Where the data came from
+
+Most files here were collected or simulated for this course. The ones below come
+from outside sources, so each carries a license and a citation.
+
+| File | What it is | Source and license |
+|---|---|---|
+| `concrete.csv` | 1,030 concrete mixes: 8 recipe/age inputs (`cement`, `slag`, `ash`, `water`, `superplasticizer`, `coarse`, `fine` in kg/m³, and `age` in days) and `strength` (compressive strength, MPa). | I-Cheng Yeh (1998), *Concrete Compressive Strength* [Dataset], UCI Machine Learning Repository, <https://doi.org/10.24432/C5PK67>. Licensed CC BY 4.0. Column names shortened; values unchanged. |
+| `castings_split.csv` | An **index only**: 7,283 rows (`file`, `label`, `split`) saying which casting photo goes in `train`, `valid` or `test`, and whether it is a `defect` or `ok`. 65 test photos that duplicate training photos are left out. | Built for this course from the Kaggle dataset "Casting product image data for quality inspection" (ravirajsinh45; photos from Pilot Technocast, Rajkot), <https://www.kaggle.com/datasets/ravirajsinh45/real-life-industrial-dataset-of-casting-product>. The photos are licensed CC BY-NC-ND 4.0, so they are **not** in this repo and nobody here shares resized copies of them. You download them from Kaggle (free account) and run `code/prepare_castings.R` or `code/prepare_castings.py`, which shrinks them to 64 × 64 grayscale PNGs in `workshops/castings/`. That folder is created on your own computer and is never committed. |
+
 ## Which dataset goes with which chapter
 
 The table in the top-level [`README.md`](../README.md) lists every chapter by
