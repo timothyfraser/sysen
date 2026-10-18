@@ -1,3 +1,4 @@
+# DEPRECATED: the image chapter no longer uses the castings photos; it uses the concrete crack panels (see docs-v3/data/nn/README.md).
 # prepare_castings.py
 # Shrinks the Kaggle casting photos to 64 x 64 grayscale PNGs and sorts them into
 # train / valid / test folders, following the course's split list (castings_split.csv).
