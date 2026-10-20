@@ -160,7 +160,7 @@ model for two housekeeping slides that should be one.
 
 ## 2. Spacing and margins
 
-- Nothing starts under the chevron band (x < 80 px on red panels) or under the footer band.
+- Nothing starts under the footer band (the on-slide ‹ › buttons were removed 2026-10-20; navigation is keys, taps, swipe and mouse drag).
 - Stacked blocks (two tables, table + text) 24-28 px apart: `style="margin-top:28px"` on the second.
 - Captions in flow under their figure (`.caption` with `position:static`), never bottom-pinned onto the footer.
 - A wide header before a ~400 px column gets `<br>`, a two-line header, not a giant column.

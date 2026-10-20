@@ -31,3 +31,12 @@ print(round(c(mu = mu, sigma = sigma), 4))
 n = length(simprobs)
 ci_mean = mu + c(-1, 1) * qnorm(0.975) * sigma / sqrt(n)
 print(round(ci_mean, 4))
+
+# -- Slide: light bulb tree, OR gate over five events (Uncertainty 1) -----------
+bulb = tibble(event = c("A", "B", "C", "D", "E"),
+              lambda = c(1e-6, 1e-7, 1e-7, 1e-8, 1e-9),
+              T = 2) %>%
+  mutate(P = 1 - exp(-lambda * T))   # ~ lambda * T
+print(bulb)
+cat("upper bound (sum):", signif(sum(bulb$P), 4), "\n")
+cat("exact OR, 1 - prod(1 - P):", signif(1 - prod(1 - bulb$P), 4), "\n")

@@ -32,12 +32,12 @@ g = ggplot(d, aes(x = x, y = y)) +
   geom_area(data = d %>% filter(x >= cut), fill = "#B31B1B", alpha = 0.8) +
   geom_line(linewidth = 1.3) +
   geom_vline(xintercept = cut, linetype = "dashed") +
-  annotate("text", x = cut + 0.6, y = 0.12, hjust = 0, size = 7,
-           label = paste0("critical value = ", round(cut, 2))) +
-  annotate("text", x = 2, y = 0.05, size = 7, label = "95% of cases\nby chance") +
-  annotate("text", x = 14, y = 0.02, size = 7, colour = "#B31B1B", label = "5% tail:\nsignificant") +
+  annotate("text", x = cut + 0.6, y = 0.13, hjust = 0, size = 7,
+           label = paste0("critical value\n= ", round(cut, 2))) +
+  annotate("text", x = 5, y = 0.022, size = 5.2, label = "95% of cases\nby chance") +
+  annotate("text", x = cut + 3, y = 0.05, hjust = 0, size = 7, colour = "#B31B1B", label = "5% tail:\nsignificant") +
   labs(x = "chi-squared statistic (df = 5)", y = "density") +
-  theme_minimal(base_size = 20)
+  theme_minimal(base_size = 22)   # labels sit clear of the curve and the tail (slide 19 review)
 dir.create("docs-v3/images/slides/lesson-7b", showWarnings = FALSE, recursive = TRUE)
-ggsave("docs-v3/images/slides/lesson-7b/gen_density_df5.png", g, width = 7, height = 4.2, dpi = 150)
+ggsave("docs-v3/images/slides/lesson-7b/gen_density_df5.png", g, width = 6.2, height = 4.6, dpi = 150)
 cat("wrote figure, cut =", round(cut, 4), "\n")

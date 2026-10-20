@@ -27,10 +27,10 @@ g1 = ggplot(grid, aes(x = molasses, y = ginger, z = yum)) +
   geom_contour(color = "white", bins = 12) +
   geom_point(data = best, aes(x = molasses, y = ginger), inherit.aes = FALSE, size = 4, color = "black") +
   scale_fill_viridis_c(option = "plasma", name = "Predicted\nYum Factor") +
-  labs(title = "Predicted yum, inside the tested range (dot = predicted best)",
+  labs(title = "Predicted yum (dot = best)",
        x = "Molasses (cups)", y = "Ginger (tablespoons)") +
-  theme_minimal(base_size = 18)
-ggsave(paste0(out, "gen_contour_yum.png"), g1, width = 9, height = 5.6, dpi = 110)
+  theme_minimal(base_size = 20)
+ggsave(paste0(out, "gen_contour_yum.png"), g1, width = 7, height = 4.4, dpi = 110)
 
 # ---- Textiles: models M1-M4 (Table 12.8 / 12.9) ----
 d = read_csv("workshops/recitation11_textile.csv", show_col_types = FALSE)
@@ -64,7 +64,7 @@ g2 = ggplot(long, aes(x = y, y = pred)) +
   geom_point(size = 2.5, color = "#0b5cad") +
   facet_wrap(~model, nrow = 1) +
   scale_x_log10() + scale_y_continuous(trans = "log10") +
-  labs(title = "Predicted vs observed lifetime, 27 textile runs (log axes)",
+  labs(title = "Predicted vs observed, 27 runs",
        x = "Observed lifetime y (cycles)", y = "Predicted") +
-  theme_minimal(base_size = 18)
-ggsave(paste0(out, "gen_textile_fit.png"), g2, width = 11, height = 4.6, dpi = 110)
+  theme_minimal(base_size = 20)
+ggsave(paste0(out, "gen_textile_fit.png"), g2, width = 8.6, height = 3.9, dpi = 110)

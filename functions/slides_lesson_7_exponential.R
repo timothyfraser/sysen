@@ -21,12 +21,12 @@ red = "#B31B1B"; grey = "grey35"
 r_exp = function(t, lambda) { exp(-lambda * t) }
 f_exp = function(t, lambda) { lambda * exp(-lambda * t) }
 
-theme_deck = function() {
-  theme_classic(base_size = 20) +
+theme_deck = function(base = 20) {
+  theme_classic(base_size = base) +
     theme(plot.margin = margin(8, 16, 4, 4), axis.line = element_line(linewidth = 0.8))
 }
-save = function(g, file) {
-  ggsave(file.path(out, file), g, width = 11, height = 6, dpi = 100, bg = "white")
+save = function(g, file, width = 11, height = 6) {
+  ggsave(file.path(out, file), g, width = width, height = height, dpi = 100, bg = "white")
   cat("wrote", file.path(out, file), "\n")
 }
 
@@ -44,7 +44,7 @@ g = ggplot(bath, aes(t, z)) +
   scale_x_continuous(expand = c(0, 0), breaks = NULL) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.5), breaks = NULL) +
   labs(x = "Time t", y = "z(t)") + theme_deck()
-save(g, "gen_bathtub.png")
+save(g, "gen_bathtub.png", width = 8, height = 6)   # near-square: fills the right half of slides 5-6
 
 # ---- 2. Mode, median, MTTF (slide 10, left chart) -----------------------------
 # The scan's curve is a lognormal with median 10 and MTTF 15: meanlog = ln 10,
@@ -59,10 +59,10 @@ marks = tibble(t = c(mode_t, median_t, mttf_t), lab = c("Mode", "Median", "MTTF"
 g = ggplot(ln, aes(t, f)) +
   geom_segment(data = marks, aes(x = t, xend = t, y = 0, yend = f), linetype = "dashed", color = grey) +
   geom_line(color = red, linewidth = 1.8) +
-  geom_text(data = marks, aes(y = f + 0.006, label = lab), size = 6.5, vjust = 0) +
+  geom_text(data = marks, aes(y = f + 0.006, label = lab), size = 9.5, vjust = 0) +
   scale_x_continuous(expand = c(0, 0), breaks = seq(0, 25, 5)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 0.085)) +
-  labs(x = "Time t", y = "f(t)") + theme_deck()
+  labs(x = "Time t", y = "f(t)") + theme_deck(30)   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_mode_median_mttf.png")
 
 # ---- 3. R(t), z(t), f(t) for Exercise 1's item (slide 10 right chart; slide 12) --
@@ -73,11 +73,11 @@ ex1 = tibble(t = seq(0, 10, length.out = 400)) %>%
 lab3 = tibble(fn = c("R(t)", "z(t)", "f(t)"), t = c(1.6, 1.6, 1.6), y = c(0.72, 0.38, 0.1))
 g = ggplot(ex1, aes(t, y, linetype = fn)) +
   geom_line(color = red, linewidth = 1.6) +
-  geom_text(data = lab3, aes(label = fn), size = 7, hjust = 0, fontface = "italic") +
+  geom_text(data = lab3, aes(label = fn), size = 10, hjust = 0, fontface = "italic") +
   scale_linetype_manual(values = c("R(t)" = "solid", "f(t)" = "solid", "z(t)" = "dashed"), guide = "none") +
   scale_x_continuous(expand = c(0, 0), breaks = seq(0, 10, 2)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 1.02), breaks = seq(0, 1, 0.2)) +
-  labs(x = "Time t (months)", y = NULL) + theme_deck()
+  labs(x = "Time t (months)", y = NULL) + theme_deck(30)   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_r_z_f.png")
 
 # Exercise 1 (slide 12): MTTF = integral of R(t) from 0 to infinity
@@ -85,13 +85,12 @@ ex1_mttf = integrate(function(t) 1 / (0.2 * t + 1)^2, 0, Inf)$value
 cat(sprintf("Exercise 1: MTTF = %.4f months (scan: 5 months)\n", ex1_mttf))
 
 # ---- 4. "MTTF?" shaded pdf (slide 12) ------------------------------------------
-# Drawn from Exercise 1's own f(t), with the MTTF (5 months) marked.
+# Drawn from Exercise 1's own f(t); labelled "MTTF?" like the 2025 slide so it does not give the answer away.
 pdf1 = tibble(t = seq(0, 25, length.out = 400)) %>% mutate(f = 0.4 / (0.2 * t + 1)^3)
 g = ggplot(pdf1, aes(t, f)) +
   geom_area(fill = red, alpha = 0.35) + geom_line(color = red, linewidth = 1.4) +
-  geom_vline(xintercept = ex1_mttf, color = red, linewidth = 1) +
-  annotate("text", x = ex1_mttf + 0.5, y = 0.3, label = "MTTF = 5", color = red,
-           size = 7, fontface = "bold", hjust = 0) +
+  annotate("text", x = 7, y = 0.3, label = "MTTF?", color = red,
+           size = 9, fontface = "bold", hjust = 0) +
   scale_x_continuous(expand = c(0, 0)) + scale_y_continuous(expand = c(0, 0), limits = c(0, 0.42)) +
   labs(x = "Months", y = "f(t)") + theme_deck()
 save(g, "gen_mttf_shaded.png")
@@ -167,8 +166,11 @@ g = ggplot() +
   geom_line(data = curve_d, aes(t, pct), color = "black", linewidth = 1.3) +
   scale_x_continuous(expand = c(0, 0), breaks = seq(0, 600, 100)) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 45), breaks = seq(0, 40, 10)) +
-  labs(x = "Days to failure (last bar: > 550)", y = "Frequency (%)") + theme_deck()
+  labs(x = "Days to failure (last bar: > 550)", y = "Frequency (%)") + theme_deck(26)   # shown beside the code: readable type
 save(g, "gen_bulb_histogram_pdf.png")
+# Squarer copy for the Example slide, where the chart floats beside the code (7 x 6 in).
+g = g + theme_deck(24)
+save(g, "gen_bulb_histogram_side.png", width = 7, height = 6)
 
 # Generic exponential pdf f(t) = lambda e^(-lambda t), starting at lambda (slide 22)
 g = ggplot(tibble(t = seq(0, 5, length.out = 300)) %>% mutate(f = f_exp(t, 1)), aes(t, f)) +

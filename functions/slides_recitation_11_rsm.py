@@ -23,9 +23,9 @@ g1 = (ggplot(grid, aes("molasses", "ginger"))
       + geom_tile(aes(fill="band"))  # plotnine has no geom_contour: 5-point yum bands instead
       + geom_point(data=best, mapping=aes("molasses", "ginger"), size=4, color="black", inherit_aes=False)
       + scale_fill_cmap("plasma", name="Predicted\nYum Factor")
-      + labs(title="Predicted yum, inside the tested range (dot = predicted best)",
+      + labs(title="Predicted yum (dot = best)",
              x="Molasses (cups)", y="Ginger (tablespoons)")
-      + theme_minimal(base_size=14) + theme(figure_size=(9, 5.6)))
+      + theme_minimal(base_size=20) + theme(figure_size=(7, 4.4)))
 g1.save(out + "gen_contour_yum_py.png", dpi=110, verbose=False)
 
 # ---- Textiles ----
@@ -55,7 +55,7 @@ g2 = (ggplot(long, aes("y", "pred"))
       + geom_point(size=2.5, color="#0b5cad")
       + facet_wrap("~model", nrow=1)
       + scale_x_log10() + scale_y_log10()
-      + labs(title="Predicted vs observed lifetime, 27 textile runs (log axes)",
+      + labs(title="Predicted vs observed, 27 runs",
              x="Observed lifetime y (cycles)", y="Predicted")
-      + theme_minimal(base_size=14) + theme(figure_size=(11, 4.6)))
+      + theme_minimal(base_size=20) + theme(figure_size=(8.6, 3.9)))
 g2.save(out + "gen_textile_fit_py.png", dpi=110, verbose=False)

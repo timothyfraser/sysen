@@ -32,10 +32,10 @@ best = 1 / mean(crops$days)
 g2 = ggplot(grid, aes(x = lambda, y = loglik)) +
   geom_line(color = red, linewidth = 1.3) +
   geom_vline(xintercept = best, linetype = "dashed") +
-  annotate("text", x = best, y = min(grid$loglik), label = round(best, 5), hjust = -0.1, size = 6) +
+  annotate("text", x = best, y = min(grid$loglik), label = round(best, 5), hjust = -0.1, size = 9) +
   labs(x = "Rate parameter lambda", y = "Log-likelihood") +
-  theme_classic(base_size = 20)
-ggsave(paste0(out, "gen_loglik.png"), g2, width = 7, height = 4.2, dpi = 160)
+  theme_classic(base_size = 30)
+ggsave(paste0(out, "gen_loglik.png"), g2, width = 6.4, height = 5.2, dpi = 160)
 cat("crops MLE lambda =", best, " loglik =", ll(crops$days, best), "\n")
 
 # 3. Example 1: linear rectification of the Weibull -------------------------

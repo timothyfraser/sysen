@@ -10,6 +10,23 @@ library(ggplot2)
 out = "docs-v3/images/slides/lesson-9"
 red = "#B31B1B"
 
+# --- Bathtub curve: the recap slide's three failure periods ---------------
+# Illustrative z(t) = 1.2 e^(-t/0.5) + 0.25 + 0.25 (t/8)^6 : decreasing burn-in,
+# flat useful life, rising wear-out. Period boundaries drawn at t = 1.6 and t = 7.3.
+bath = tibble(t = seq(0.02, 10, length.out = 600)) %>%
+  mutate(z = 1.2 * exp(-t / 0.5) + 0.25 + 0.25 * (t / 8)^6)
+gb = ggplot(bath, aes(x = t, y = z)) +
+  geom_vline(xintercept = c(1.6, 7.3), linetype = "dashed", color = "grey40") +
+  geom_line(color = red, linewidth = 1.8) +
+  annotate("text", x = c(0.8, 4.45, 8.65), y = -0.27,
+           label = c("Burn-in\nperiod", "Useful life\nperiod", "Wear-out\nperiod"),
+           size = 6.5, vjust = 0, lineheight = 0.9) +
+  scale_x_continuous(expand = c(0, 0), breaks = NULL) +
+  scale_y_continuous(expand = c(0, 0), limits = c(-0.3, 1.5), breaks = NULL) +   # room below the curve for the labels
+  labs(x = "Time t", y = "z(t)") +
+  theme_classic(base_size = 22)
+ggsave(file.path(out, "gen_bathtub.png"), gb, width = 7.2, height = 4.4, dpi = 150)
+
 # --- Gamma: f(t), R(t), z(t) for several k, with lambda = 1 ----------------
 gamma_curves = expand_grid(k = c(0.5, 1, 2, 3), t = seq(0.01, 6, by = 0.01)) %>%
   mutate(
@@ -54,8 +71,8 @@ g2 = ggplot(ln_curves, aes(x = t, y = value, color = sigma, linetype = sigma)) +
   scale_color_manual(values = c("#DE6C68", "#CC4743", red, "#7F1010", "#4A0505")) +
   scale_linetype_manual(values = c("solid", "dashed", "solid", "dashed", "solid")) +
   labs(x = "Time t (multiples of T50)", y = NULL,
-       color = "σ", linetype = "σ") +
-  theme_classic(base_size = 17) +
+       color = "\u03c3", linetype = "\u03c3") +   # escaped: a POSIX locale reads a raw sigma as two bytes
+  theme_classic(base_size = 18) +
   theme(legend.position = "right", strip.background = element_blank(),
         strip.text = element_text(face = "bold", size = rel(1)),
         axis.text = element_text(size = rel(0.9)),
@@ -64,8 +81,8 @@ g2 = ggplot(ln_curves, aes(x = t, y = value, color = sigma, linetype = sigma)) +
         legend.box.spacing = unit(4, "pt"),
         legend.margin = margin(0, 0, 0, 0),
         plot.margin = margin(2, 2, 2, 2))
-# sized for the right-hand third of the slide: little whitespace, so it reads at ~377 px wide
-ggsave(file.path(out, "gen_lognormal_functions.png"), g2, width = 5.2, height = 3.15, dpi = 150)
+# sized for half the slide (~560 px wide), so the ticks read at ~20 px
+ggsave(file.path(out, "gen_lognormal_functions.png"), g2, width = 6.4, height = 3.7, dpi = 150)
 
 # --- Example 1 / 2: gamma reliability, k = 3, lambda = 0.05, t = 24 --------
 k = 3; lambda = 0.05; t = 24
@@ -113,3 +130,45 @@ print(round(c(mttf = mttf, variance = variance, check = check)))
 # --- Lognormal example: T50 = 5000, sigma = 0.7, t = 2000 ------------------
 print(log(2000 / 5000) / 0.7)
 print(plnorm(2000, meanlog = log(5000), sdlog = 0.7))
+
+# --- Weibull: f(t) and z(t) for several m, t in multiples of c (c = 1) ----
+# Redraws the two small textbook scans on Properties of Weibull (2).
+weibull_curves = expand_grid(m = c(0.5, 1, 2, 4, 10), t = seq(0.005, 3, by = 0.005)) %>%
+  mutate(
+    f = dweibull(t, shape = m, scale = 1),
+    z = (m / 1) * (t / 1)^(m - 1)
+  ) %>%
+  pivot_longer(cols = c(f, z), names_to = "fn", values_to = "value") %>%
+  mutate(fn = factor(fn, levels = c("f", "z"),
+                     labels = c("PDF f(t)", "Failure rate z(t)")),
+         m = factor(paste0("m = ", m), levels = paste0("m = ", c(0.5, 1, 2, 4, 10)))) %>%
+  filter((fn == "PDF f(t)" & value <= 4) | (fn == "Failure rate z(t)" & value <= 10.5))
+
+g3 = ggplot(weibull_curves, aes(x = t, y = value, color = m)) +
+  geom_line(linewidth = 1.4) +
+  facet_wrap(~fn, ncol = 1, scales = "free_y") +
+  scale_color_manual(values = c("#E8A0A0", "#D05050", red, "#7A1010", "#2B2B2B")) +
+  labs(x = "Time t (multiples of characteristic life c)", y = NULL, color = NULL) +
+  theme_classic(base_size = 20) +
+  theme(legend.position = "right", strip.background = element_blank(),
+        strip.text = element_text(face = "bold"))
+ggsave(file.path(out, "gen_weibull_functions.png"), g3, width = 7.5, height = 7, dpi = 150)
+
+# --- Weibull: CDF F(t) for the same m values, t in multiples of c (c = 1) --
+# Redraws the textbook CDF scan on Properties of Weibull (1). Every curve
+# passes through F(c) = 1 - e^-1 = 0.632 at t = c.
+weibull_cdf = expand_grid(m = c(0.5, 1, 2, 4, 10), t = seq(0, 3, by = 0.005)) %>%
+  mutate(cdf = pweibull(t, shape = m, scale = 1),
+         m = factor(paste0("m = ", m), levels = paste0("m = ", c(0.5, 1, 2, 4, 10))))
+print(1 - exp(-1))                             # F(c) = 0.632
+
+g4 = ggplot(weibull_cdf, aes(x = t, y = cdf, color = m)) +
+  geom_hline(yintercept = 1 - exp(-1), linetype = "dashed", color = "grey50") +
+  geom_vline(xintercept = 1, linetype = "dashed", color = "grey50") +
+  geom_line(linewidth = 1.4) +
+  annotate("text", x = 2.95, y = 0.60, label = "F(c) = 0.632", hjust = 1, size = 6, color = "grey30") +
+  scale_color_manual(values = c("#E8A0A0", "#D05050", red, "#7A1010", "#2B2B2B")) +
+  labs(x = "Time t (multiples of characteristic life c)", y = "CDF F(t)", color = NULL) +
+  theme_classic(base_size = 20) +
+  theme(legend.position = "right")
+ggsave(file.path(out, "gen_weibull_cdf.png"), g4, width = 7.5, height = 5, dpi = 150)

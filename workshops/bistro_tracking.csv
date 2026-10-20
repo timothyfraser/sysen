@@ -1,0 +1,9 @@
+task,team,person,done,elapsed
+Receive Order,Front,Craig,FALSE,10 min
+Receive Order,Front,Craig,FALSE,15 min
+Receive Order,Front,Javier,TRUE,5 min
+Receive Order,Front,Laura,TRUE,2 min
+Receive Order,Front,Laura,TRUE,3 min
+Receive Order,Front,Laura,FALSE,1 min
+Cook Order,Front,Kaitlyn,TRUE,10 min
+Cook Order,Front,Kaitlyn,FALSE,5 min

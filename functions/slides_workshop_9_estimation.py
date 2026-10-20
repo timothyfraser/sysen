@@ -29,4 +29,13 @@ w = pd.concat([pd.DataFrame({"x": x, "density": weibull_min.pdf(x, m), "m": str(
 g1 = (ggplot(w, aes("x", "density", color="m")) + geom_line(size=1.3) + coord_cartesian(ylim=(0, 2.5))
       + labs(x="Time (multiples of characteristic life c)", y="Density f(t)", color="Shape m")
       + theme_classic(base_size=20))
-g1.save("/tmp/claude-0/-home-user/9448d86e-70dd-536d-9568-1f17c80db478/scratchpad/D22/py_weibull_pdf.png", width=7, height=4.2, dpi=100, verbose=False)
+g1.save(out + "gen_weibull_pdf_py.png", width=7, height=4.2, dpi=100, verbose=False)
+
+grid = pd.DataFrame({"lam": np.linspace(0.004, 0.04, 300)})
+grid["loglik"] = [ll(crops["days"], l) for l in grid["lam"]]
+g2 = (ggplot(grid, aes("lam", "loglik")) + geom_line(color="#B31B1B", size=1.3)
+      + geom_vline(xintercept=best, linetype="dashed")
+      + annotate("text", x=best, y=grid["loglik"].min(), label=str(round(best, 5)), ha="left", size=20)
+      + labs(x="Rate parameter lambda", y="Log-likelihood")
+      + theme_classic(base_size=30))
+g2.save(out + "gen_loglik_py.png", width=6.4, height=5.2, dpi=100, verbose=False)

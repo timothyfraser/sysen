@@ -10,6 +10,22 @@ from plotnine import *
 out = "docs-v3/images/slides/lesson-9"
 red = "#B31B1B"
 
+# Bathtub curve: the recap slide's three failure periods
+# Illustrative z(t) = 1.2 e^(-t/0.5) + 0.25 + 0.25 (t/8)^6; boundaries at t = 1.6 and 7.3
+tb = np.linspace(0.02, 10, 600)
+bath = pd.DataFrame({"t": tb, "z": 1.2 * np.exp(-tb / 0.5) + 0.25 + 0.25 * (tb / 8) ** 6})
+gb = (ggplot(bath, aes(x="t", y="z")) +
+      geom_vline(xintercept=[1.6, 7.3], linetype="dashed", color="#666666") +
+      geom_line(color=red, size=1.8) +
+      annotate("text", x=[0.8, 4.45, 8.65], y=-0.27,
+               label=["Burn-in\nperiod", "Useful life\nperiod", "Wear-out\nperiod"],
+               size=18, va="bottom") +
+      scale_x_continuous(expand=(0, 0), breaks=[]) +
+      scale_y_continuous(expand=(0, 0), limits=(-0.3, 1.5), breaks=[]) +   # room below the curve for the labels
+      labs(x="Time t", y="z(t)") +
+      theme_classic(base_size=22))
+gb.save(f"{out}/gen_bathtub_py.png", width=7.2, height=4.4, dpi=150, verbose=False)
+
 # Gamma: f(t), R(t), z(t) for several k, lambda = 1
 rows = []
 for k in [0.5, 1, 2, 3]:
@@ -53,16 +69,16 @@ g2 = (ggplot(ln_curves, aes(x="t", y="value", color="sigma", linetype="sigma")) 
       scale_color_manual(values=["#DE6C68", "#CC4743", red, "#7F1010", "#4A0505"]) +
       scale_linetype_manual(values=["solid", "dashed", "solid", "dashed", "solid"]) +
       labs(x="Time t (multiples of T50)", y="", color="σ", linetype="σ") +
-      theme_classic(base_size=17) +
+      theme_classic(base_size=18) +
       theme(legend_position="right", strip_background=element_blank(),
-            strip_text=element_text(weight="bold", size=17),
-            axis_text=element_text(size=15.3),
-            legend_text=element_text(size=15.3),
+            strip_text=element_text(weight="bold", size=18),
+            axis_text=element_text(size=16.2),
+            legend_text=element_text(size=16.2),
             legend_key_width=31,
             legend_margin=0,
             plot_margin=0.03))
-# sized for the right-hand third of the slide: little whitespace, so it reads at ~377 px wide
-g2.save(f"{out}/gen_lognormal_functions_py.png", width=5.2, height=3.15, dpi=150, verbose=False)
+# sized for half the slide (~560 px wide), so the ticks read at ~20 px
+g2.save(f"{out}/gen_lognormal_functions_py.png", width=6.4, height=3.7, dpi=150, verbose=False)
 
 # Example 1 / 2: k = 3, lambda = 0.05, t = 24
 k, lam, t = 3, 0.05, 24
@@ -107,3 +123,49 @@ print({"mttf": round(mttf), "variance": round(variance), "check": round(check)})
 
 # Lognormal: T50 = 5000, sigma = 0.7, t = 2000
 print(np.log(2000 / 5000) / 0.7, stats.lognorm.cdf(2000, s=0.7, scale=5000))
+
+# Weibull: f(t) and z(t) for several m, t in multiples of c (c = 1)
+# Redraws the two small textbook scans on Properties of Weibull (2).
+ms = [0.5, 1, 2, 4, 10]
+rows = []
+for m in ms:
+    t = np.arange(0.005, 3.0001, 0.005)
+    f = stats.weibull_min.pdf(t, c=m, scale=1)
+    z = m * t ** (m - 1)
+    rows.append(pd.DataFrame({"m": f"m = {m:g}", "t": t, "fn": "PDF f(t)", "value": f}))
+    rows.append(pd.DataFrame({"m": f"m = {m:g}", "t": t, "fn": "Failure rate z(t)", "value": z}))
+wb = pd.concat(rows)
+wb = wb[((wb.fn == "PDF f(t)") & (wb.value <= 4)) | ((wb.fn == "Failure rate z(t)") & (wb.value <= 10.5))]
+wb["fn"] = pd.Categorical(wb.fn, ["PDF f(t)", "Failure rate z(t)"])
+wb["m"] = pd.Categorical(wb.m, [f"m = {m:g}" for m in ms])
+
+g3 = (ggplot(wb, aes(x="t", y="value", color="m")) +
+      geom_line(size=1.4) +
+      facet_wrap("~fn", ncol=1, scales="free_y") +
+      scale_color_manual(values=["#E8A0A0", "#D05050", red, "#7A1010", "#2B2B2B"]) +
+      labs(x="Time t (multiples of characteristic life c)", y="", color="") +
+      theme_classic(base_size=20) +
+      theme(legend_position="right", strip_background=element_blank()))
+g3.save(f"{out}/gen_weibull_functions_py.png", width=7.5, height=7, dpi=150, verbose=False)
+
+# Weibull: CDF F(t) for the same m values, t in multiples of c (c = 1)
+# Redraws the textbook CDF scan on Properties of Weibull (1).
+# Every curve passes through F(c) = 1 - e^-1 = 0.632 at t = c.
+rows = []
+for m in ms:
+    t = np.arange(0, 3.0001, 0.005)
+    rows.append(pd.DataFrame({"m": f"m = {m:g}", "t": t, "cdf": stats.weibull_min.cdf(t, c=m, scale=1)}))
+wc = pd.concat(rows)
+wc["m"] = pd.Categorical(wc.m, [f"m = {m:g}" for m in ms])
+print(1 - np.exp(-1))  # F(c) = 0.632
+
+g4 = (ggplot(wc, aes(x="t", y="cdf", color="m")) +
+      geom_hline(yintercept=1 - np.exp(-1), linetype="dashed", color="grey") +
+      geom_vline(xintercept=1, linetype="dashed", color="grey") +
+      geom_line(size=1.4) +
+      annotate("text", x=2.95, y=0.60, label="F(c) = 0.632", ha="right", size=16, color="#4D4D4D") +
+      scale_color_manual(values=["#E8A0A0", "#D05050", red, "#7A1010", "#2B2B2B"]) +
+      labs(x="Time t (multiples of characteristic life c)", y="CDF F(t)", color="") +
+      theme_classic(base_size=20) +
+      theme(legend_position="right"))
+g4.save(f"{out}/gen_weibull_cdf_py.png", width=7.5, height=5, dpi=150, verbose=False)

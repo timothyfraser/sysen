@@ -35,3 +35,12 @@ print(round(mu, 4), round(sigma, 4))
 n = len(simprobs)
 ci_mean = mu + np.array([-1, 1]) * qnorm(0.975) * sigma / np.sqrt(n)
 print(ci_mean.round(4))
+
+# -- Slide: light bulb tree, OR gate over five events (Uncertainty 1)
+bulb = pd.DataFrame({'event': list("ABCDE"),
+                     'lambda': [1e-6, 1e-7, 1e-7, 1e-8, 1e-9],
+                     'T': 2})
+bulb['P'] = 1 - np.exp(-bulb['lambda'] * bulb['T'])   # ~ lambda * T
+print(bulb)
+print("upper bound (sum):", "%.4g" % bulb['P'].sum())
+print("exact OR, 1 - prod(1 - P):", "%.4g" % (1 - np.prod(1 - bulb['P'])))

@@ -16,8 +16,8 @@ red = "#B31B1B"; grey = "#595959"
 def r_exp(t, lam): return np.exp(-lam * t)
 def f_exp(t, lam): return lam * np.exp(-lam * t)
 
-def theme_deck():
-    return theme_classic(base_size = 20) + theme(figure_size = (11, 6))
+def theme_deck(base = 20):
+    return theme_classic(base_size = base) + theme(figure_size = (11, 6))
 
 def save(g, name):
     g.save(f"{out}/{name}", dpi = 100, verbose = False)
@@ -34,7 +34,7 @@ g = (ggplot(bath, aes("t", "z")) +
      geom_text(labs_b, aes(label = "lab"), size = 18, va = "bottom") +
      scale_x_continuous(expand = (0, 0), breaks = []) +
      scale_y_continuous(expand = (0, 0), limits = (0, 1.5), breaks = []) +
-     labs(x = "Time t", y = "z(t)") + theme_deck())
+     labs(x = "Time t", y = "z(t)") + theme_deck() + theme(figure_size = (8, 6)))   # near-square: fills the right half of slides 5-6
 save(g, "gen_bathtub_py.png")
 
 # 2. Mode, median, MTTF: lognormal, median 10, MTTF 15
@@ -49,10 +49,10 @@ marks["f"] = ln_d.pdf(marks["t"]); marks["ft"] = marks["f"] + 0.006
 g = (ggplot(ln, aes("t", "f")) +
      geom_segment(marks, aes(x = "t", xend = "t", y = 0, yend = "f"), linetype = "dashed", color = grey) +
      geom_line(color = red, size = 1.8) +
-     geom_text(marks, aes(y = "ft", label = "lab"), size = 18, va = "bottom") +
+     geom_text(marks, aes(y = "ft", label = "lab"), size = 27, va = "bottom") +
      scale_x_continuous(expand = (0, 0), breaks = list(range(0, 26, 5))) +
      scale_y_continuous(expand = (0, 0), limits = (0, 0.085)) +
-     labs(x = "Time t", y = "f(t)") + theme_deck())
+     labs(x = "Time t", y = "f(t)") + theme_deck(30))   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_mode_median_mttf_py.png")
 
 # 3. R, z, f for Exercise 1
@@ -63,11 +63,11 @@ ex1 = pd.concat([pd.DataFrame({"t": t, "fn": "R(t)", "y": 1 / (0.2 * t + 1) ** 2
 lab3 = pd.DataFrame({"fn": ["R(t)", "z(t)", "f(t)"], "t": 1.6, "y": [0.72, 0.38, 0.1]})
 g = (ggplot(ex1, aes("t", "y", linetype = "fn")) +
      geom_line(color = red, size = 1.6) +
-     geom_text(lab3, aes(label = "fn"), size = 20, ha = "left", fontstyle = "italic") +
+     geom_text(lab3, aes(label = "fn"), size = 28, ha = "left", fontstyle = "italic") +
      scale_linetype_manual(values = {"R(t)": "solid", "f(t)": "solid", "z(t)": "dashed"}, guide = None) +
      scale_x_continuous(expand = (0, 0), breaks = list(range(0, 11, 2))) +
      scale_y_continuous(expand = (0, 0), limits = (0, 1.02), breaks = np.arange(0, 1.01, 0.2)) +
-     labs(x = "Time t (months)", y = "") + theme_deck())
+     labs(x = "Time t (months)", y = "") + theme_deck(30))   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_r_z_f_py.png")
 ex1_mttf = integrate.quad(lambda t: 1 / (0.2 * t + 1) ** 2, 0, np.inf)[0]
 print(f"Exercise 1: MTTF = {ex1_mttf:.4f} months (scan: 5 months)")
@@ -76,8 +76,7 @@ print(f"Exercise 1: MTTF = {ex1_mttf:.4f} months (scan: 5 months)")
 t = np.linspace(0, 25, 400)
 pdf1 = pd.DataFrame({"t": t, "f": 0.4 / (0.2 * t + 1) ** 3})
 g = (ggplot(pdf1, aes("t", "f")) + geom_area(fill = red, alpha = 0.35) + geom_line(color = red, size = 1.4) +
-     geom_vline(xintercept = ex1_mttf, color = red, size = 1) +
-     annotate("text", x = ex1_mttf + 0.5, y = 0.3, label = "MTTF = 5", color = red, size = 20,
+     annotate("text", x = 7, y = 0.3, label = "MTTF?", color = red, size = 26,
               fontweight = "bold", ha = "left") +
      scale_x_continuous(expand = (0, 0)) + scale_y_continuous(expand = (0, 0), limits = (0, 0.42)) +
      labs(x = "Months", y = "f(t)") + theme_deck())
@@ -135,8 +134,11 @@ g = (ggplot() +
      geom_line(curve, aes("t", "pct"), color = "black", size = 1.3) +
      scale_x_continuous(expand = (0, 0), breaks = list(range(0, 601, 100))) +
      scale_y_continuous(expand = (0, 0), limits = (0, 45), breaks = list(range(0, 41, 10))) +
-     labs(x = "Days to failure (last bar: > 550)", y = "Frequency (%)") + theme_deck())
+     labs(x = "Days to failure (last bar: > 550)", y = "Frequency (%)") + theme_deck(26))   # shown beside the code: readable type
 save(g, "gen_bulb_histogram_pdf_py.png")
+# Squarer copy for the Example slide, where the chart floats beside the code (7 x 6 in).
+g = g + theme_deck(24) + theme(figure_size = (7, 6))
+save(g, "gen_bulb_histogram_side_py.png")
 t = np.linspace(0, 5, 300)
 g = (ggplot(pd.DataFrame({"t": t, "f": f_exp(t, 1)}), aes("t", "f")) + geom_line(color = red, size = 1.8) +
      scale_x_continuous(expand = (0, 0), breaks = []) +
