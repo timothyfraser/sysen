@@ -58,3 +58,13 @@ GRAND_MEAN_COLOUR = "#2a1414"
 
 The matching HTML tints for tables use the same tones: `td.t-o` (A),
 `td.t-p` (B), `td.t-b` (C), `td.t-rose` (D); see `specs/SLIDES.md`.
+
+## Factorial design assets (Lesson 13 / Workshop 13)
+
+| Script | Writes | Shows |
+|---|---|---|
+| `slides_factorial_cubes.py` (stdlib only) | `docs-v3/images/slides/factorial/cube_yields.svg`, `cube_T.svg`, `cube_C.svg`, `cube_K.svg`, `cube_TK.svg`, `cube_three_way.svg` | Pilot-plant 2^3 cube (T left-right, C front-back, K bottom-top); yields at corners; main-effect edges as red arrows, "-" face tan, "+" face soft blue; K = A / K = B faces tan / lavender |
+| `slides_factorial_cubes.py` | `docs-v3/images/slides/factorial/cube_contrast_{A,B,C,AB,AC,BC,ABC}.svg` | BHH Fig 5.4 contrast cubes: filled corner = "+", open ring = "-" |
+| `slides_factorial_cubes.py` | `docs-v3/images/slides/factorial/cube_full.svg`, `cube_half.svg` | Generic 2^3 (y1..y8 = 33, 63, 41, 57, 57, 51, 59, 53) and its ABC = + half fraction |
+| `slides_factorial_pilot.R` / `.py` | `docs-v3/images/slides/lesson-13/gen_effects_lattes.png` / `gen_effects_lattes_py.png` | Lattes effects plot: one box per effect at its estimate, "estimate (SE)", diverging fill (blue mid / white / red) |
+| `slides_factorial_replicates.R` / `.py` | `workshops/pilot_plant_replicates.csv` is read, nothing written | Replicate arithmetic: d, d^2/2, s^2 = 8, Var(effect) = 2, SE(effect) = 1.41 |

@@ -4,7 +4,8 @@
 #   the lattes effects chart.
 # Run from the top of the repo:  Rscript functions/slides_factorial_pilot.R
 # Reads:  workshops/lattes.csv
-# Writes: docs-v3/images/slides/lesson-13/gen_effects_lattes.png; prints outputs.
+# Writes: docs-v3/images/slides/lesson-13/gen_effects_lattes.png (effects plot:
+#   one box per effect, "estimate (SE)"); prints outputs.
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -49,9 +50,32 @@ d = data.frame(
   effect = c("Syrup: Torani - Monin", "Machine: B - A", "Art: heart - foam"),
   dbar = c(eff("syrup","torani","monin"), eff("machine","b","a"), eff("art","heart","foamy")))
 print(d %>% mutate(dbar = round(dbar, 2)))
-g = ggplot(d, aes(x = dbar, y = reorder(effect, dbar), fill = dbar > 0)) +
-  geom_col(width = 0.6) + geom_vline(xintercept = 0) +
-  scale_fill_manual(values = c("TRUE" = "#B31B1B", "FALSE" = "#5b6b7a"), guide = "none") +
-  labs(x = "Difference in mean tastiness", y = NULL, title = "Direct effects, lattes experiment") +
-  theme_minimal(base_size = 16)
-ggsave("docs-v3/images/slides/lesson-13/gen_effects_lattes.png", g, width = 7, height = 3.6, dpi = 150)
+# Effects plot (Tim's 2025 form): one labelled box per effect at its estimate.
+# Coded +/-1 factors on the 240 lattes; effect = 2 x coefficient, SE = 2 x SE(coef).
+lc = lattes %>% mutate(S = ifelse(syrup == "torani", 1, -1),
+                       M = ifelse(machine == "b", 1, -1),
+                       A = ifelse(art == "heart", 1, -1))
+ml = lm(tastiness ~ S * M * A, data = lc)
+est = summary(ml)$coefficients[-1, , drop = FALSE]
+# names: S = Syrup (Torani vs Monin), M = Machine (b vs a), A = Art (heart vs foamy)
+fx = data.frame(term = rownames(est), estimate = 2 * est[, "Estimate"],
+                se = 2 * est[, "Std. Error"], row.names = NULL) %>%
+  mutate(effect = recode(term, "S" = "Syrup", "M" = "Machine", "A" = "Art",
+                         "S:M" = "S x M", "S:A" = "S x A",
+                         "M:A" = "M x A", "S:M:A" = "S x M x A"),
+         effect = factor(effect, levels = rev(effect)),
+         label = sprintf("%.1f (%.1f)", estimate, se))
+print(fx %>% mutate(across(c(estimate, se), ~ round(.x, 2))) %>% select(effect, estimate, se, label))
+lim = max(abs(fx$estimate))
+g = ggplot(fx, aes(x = estimate, y = effect)) +
+  geom_vline(xintercept = 0, colour = "#1f1f1f", linewidth = 0.8) +
+  geom_label(aes(label = label, fill = estimate), size = 6.5, fontface = "bold",
+             label.padding = unit(0.35, "lines"), label.size = 0.6, colour = "#1f1f1f") +
+  scale_fill_gradient2(low = "#3880c0", mid = "#ffffff", high = "#B31B1B", midpoint = 0,
+                       limits = c(-lim, lim), name = "Effect") +
+  scale_x_continuous(limits = range(fx$estimate) + c(-17, 17)) +
+  labs(x = "Effect on tastiness", y = NULL) +
+  theme_minimal(base_size = 20) +
+  theme(axis.text = element_text(size = 18, colour = "#1f1f1f"),
+        panel.grid.minor = element_blank(), legend.key.height = unit(1.4, "lines"))
+ggsave("docs-v3/images/slides/lesson-13/gen_effects_lattes.png", g, width = 7, height = 3.6, dpi = 150, bg = "white")

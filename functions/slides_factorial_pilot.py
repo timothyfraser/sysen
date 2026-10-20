@@ -2,7 +2,8 @@
 # Python twin of slides_factorial_pilot.R (Lesson 13 / Workshop 13 slides).
 # Run from the top of the repo:  python functions/slides_factorial_pilot.py
 # Reads:  workshops/lattes.csv
-# Writes: docs-v3/images/slides/lesson-13/gen_effects_lattes_py.png; prints outputs.
+# Writes: docs-v3/images/slides/lesson-13/gen_effects_lattes_py.png (effects plot:
+#   one box per effect, "estimate (SE)"); prints outputs.
 import pandas as pd
 import itertools
 import statsmodels.formula.api as smf
@@ -55,11 +56,32 @@ dd = pd.DataFrame({"effect": ["Syrup: Torani - Monin", "Machine: B - A", "Art: h
                    "dbar": [eff("syrup", "torani", "monin"), eff("machine", "b", "a"),
                             eff("art", "heart", "foamy")]})
 print(dd.round(2))
-dd["effect"] = pd.Categorical(dd.effect, categories=dd.sort_values("dbar").effect)
-dd["pos"] = dd.dbar > 0
-g = (ggplot(dd, aes(x="dbar", y="effect", fill="pos")) + geom_col(width=0.6) +
-     geom_vline(xintercept=0) +
-     scale_fill_manual(values={True: "#B31B1B", False: "#5b6b7a"}, guide=None) +
-     labs(x="Difference in mean tastiness", y="", title="Direct effects, lattes experiment") +
-     theme_minimal(base_size=16))
+# Effects plot (Tim's 2025 form): one labelled box per effect at its estimate.
+# Coded +/-1 factors; effect = 2 x coefficient, SE = 2 x SE(coef).
+lc = lattes.assign(S=(lattes.syrup == "torani") * 2 - 1, M=(lattes.machine == "b") * 2 - 1,
+                   A=(lattes.art == "heart") * 2 - 1)
+ml = smf.ols("tastiness ~ S * M * A", data=lc).fit()
+names = {"S": "Syrup", "M": "Machine", "A": "Art", "S:M": "S x M",
+         "S:A": "S x A", "M:A": "M x A", "S:M:A": "S x M x A"}
+fx = pd.DataFrame({"term": list(names)})
+fx["estimate"] = [2 * ml.params[t] for t in fx.term]
+fx["se"] = [2 * ml.bse[t] for t in fx.term]
+fx["effect"] = pd.Categorical([names[t] for t in fx.term],
+                              categories=[names[t] for t in reversed(list(names))])
+fx["label"] = [f"{e:.1f} ({s:.1f})" for e, s in zip(fx.estimate, fx.se)]
+print(fx[["effect", "estimate", "se", "label"]].round(2).to_string(index=False))
+lim = fx.estimate.abs().max()
+span = fx.estimate.max() - fx.estimate.min()
+g = (ggplot(fx, aes(x="estimate", y="effect")) +
+     geom_vline(xintercept=0, color="#1f1f1f", size=0.8) +
+     geom_label(aes(label="label", fill="estimate"), size=15, fontweight="bold",
+                color="#1f1f1f", label_padding=0.35) +
+     scale_fill_gradient2(low="#3880c0", mid="#ffffff", high="#B31B1B", midpoint=0,
+                          limits=(-lim, lim), name="Effect") +
+     scale_x_continuous(limits=(fx.estimate.min() - 17, fx.estimate.max() + 17)) +
+     labs(x="Effect on tastiness", y="") +
+     theme_minimal(base_size=20) +
+     theme(axis_text=element_text(size=16, color="#1f1f1f"), panel_grid_minor=element_blank(),
+           legend_title=element_text(size=16), legend_text=element_text(size=14),
+           legend_key_height=150))
 g.save("docs-v3/images/slides/lesson-13/gen_effects_lattes_py.png", width=7, height=3.6, dpi=150, verbose=False)
