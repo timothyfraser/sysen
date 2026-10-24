@@ -26,16 +26,21 @@ lattes$art %>% unique()
 lattes$milk %>% unique()
 
 
-# Calculate a standard error the tastiness metric in this factorial experiment
-se = lattes %>%
+# Calculate the standard error of an effect in this factorial experiment.
+# First, pool the variance across every treatment combination (cell)...
+s2 = lattes %>%
   group_by(machine, syrup, art) %>%
-  summarize(s = sd(y), n = n()) %>%
+  summarize(s2 = var(y), n = n()) %>%
   ungroup() %>%
-  summarize(se = sqrt( sum(s^2 / n))) %>%
-  # A trick - with() is like the dollar sign - it will let you access se
-  with(se)
+  summarize(s2 = sum((n - 1) * s2) / sum(n - 1)) %>%
+  # A trick - with() is like the dollar sign - it will let you access s2
+  with(s2)
+# ...then each effect compares the mean of the runs at + with the mean of the runs at -,
+# so SE = s * sqrt(1 / n_plus + 1 / n_minus). Machine b has 120 runs and machine a has 120.
+se = sqrt(s2) * sqrt(1 / 120 + 1 / 120)
 
 se
+
 
 
 
@@ -62,10 +67,11 @@ lattes %>%
 myse = lattes %>%
   group_by(machine, syrup, art) %>%
   summarize(
-    s = sd(y),
+    s2 = var(y),
     n = n()) %>%
   ungroup() %>%
-  summarize(se = sqrt( sum(s^2 / n) )) 
+  summarize(s2 = sum((n - 1) * s2) / sum(n - 1),
+            se = sqrt(s2) * sqrt(1 / 120 + 1 / 120))
 myse %>%  {.$se}
 myse %>%  with(se)
 
@@ -128,112 +134,127 @@ ggplot() +
 # functions will become our friends.
 
 # Let's construct ourselves some functions
+se_factorial = function(formula, data, table = FALSE){
+  # Get the response (y) and the factors from the formula
+  frame = model.frame(formula, data) %>% rename(y = 1)
+  xvars = names(frame)[-1]
+  # Every factor must have exactly two levels
+  levels_n = sapply(frame[xvars], function(x) length(unique(x)))
+  if (any(levels_n != 2)) {
+    stop("se_factorial(): ", paste(xvars[levels_n != 2], collapse = ", "),
+         " does not have exactly two levels. Recode it as a yes/no question, e.g. oat = milk == \"oat\".")
+  }
+  # Code each factor -1 (first level) and +1 (second level)
+  coded = frame %>% mutate(across(all_of(xvars), ~ ifelse(as.integer(factor(.x)) == 2, 1, -1)))
+
+  # Pooled variance over the treatment combinations of all the factors
+  cells = coded %>%
+    group_by(across(all_of(xvars))) %>%
+    summarize(s2 = var(y), v = n() - 1, .groups = "drop")
+  df = sum(cells$v)
+  if (df == 0) {
+    stop("se_factorial(): no treatment combination has 2 or more runs, so there is no pooled variance; ",
+         "judge its effects with a normal plot instead.")
+  }
+  s2 = sum(cells$v * cells$s2, na.rm = TRUE) / df
+
+  # Every main effect, two-way and three-way interaction among the factors
+  terms = unlist(lapply(1:min(3, length(xvars)), function(m) combn(xvars, m, simplify = FALSE)),
+                 recursive = FALSE)
+  # SE of each effect: s * sqrt(sum of c^2 / n) over the combinations of its factors
+  output = tibble(term = sapply(terms, paste, collapse = ":")) %>%
+    mutate(
+      n_plus = sapply(terms, function(t) sum(apply(coded[t], 1, prod) == 1)),
+      n_minus = sapply(terms, function(t) sum(apply(coded[t], 1, prod) == -1)),
+      se = sapply(terms, function(t){
+        n_k = coded %>% count(across(all_of(t))) %>% pull(n)
+        c_k = 1 / 2^(length(t) - 1)
+        sqrt(s2) * sqrt(sum(c_k^2 / n_k)) }),
+      s2 = s2, df = df, t_crit = qt(0.975, df = df))
+
+  if (table) { return(output) }
+  # Balanced: every effect has the same SE, so return that one number
+  if (diff(range(output$se)) < 1e-10) { return(output$se[1]) }
+  message("se_factorial(): effects have different standard errors; effects_factorial() lists each effect with its own.")
+  return(setNames(output$se, output$term))
+}
+
+effects_factorial = function(formula, data, conf = 0.95){
+  # Standard errors (and the two-level check) come from se_factorial()
+  ses = se_factorial(formula, data, table = TRUE)
+  frame = model.frame(formula, data) %>% rename(y = 1)
+
+  ses %>%
+    mutate(
+      # Each effect from the matching dbar function
+      effect = sapply(strsplit(term, ":"), function(t){
+        f = as.formula(paste("y ~", paste(t, collapse = " * ")))
+        switch(length(t), dbar_oneway(f, frame), dbar_twoway(f, frame), dbar_threeway(f, frame)) }),
+      # t interval on the pooled degrees of freedom
+      t_crit = qt(1 - (1 - conf) / 2, df = df),
+      lower = effect - t_crit * se,
+      upper = effect + t_crit * se) %>%
+    select(term, effect, se, lower, upper)
+}
+
 dbar_oneway = function(formula, data){
   # formula = y ~ machine
   # data = lattes
-  
+
   frame = model.frame(formula, data) %>%
     select(y = 1, a = 2) %>%
-    mutate(a = factor(a)) %>%
-    mutate(a = as.integer(a) - 1)
-  
-  
+    mutate(a = as.integer(factor(a)) - 1)
+
+  # Compute the one-way effect from the cell means
   frame %>%
-    reframe(
-      dbar = mean(y[a==1] - y[a ==0]),
-    ) %>%
+    # One mean per level of a
+    group_by(a) %>%
+    summarize(xbar = mean(y)) %>%
+    # The "High" level (a == 1) minus the "Low" level (a == 0)
+    summarize(dbar = mean(xbar[a == 1]) - mean(xbar[a == 0])) %>%
     with(dbar)
 }
 
-# Function for a 2^3 factorial experiment's 2-way interaction effects
 dbar_twoway = function(formula, data){
-  # Testing Values
-  # formula = y ~ syrup * art
+  # formula = y ~ machine * syrup
   # data = lattes
-  
-  # Extract model frame
+
+  # Extract model frame, with y and the two factors coded 0 (low) and 1 (high)
   frame = model.frame(formula, data) %>%
     select(y = 1, a = 2, b = 3) %>%
-    mutate(a = factor(a), b = factor(b))
-  
-  levels_a = levels(frame$a)
-  levels_b = levels(frame$b)
-  
-  frame = frame %>%
-    mutate(a = as.integer(a),
-           b = as.integer(b))
-  
+    mutate(a = as.integer(factor(a)) - 1,
+           b = as.integer(factor(b)) - 1)
+
   output = frame %>%
-    reframe(
-      x1 = y[(a==2&b==2)|(a==1&b==1)],
-      x0 = y[(a==1&b==2)|(a==2&b==1)]
-    ) %>%
-    reframe(
-      dbar = mean(x1) - mean(x0)
-    ) %>%
+    # One mean per cell (each combination of a and b)
+    group_by(a, b) %>%
+    summarize(xbar = mean(y), .groups = "drop") %>%
+    # Same-direction cells (HH or LL) minus opposite-direction cells (HL or LH)
+    summarize(dbar = mean(xbar[a == b]) - mean(xbar[a != b])) %>%
     with(dbar)
   return(output)
 }
 
-# For a true 3-by-3 interaction...
 dbar_threeway = function(formula, data){
-  # Testing Values
   # formula = y ~  machine * syrup * art
   # data = lattes
-  
+
+  # Extract model frame, with y and the three factors coded 0 (low) and 1 (high)
   frame = model.frame(formula, data) %>%
     select(y = 1, a = 2, b = 3, c = 4) %>%
-    mutate(a = factor(a), b = factor(b), c= factor(c)) %>%
-    mutate(a = as.integer(a) - 1, b = as.integer(b) - 1, c = as.integer(c) - 1)
-  
-  differences = frame %>%
-    reframe(
-      # Get the AC interaction when B = 0
-      d1a = y[a==1&b==0&c==1] - y[a==0&b==0&c==1],
-      d0a = y[a==1&b==0&c==0] - y[a==0&b==0&c==0],
-      # Get the AC interaction when B = 1
-      d1b = y[a==1&b==1&c==1] - y[a==0&b==1&c==1],
-      d0b = y[a==1&b==1&c==0] - y[a==0&b==1&c==0]
-    )
-  
-  output = differences %>%
-    reframe(
-      # Get AC interaction effect when B = 0
-      dbar_a = (mean(d1a) - mean(d0a)) / 2,
-      # Get AC interaction effect when B = 1
-      dbar_b = (mean(d1b) - mean(d0b) ) / 2,
-      # Get the average of the two effects 
-      dbar = (dbar_b - dbar_a) / 2
-    ) %>%
-    select(dbar) %>%
-    with(dbar)
-  return(output)
-}
+    mutate(a = as.integer(factor(a)) - 1,
+           b = as.integer(factor(b)) - 1,
+           c = as.integer(factor(c)) - 1)
 
-se_factorial = function(formula = y ~ machine + syrup + art, data){
-  # formula = y ~  machine + syrup + art
-  # data = lattes
-  
-  
-  # Get frame of data
-  frame = model.frame(formula, data) %>%
-    rename(y = 1)
-  # Get names of xvaraiables
-  xvars = names(frame)[-1]
-  
-  # Recode values
-  # frame = frame %>%
-  #   mutate(across(.cols = any_of(xvars), .fns = ~as.integer(factor(.x)) - 1))
-  
-  
-  # Calculate a standard error the tastiness metric in this factorial experiment
   output = frame %>%
-    group_by(across(any_of(xvars))) %>%
-    summarize(s = sd(y), n = n()) %>%
-    ungroup() %>%
-    summarize(se = sqrt( sum(s^2 / n))) %>%
-    # A trick - with() is like the dollar sign - it will let you access se
-    with(se)
+    # One mean per cell (each combination of a, b and c)
+    group_by(a, b, c) %>%
+    summarize(xbar = mean(y), .groups = "drop") %>%
+    # The sign of each cell in the three-way contrast: + or -
+    mutate(sign = (2 * a - 1) * (2 * b - 1) * (2 * c - 1)) %>%
+    # Average of the + cells minus average of the - cells
+    summarize(dbar = mean(xbar[sign == 1]) - mean(xbar[sign == -1])) %>%
+    with(dbar)
   return(output)
 }
 
@@ -273,54 +294,9 @@ dbar_threeway(formula = y ~ machine * syrup * art, data = lattes)
 se_factorial(formula = y ~ machine + syrup + art, data = lattes)
 
 
-effects = bind_rows(
-  tibble(
-    name = "Torani - Monin",
-    estimate = dbar_oneway(formula = y ~ syrup, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  tibble(
-    name = "Heart - Foam",
-    estimate = dbar_oneway(formula = y ~ art, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  tibble(
-    name = "Machine B - A",
-    estimate = dbar_oneway(formula = y ~ machine, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  
-  tibble(
-    name = "Machine * Art",
-    estimate = dbar_twoway(formula = y ~ machine * art, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  tibble(
-    name = "Machine * Syrup",
-    estimate = dbar_twoway(formula = y ~ machine * syrup, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  
-  tibble(
-    name = "Syrup * Art",
-    estimate = dbar_twoway(formula = y ~ syrup * art, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  ),
-  
-  tibble(
-    name = "Machine * Syrup * Art",
-    estimate = dbar_threeway(formula = y ~ machine * syrup * art, data = lattes),
-    se = se_factorial(formula = y ~ machine + syrup + art, data = lattes)
-  )
-) %>%
-   mutate(z = qnorm(0.975),
-          upper = estimate + se * z,
-          lower = estimate - se * z)
+# Every main effect and interaction, each with its standard error and a 95% interval
+effects = effects_factorial(formula = y ~ machine + syrup + art, data = lattes) %>%
+  rename(name = term, estimate = effect)
 
 effects
 gg = ggplot() +
@@ -417,6 +393,12 @@ lattes %>%
 lattes %>%
   mutate(oat = milk == "oat") %>%
   dbar_twoway(formula = y ~ machine * oat)
+
+# Or get every effect at once. Oat lattes are a third of the runs,
+# so effects involving oat get their own, larger standard error
+lattes %>%
+  mutate(oat = milk == "oat") %>%
+  effects_factorial(formula = y ~ machine + oat + syrup + art)
 
 
 

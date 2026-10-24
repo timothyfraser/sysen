@@ -34,11 +34,13 @@ print(lattes["art"].unique())
 print(lattes["milk"].unique())
 
 
-# Calculate a standard error the tastiness metric in this factorial experiment
-se = (lattes.groupby(["machine", "syrup", "art"], as_index=False)
-      .agg(s=("y", "std"), n=("y", "size"))
-      # A trick - .pipe() hands the table to a function, like with() in R
-      .pipe(lambda df: np.sqrt((df["s"]**2 / df["n"]).sum())))
+# Calculate the standard error of an effect in this factorial experiment.
+# First, pool the variance across every treatment combination (cell)...
+cells = lattes.groupby(["machine", "syrup", "art"], as_index=False).agg(s2=("y", "var"), n=("y", "size"))
+s2 = ((cells["n"] - 1) * cells["s2"]).sum() / (cells["n"] - 1).sum()
+# ...then each effect compares the mean of the runs at + with the mean of the runs at -,
+# so SE = s * sqrt(1 / n_plus + 1 / n_minus). Machine b has 120 runs and machine a has 120.
+se = np.sqrt(s2) * np.sqrt(1 / 120 + 1 / 120)
 
 print(se)
 
@@ -64,9 +66,10 @@ print(pd.DataFrame({"dbar": lattes.loc[lattes["machine"] == "a", "y"].to_numpy()
 
 
 myse = (lattes.groupby(["machine", "syrup", "art"], as_index=False)
-        .agg(s=("y", "std"),
+        .agg(s2=("y", "var"),
              n=("y", "size"))
-        .pipe(lambda df: pd.DataFrame({"se": [np.sqrt((df["s"]**2 / df["n"]).sum())]})))
+        .pipe(lambda df: pd.DataFrame({"s2": [((df["n"] - 1) * df["s2"]).sum() / (df["n"] - 1).sum()]}))
+        .assign(se=lambda df: np.sqrt(df["s2"]) * np.sqrt(1 / 120 + 1 / 120)))
 # myse %>% {.$se} and myse %>% with(se) in R both pull out the value
 print(myse["se"].iloc[0])
 
@@ -127,82 +130,103 @@ print(stat)
 # functions will become our friends.
 
 # Let's construct ourselves some functions
+from itertools import combinations
+from scipy import stats  # qt() in R
+
+
+def factorial_frame(formula, data):
+    response, rhs = [part.strip() for part in formula.split("~")]
+    xvars = [v.strip() for v in rhs.replace("*", "+").split("+")]
+    frame = data[[response] + xvars].rename(columns={response: "y"})
+    return frame, xvars
+
+
+def se_factorial(formula, data, table=False):
+    frame, xvars = factorial_frame(formula, data)
+    # Every factor must have exactly two levels
+    n_levels = frame[xvars].nunique()
+    if (n_levels != 2).any():
+        raise ValueError("se_factorial(): " + ", ".join(n_levels[n_levels != 2].index) +
+                         " does not have exactly two levels. Recode it as a yes/no question, "
+                         "e.g. lattes['oat'] = lattes['milk'] == 'oat'.")
+    # Code each factor -1 (first level) and +1 (second level)
+    coded = frame.assign(**{x: np.where(frame[x] == sorted(frame[x].unique())[1], 1, -1) for x in xvars})
+
+    # Pooled variance over the treatment combinations of all the factors
+    cells = coded.groupby(xvars)["y"].agg(s2="var", n="count").reset_index()
+    cells["v"] = cells["n"] - 1
+    df = int(cells["v"].sum())
+    if df == 0:
+        raise ValueError("se_factorial(): no treatment combination has 2 or more runs, so there is no "
+                         "pooled variance; judge its effects with a normal plot instead.")
+    s2 = (cells["v"] * cells["s2"].fillna(0)).sum() / df
+
+    # Every main effect, two-way and three-way interaction among the factors
+    terms = [list(t) for m in range(1, min(3, len(xvars)) + 1) for t in combinations(xvars, m)]
+
+    # SE of each effect: s * sqrt(sum of c^2 / n) over the combinations of its factors
+    def se_term(t):
+        n_k = coded.groupby(t).size()
+        c_k = 1 / 2 ** (len(t) - 1)
+        return np.sqrt(s2) * np.sqrt((c_k ** 2 / n_k).sum())
+
+    output = pd.DataFrame({
+        "term": [":".join(t) for t in terms],
+        "n_plus": [int((coded[t].prod(axis=1) == 1).sum()) for t in terms],
+        "n_minus": [int((coded[t].prod(axis=1) == -1).sum()) for t in terms],
+        "se": [se_term(t) for t in terms]})
+    output = output.assign(s2=s2, df=df, t_crit=stats.t.ppf(0.975, df))
+
+    if table:
+        return output
+    # Balanced: every effect has the same SE, so return that one number
+    if np.ptp(output["se"]) < 1e-10:
+        return float(output["se"].iloc[0])
+    print("se_factorial(): effects have different standard errors; effects_factorial() lists each effect with its own.")
+    return pd.Series(output["se"].values, index=output["term"])
+
+
 def dbar_oneway(formula, data):
-  # formula = "y ~ machine"
-  # data = lattes
+    frame, (a,) = factorial_frame(formula, data)
+    frame = frame.assign(a=(frame[a] == sorted(frame[a].unique())[1]).astype(int))
+    # One mean per level of a, then high minus low
+    xbar = frame.groupby("a")["y"].mean()
+    return xbar[1] - xbar[0]
 
-  # model.frame(formula, data) in R: the y column, then the x columns named in the formula
-  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
-  frame.columns = ["y", "a"]
-  # factor(a) %>% as.integer() - 1 in R: levels sorted alphabetically, coded 0, 1, ...
-  frame = frame.assign(a=pd.Categorical(frame["a"]).codes)
 
-  # R subtracts y[a==0] from y[a==1] element by element, recycling the shorter
-  # vector; for balanced groups that is the same as a difference of means.
-  dbar = frame.loc[frame["a"] == 1, "y"].mean() - frame.loc[frame["a"] == 0, "y"].mean()
-  return dbar
-
-# Function for a 2^3 factorial experiment's 2-way interaction effects
 def dbar_twoway(formula, data):
-  # Testing Values
-  # formula = "y ~ syrup * art"
-  # data = lattes
+    frame, (a, b) = factorial_frame(formula, data)
+    frame = frame.assign(a=(frame[a] == sorted(frame[a].unique())[1]).astype(int),
+                         b=(frame[b] == sorted(frame[b].unique())[1]).astype(int))
+    # One mean per combination of a and b
+    cells = frame.groupby(["a", "b"])["y"].mean().reset_index()
+    same = cells["a"] == cells["b"]
+    return cells.loc[same, "y"].mean() - cells.loc[~same, "y"].mean()
 
-  # Extract model frame
-  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
-  frame.columns = ["y", "a", "b"]
 
-  # (R codes the levels 1 and 2; we code them 0 and 1)
-  a, b = pd.Categorical(frame["a"]).codes, pd.Categorical(frame["b"]).codes
-
-  x1 = frame.loc[((a == 1) & (b == 1)) | ((a == 0) & (b == 0)), "y"]
-  x0 = frame.loc[((a == 0) & (b == 1)) | ((a == 1) & (b == 0)), "y"]
-  output = x1.mean() - x0.mean()
-  return output
-
-# For a true 3-by-3 interaction...
 def dbar_threeway(formula, data):
-  # Testing Values
-  # formula = "y ~  machine * syrup * art"
-  # data = lattes
+    frame, (a, b, c) = factorial_frame(formula, data)
+    frame = frame.assign(a=(frame[a] == sorted(frame[a].unique())[1]).astype(int),
+                         b=(frame[b] == sorted(frame[b].unique())[1]).astype(int),
+                         c=(frame[c] == sorted(frame[c].unique())[1]).astype(int))
+    # One mean per combination of a, b and c, with its sign in the contrast
+    cells = frame.groupby(["a", "b", "c"])["y"].mean().reset_index()
+    sign = (2 * cells["a"] - 1) * (2 * cells["b"] - 1) * (2 * cells["c"] - 1)
+    return cells.loc[sign == 1, "y"].mean() - cells.loc[sign == -1, "y"].mean()
 
-  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
-  frame.columns = ["y", "a", "b", "c"]
-  a, b, c = (pd.Categorical(frame["a"]).codes, pd.Categorical(frame["b"]).codes,
-             pd.Categorical(frame["c"]).codes)
 
-  def ycell(aa, bb, cc):
-    return frame.loc[(a == aa) & (b == bb) & (c == cc), "y"].to_numpy()
-
-  # Get the AC interaction when B = 0
-  d1a = ycell(1, 0, 1) - ycell(0, 0, 1)
-  d0a = ycell(1, 0, 0) - ycell(0, 0, 0)
-  # Get the AC interaction when B = 1
-  d1b = ycell(1, 1, 1) - ycell(0, 1, 1)
-  d0b = ycell(1, 1, 0) - ycell(0, 1, 0)
-
-  # Get AC interaction effect when B = 0
-  dbar_a = (d1a.mean() - d0a.mean()) / 2
-  # Get AC interaction effect when B = 1
-  dbar_b = (d1b.mean() - d0b.mean()) / 2
-  # Get the average of the two effects
-  output = (dbar_b - dbar_a) / 2
-  return output
-
-def se_factorial(formula="y ~ machine + syrup + art", data=None):
-  # formula = "y ~  machine + syrup + art"
-  # data = lattes
-
-  # Get frame of data
-  frame = data[[v.strip() for v in re.split("[~*+]", formula)]]
-  frame = frame.rename(columns={frame.columns[0]: "y"})
-  # Get names of xvaraiables
-  xvars = list(frame.columns[1:])
-
-  # Calculate a standard error the tastiness metric in this factorial experiment
-  cells = frame.groupby(xvars, as_index=False).agg(s=("y", "std"), n=("y", "size"))
-  output = np.sqrt((cells["s"]**2 / cells["n"]).sum())
-  return output
+def effects_factorial(formula, data, conf=0.95):
+    # Standard errors (and the two-level check) come from se_factorial()
+    ses = se_factorial(formula, data, table=True)
+    frame, xvars = factorial_frame(formula, data)
+    # Each effect from the matching dbar function
+    dbar = {1: dbar_oneway, 2: dbar_twoway, 3: dbar_threeway}
+    effect = np.array([dbar[len(t.split(":"))]("y ~ " + " * ".join(t.split(":")), frame)
+                       for t in ses["term"]])
+    # t interval on the pooled degrees of freedom
+    t_crit = stats.t.ppf(1 - (1 - conf) / 2, ses["df"].iloc[0])
+    return pd.DataFrame({"term": ses["term"], "effect": effect, "se": ses["se"],
+                         "lower": effect - t_crit * ses["se"], "upper": effect + t_crit * ses["se"]})
 
 
 # Generate your interaction effects for a 2^3 factorial experiment
@@ -240,21 +264,9 @@ print(dbar_threeway(formula="y ~ machine * syrup * art", data=lattes))
 print(se_factorial(formula="y ~ machine + syrup + art", data=lattes))
 
 
-effects = (pd.DataFrame({
-  "name": ["Torani - Monin", "Heart - Foam", "Machine B - A",
-           "Machine * Art", "Machine * Syrup", "Syrup * Art",
-           "Machine * Syrup * Art"],
-  "estimate": [dbar_oneway(formula="y ~ syrup", data=lattes),
-               dbar_oneway(formula="y ~ art", data=lattes),
-               dbar_oneway(formula="y ~ machine", data=lattes),
-               dbar_twoway(formula="y ~ machine * art", data=lattes),
-               dbar_twoway(formula="y ~ machine * syrup", data=lattes),
-               dbar_twoway(formula="y ~ syrup * art", data=lattes),
-               dbar_threeway(formula="y ~ machine * syrup * art", data=lattes)],
-  "se": se_factorial(formula="y ~ machine + syrup + art", data=lattes)})
-  .assign(z=qnorm(0.975),
-          upper=lambda df: df["estimate"] + df["se"] * df["z"],
-          lower=lambda df: df["estimate"] - df["se"] * df["z"]))
+# Every main effect and interaction, each with its standard error and a 95% interval
+effects = (effects_factorial(formula="y ~ machine + syrup + art", data=lattes)
+           .rename(columns={"term": "name", "effect": "estimate"}))
 
 print(effects)
 gg = (ggplot() +
@@ -341,6 +353,10 @@ print(dbar_oneway(formula="y ~ whole", data=lattes.assign(whole=lattes["milk"] =
 
 # Compare the ones that are oatmilk AND from machine B against all the ones that are NOT oatmilk and from machine A
 print(dbar_twoway(formula="y ~ machine * oat", data=lattes.assign(oat=lattes["milk"] == "oat")))
+
+# Or get every effect at once. Oat lattes are a third of the runs,
+# so effects involving oat get their own, larger standard error
+print(effects_factorial(formula="y ~ machine + oat + syrup + art", data=lattes.assign(oat=lattes["milk"] == "oat")))
 
 
 

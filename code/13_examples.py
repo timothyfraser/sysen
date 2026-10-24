@@ -14,7 +14,7 @@ import pandas as pd            # data wrangling (dplyr + readr in R)
 # Load the factorial analysis functions
 # (source("functions/functions_factorial.R") in R)
 sys.path.append("functions")
-from functions_factorial import se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
+from functions_factorial import effects_factorial, se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
 
 # ============================================================================
 # Example 1: Plant Growth Experiment (2^2 Factorial Design)
@@ -38,8 +38,8 @@ print(example1_plants)
 # 1. Direct effect of fertilizer: dbar_oneway...
 # 2. Direct effect of watering: dbar_oneway...
 # 3. Two-way interaction: dbar_twoway...
-# 4. Standard error: se_factorial...
-# 5. Which effects are statistically significant? Remember that 1.96 standard errors is a good approximation of a 95% confidence interval.
+# 4. Standard errors: effects_factorial() gives every effect with its own standard error and 95% interval (se_factorial() gives just the standard errors)
+# 5. Which effects are statistically significant? An effect whose 95% interval does not cross zero (roughly 2 standard errors away) is statistically significant.
 # 6. What is your conclusion for the experiment?
 
 
@@ -70,8 +70,8 @@ print(example2_batteries)
 # 5. Two-way interaction (battery_type * usage): dbar_twoway...
 # 6. Two-way interaction (temperature * usage): dbar_twoway...
 # 7. Three-way interaction: dbar_threeway...
-# 8. Standard error: se_factorial...
-# 9. Which effects are statistically significant? Remember that 1.96 standard errors is a good approximation of a 95% confidence interval.
+# 8. Standard errors: effects_factorial() gives every effect with its own standard error and 95% interval (se_factorial() gives just the standard errors)
+# 9. Which effects are statistically significant? An effect whose 95% interval does not cross zero (roughly 2 standard errors away) is statistically significant.
 # 10. What is your conclusion for the experiment? Which combination of factors leads to the longest battery life?
 
 
@@ -104,8 +104,8 @@ print(example3_website)
 # 5. Two-way interaction (button_color * headline): dbar_twoway...
 # 6. Two-way interaction (layout * headline): dbar_twoway...
 # 7. Three-way interaction: dbar_threeway...
-# 8. Standard error: se_factorial...
-# 9. Which effects are statistically significant? Remember that 1.96 standard errors is a good approximation of a 95% confidence interval.
+# 8. Standard errors: effects_factorial() gives every effect with its own standard error and 95% interval (se_factorial() gives just the standard errors)
+# 9. Which effects are statistically significant? An effect whose 95% interval does not cross zero (roughly 2 standard errors away) is statistically significant.
 # 10. What is your conclusion for the experiment? Which combination of factors leads to the highest purchase amounts?
 
 
@@ -140,8 +140,8 @@ print(example4_bikeshare)
 # 4. Two-way interaction (location * bike_type): dbar_twoway...
 # 5. Two-way interaction (location * pricing): dbar_twoway...
 # 6. Two-way interaction (bike_type * pricing): dbar_twoway...
-# 7. Standard error: se_factorial...
-# 8. Which effects are statistically significant? Remember that 1.96 standard errors is a good approximation of a 95% confidence interval.
+# 7. Standard errors: effects_factorial() gives every effect with its own standard error and 95% interval (se_factorial() gives just the standard errors)
+# 8. Which effects are statistically significant? An effect whose 95% interval does not cross zero (roughly 2 standard errors away) is statistically significant.
 # 9. What is your conclusion for the experiment? Which combination leads to the most daily rides?
 # 10. What are the limitations of using a fractional factorial design compared to a full factorial?
 
@@ -179,8 +179,8 @@ print(example5_drones)
 example5_drones["small"] = example5_drones["propeller"] == "small"
 # 2. Calculate direct effects using dbar_oneway for your binary comparisons... eg.
 print(dbar_oneway(formula="flight_time ~ small", data=example5_drones))
-# 4. Standard error: se_factorial...
-# 5. Which effects are statistically significant? Remember that 1.96 standard errors is a good approximation of a 95% confidence interval.
+# 4. Standard errors: effects_factorial() gives every effect with its own standard error and 95% interval (se_factorial() gives just the standard errors)
+# 5. Which effects are statistically significant? An effect whose 95% interval does not cross zero (roughly 2 standard errors away) is statistically significant.
 
 
 

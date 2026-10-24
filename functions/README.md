@@ -61,10 +61,11 @@ Each name links to the source, if you're curious how it works.
 
 | Function | Description |
 |----------|-------------|
-| [`se_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Calculate Standard Error for Factorial Experiments |
-| [`dbar_oneway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Calculate One-Way Treatment Effect |
-| [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Calculate Two-Way Interaction Effect |
-| [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Calculate Three-Way Interaction Effect |
+| [`effects_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Table of Factorial Effects |
+| [`se_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Standard Error of Each Factorial Effect |
+| [`dbar_oneway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | One-Way (Main) Effect |
+| [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Two-Way Interaction Effect |
+| [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.R) | Three-Way Interaction Effect |
 
 ### `functions_crosstab.R`
 
@@ -209,10 +210,11 @@ Each name links to the source, if you're curious how it works.
 
 | Function | Description |
 |----------|-------------|
-| [`se_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Standard Error for Factorial Experiments |
-| [`dbar_oneway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate One-Way Treatment Effect |
-| [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Two-Way Interaction Effect |
-| [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Calculate Three-Way Interaction Effect |
+| [`effects_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Table of Factorial Effects |
+| [`se_factorial`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Standard Error of Each Factorial Effect |
+| [`dbar_oneway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | One-Way (Main) Effect |
+| [`dbar_twoway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Two-Way Interaction Effect |
+| [`dbar_threeway`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_factorial.py) | Three-Way Interaction Effect |
 
 ### `functions_kfactors.py`
 

@@ -1,7 +1,7 @@
 # What this file is ----------------------------------------------------------
 #
 # A short demonstration script. It loads functions_factorial.py and calls
-# each of its four functions once on the lattes data, so you can see what
+# each of its functions once on the lattes data, so you can see what
 # each one gives back.
 #
 # Run it from the top of the project folder, a few lines at a time:
@@ -16,7 +16,7 @@
 # Import the functions
 import sys
 sys.path.append("functions")
-from functions_factorial import se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
+from functions_factorial import effects_factorial, se_factorial, dbar_oneway, dbar_twoway, dbar_threeway
 import pandas as pd
 
 
@@ -25,6 +25,8 @@ import pandas as pd
 lattes = pd.read_csv("workshops/lattes.csv")
 
 # Execute the functions
+effects_factorial(formula="tastiness ~ machine + syrup + art", data=lattes)
+
 se_factorial(formula="tastiness ~ machine + syrup + art", data=lattes)
 
 dbar_oneway(formula="tastiness ~ machine", data=lattes)

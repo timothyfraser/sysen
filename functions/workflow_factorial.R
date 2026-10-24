@@ -1,7 +1,7 @@
 # What this file is ----------------------------------------------------------
 #
 # A short demonstration script. It loads functions_factorial.R and calls each
-# of its four functions once on the lattes data, so you can see what each one
+# of its functions once on the lattes data, so you can see what each one
 # gives back.
 #
 # Run it from the top of the project folder, a few lines at a time:
@@ -20,6 +20,8 @@ source("functions/functions_factorial.R")
 lattes = read.csv("workshops/lattes.csv")
 
 # Execute the functions
+effects_factorial(formula = tastiness ~ machine + syrup + art, data = lattes)
+
 se_factorial(formula = tastiness ~ machine + syrup + art, data = lattes)
 
 dbar_oneway(formula = tastiness ~ machine, data = lattes)
