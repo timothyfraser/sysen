@@ -1,6 +1,6 @@
 # Feeds Lesson 7 (Useful Life Distributions - Exponential) slides 6-7, 10, 12-13,
 #   16, 22, 27 and 30: the charts, the light-bulb frequency table, and the numbers
-#   behind the three in-deck exercises (slides 12, 15, 18) and Examples 1-3 (slides 28-30).
+#   behind the in-deck Examples 1-3 and Examples 5-7.
 # Run from the sigma repo root:  Rscript functions/slides_lesson_7_exponential.R
 # Reads  workshops/bulb_lifetimes.csv (100 bulb failure times, transcribed from slide 22).
 # Writes gen_*.png (1100x600 px) to docs-v3/images/slides/lesson-7/ and prints every
@@ -12,6 +12,7 @@ library(dplyr)
 library(ggplot2)
 library(readr)
 library(tidyr)
+library(mosaicCalc)
 
 out = "docs-v3/images/slides/lesson-7"
 red = "#B31B1B"; grey = "grey35"
@@ -65,7 +66,7 @@ g = ggplot(ln, aes(t, f)) +
   labs(x = "Time t", y = "f(t)") + theme_deck(30)   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_mode_median_mttf.png")
 
-# ---- 3. R(t), z(t), f(t) for Exercise 1's item (slide 10 right chart; slide 12) --
+# ---- 3. R(t), z(t), f(t) for Example 1's item (slide 10 right chart; slide 12) --
 # R(t) = 1/(0.2t+1)^2,  f(t) = 0.4/(0.2t+1)^3,  z(t) = 0.4/(0.2t+1)
 ex1 = tibble(t = seq(0, 10, length.out = 400)) %>%
   mutate(`R(t)` = 1 / (0.2 * t + 1)^2, `f(t)` = 0.4 / (0.2 * t + 1)^3, `z(t)` = 0.4 / (0.2 * t + 1)) %>%
@@ -80,12 +81,14 @@ g = ggplot(ex1, aes(t, y, linetype = fn)) +
   labs(x = "Time t (months)", y = NULL) + theme_deck(30)   # slide 9 shows it ~430 px wide: big type
 save(g, "gen_r_z_f.png")
 
-# Exercise 1 (slide 12): MTTF = integral of R(t) from 0 to infinity
-ex1_mttf = integrate(function(t) 1 / (0.2 * t + 1)^2, 0, Inf)$value
-cat(sprintf("Exercise 1: MTTF = %.4f months (scan: 5 months)\n", ex1_mttf))
+# Example 1 (slide 12): MTTF = integral of R(t) from 0 to infinity
+ex1_r = function(t) { 1 / (0.2 * t + 1)^2 }
+ex1_int = antiD(tilde = ex1_r(t) ~ t)
+ex1_mttf = ex1_int(t = Inf)
+cat(sprintf("Example 1: MTTF = %.4f months (scan: 5 months)\n", ex1_mttf))
 
 # ---- 4. "MTTF?" shaded pdf (slide 12) ------------------------------------------
-# Drawn from Exercise 1's own f(t); labelled "MTTF?" like the 2025 slide so it does not give the answer away.
+# Drawn from Example 1's own f(t); labelled "MTTF?" like the 2025 slide so it does not give the answer away.
 pdf1 = tibble(t = seq(0, 25, length.out = 400)) %>% mutate(f = 0.4 / (0.2 * t + 1)^3)
 g = ggplot(pdf1, aes(t, f)) +
   geom_area(fill = red, alpha = 0.35) + geom_line(color = red, linewidth = 1.4) +
@@ -110,14 +113,16 @@ g = ggplot(ln, aes(t, f)) +
   labs(x = "Months", y = "f(t)") + theme_deck()
 save(g, "gen_t_plus_x.png")
 
-# Exercise 2 (slide 15): z(t) = t/(t+1)  ->  R(t) = (t+1) e^(-t)
-r_ex2 = function(t) (t + 1) * exp(-t)
-ex2_mttf = integrate(r_ex2, 0, Inf)$value
-mrl = function(t) integrate(function(x) r_ex2(t + x) / r_ex2(t), 0, Inf)$value
-H_check = integrate(function(u) u / (u + 1), 0, 2)$value  # should equal -ln R(2)
-cat(sprintf("Exercise 2: H(2) = %.4f vs -ln R(2) = %.4f; MTTF = %.4f (scan says 5 months)\n",
+# Example 2 (slide 15): z(t) = t/(t+1)  ->  R(t) = (t+1) e^(-t)
+r_ex2 = function(t) { (t + 1) * exp(-t) }
+ex2_int = antiD(tilde = r_ex2(x) ~ x)   # antiD at Inf is NaN here, so 1000 stands in for infinity
+ex2_mttf = ex2_int(x = 1000) - ex2_int(x = 0)
+mrl = function(t) { (ex2_int(x = 1000) - ex2_int(x = t)) / r_ex2(t) }
+h_int = antiD(tilde = u / (u + 1) ~ u)
+H_check = h_int(u = 2) - h_int(u = 0)  # should equal -ln R(2)
+cat(sprintf("Example 2: H(2) = %.4f vs -ln R(2) = %.4f; MTTF = %.4f (scan says 5 months)\n",
             H_check, -log(r_ex2(2)), ex2_mttf))
-cat(sprintf("Exercise 2: MRL(t) numeric vs 1 + 1/(t+1): t=0 %.4f/%.4f, t=1 %.4f/%.4f, t=4 %.4f/%.4f\n",
+cat(sprintf("Example 2: MRL(t) numeric vs 1 + 1/(t+1): t=0 %.4f/%.4f, t=1 %.4f/%.4f, t=4 %.4f/%.4f\n",
             mrl(0), 1 + 1/1, mrl(1), 1 + 1/2, mrl(4), 1 + 1/5))
 
 # ---- 6. Constant failure rate (slides 16-17) -----------------------------------
@@ -128,11 +133,11 @@ g = ggplot(tibble(t = c(0, 10), z = 1), aes(t, z)) +
   labs(x = "t = time", y = "z(t)") + theme_deck()
 save(g, "gen_constant_hazard.png")
 
-# Exercise 3 (slide 18): lambda = 0.08 %/K hours = 0.08e-5 per hour
+# Example 3 (slide 18): lambda = 0.08 %/K hours = 0.08e-5 per hour
 lam3 = 0.08e-5
 p1 = 1 - exp(-lam3 * 20000)
 t1pct = -log(1 - 0.01) / lam3
-cat(sprintf("Exercise 3: F(20000) = %.5f (scan 0.016); two fail = %.6f (scan 0.016^2 = %.6f); t_1%% = %.0f h (scan 12563)\n",
+cat(sprintf("Example 3: F(20000) = %.5f (scan 0.016); two fail = %.6f (scan 0.016^2 = %.6f); t_1%% = %.0f h (scan 12563)\n",
             p1, p1^2, 0.016^2, t1pct))
 
 # Slides 19-20: F(MTTF) and T50
@@ -184,8 +189,9 @@ save(g, "gen_exponential_pdf.png")
 # Illustrative decreasing z(t) = 0.35 + 1.4 e^(-t/1.3); each interval [t_(i-1), t_i]
 # is approximated by a constant rate equal to the average failure rate over it.
 zp = function(t) 0.35 + 1.4 * exp(-t / 1.3)
+zp_int = antiD(tilde = zp(t) ~ t)
 steps = tibble(lo = 0:4, hi = 1:5) %>%
-  rowwise() %>% mutate(afr = integrate(zp, lo, hi)$value / (hi - lo)) %>% ungroup()
+  mutate(afr = (zp_int(t = hi) - zp_int(t = lo)) / (hi - lo))
 g = ggplot() +
   geom_rect(data = steps, aes(xmin = lo, xmax = hi, ymin = 0, ymax = afr),
             fill = red, alpha = 0.15, color = red, linewidth = 0.9) +
@@ -198,15 +204,17 @@ g = ggplot() +
   labs(x = "Time", y = "z(t)") + theme_deck()
 save(g, "gen_piecewise.png")
 
-# Example 1 (slide 28): rotary pump, lambda = 4.28e-4 per hour, t = 730 h
+# Example 5 (slide 28): rotary pump, lambda = 4.28e-4 per hour, t = 730 h
 lam_p = 4.28e-4
-cat(sprintf("Example 1: R(730) = %.4f (scan 0.732); MTTF = %.1f h = %.2f months of 730 h (scan 2336 h = 3.2); Pr(fail in next 730 | survived) = %.4f (scan 0.268)\n",
+cat(sprintf("Example 5: R(730) = %.4f (scan 0.732); MTTF = %.1f h = %.2f months of 730 h (scan 2336 h = 3.2); Pr(fail in next 730 | survived) = %.4f (scan 0.268)\n",
             r_exp(730, lam_p), 1 / lam_p, 1 / lam_p / 730, 1 - r_exp(730, lam_p)))
 
-# Example 2 (slide 29): Pr(T2 > T1) = lambda1 / (lambda1 + lambda2); check numerically
+# Example 6 (slide 29): Pr(T2 > T1) = lambda1 / (lambda1 + lambda2); check numerically
 l1 = 0.002; l2 = 0.003
-num = integrate(function(t) r_exp(t, l2) * f_exp(t, l1), 0, Inf)$value
-cat(sprintf("Example 2 (lambda1 = %.3f, lambda2 = %.3f): integral = %.4f, closed form = %.4f\n",
+num_f = function(t, l1, l2) { exp(-l2 * t) * l1 * exp(-l1 * t) }
+num_int = antiD(tilde = num_f(t, l1, l2) ~ t)
+num = num_int(t = Inf, l1 = l1, l2 = l2)
+cat(sprintf("Example 6 (lambda1 = %.3f, lambda2 = %.3f): integral = %.4f, closed form = %.4f\n",
             l1, l2, num, l1 / (l1 + l2)))
 
 # ---- 9. Mixture of two exponentials (slide 30) ---------------------------------
@@ -215,7 +223,7 @@ cat(sprintf("Example 2 (lambda1 = %.3f, lambda2 = %.3f): integral = %.4f, closed
 p = 0.4; lam1 = 1; lam2 = 3
 zmix = function(t) (p * lam1 * exp(-lam1 * t) + (1 - p) * lam2 * exp(-lam2 * t)) /
   (p * exp(-lam1 * t) + (1 - p) * exp(-lam2 * t))
-cat(sprintf("Example 3: z(0) = %.3f, z(1) = %.3f, z(2) = %.3f, z(5) = %.3f; MTTF = p/l1 + (1-p)/l2 = %.4f\n",
+cat(sprintf("Example 7: z(0) = %.3f, z(1) = %.3f, z(2) = %.3f, z(5) = %.3f; MTTF = p/l1 + (1-p)/l2 = %.4f\n",
             zmix(0), zmix(1), zmix(2), zmix(5), p / lam1 + (1 - p) / lam2))
 g = ggplot(tibble(t = seq(0, 5, length.out = 400)) %>% mutate(z = zmix(t)), aes(t, z)) +
   geom_line(color = red, linewidth = 1.8) +

@@ -5,6 +5,7 @@
 
 library(dplyr)
 library(tidyr)
+library(mosaicCalc)
 library(ggplot2)
 
 out = "docs-v3/images/slides/lesson-9"
@@ -123,8 +124,9 @@ print(1 - exp(-0.4^2 / (2 * 0.1^2)))
 t50 = 5000; sigma = 0.7
 mttf = t50 * exp(sigma^2 / 2)
 variance = t50^2 * exp(sigma^2) * (exp(sigma^2) - 1)
-check = integrate(function(t) (t - mttf)^2 * dlnorm(t, meanlog = log(t50), sdlog = sigma),
-                  lower = 0, upper = Inf)$value
+var_f = function(t) { (t - mttf)^2 * dlnorm(t, meanlog = log(t50), sdlog = sigma) }
+var_int = antiD(tilde = var_f(t) ~ t)
+check = var_int(t = 1e6) - var_int(t = 0)   # 1e6 stands in for infinity
 print(round(c(mttf = mttf, variance = variance, check = check)))
 
 # --- Lognormal example: T50 = 5000, sigma = 0.7, t = 2000 ------------------
