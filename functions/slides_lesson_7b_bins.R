@@ -34,11 +34,12 @@ t_sum = sum(b100$mid * b100$r)
 lam = sum(b100$r) / t_sum
 cat("cross-tab: r =", sum(b100$r), " t_sum =", t_sum, " lambda-hat =", round(lam, 5), "\n")
 
-# 4. Expected counts and chi-squared (the last interval is 401-500) -------
-edges = c(0, 100, 200, 300, 400, 500)
-p_exp = diff(1 - exp(-lam * edges))
+# 4. Expected counts and chi-squared (the last interval is open-ended: 401 and up) -------
+edges = c(0, 100, 200, 300, 400, Inf)
+cdf = 1 - exp(-lam * edges)          # F(Inf) = 1, so the probabilities add to 1
+p_exp = diff(cdf)
 exp_tbl = tibble(interval = c("0-100", "101-200", "201-300", "301-400", ">=401"),
-                 r = b100$r, F2 = (1 - exp(-lam * edges))[-1], F1 = (1 - exp(-lam * edges))[-6],
+                 r = b100$r, F2 = cdf[-1], F1 = cdf[-6],
                  p_exp = p_exp, r_exp = p_exp * 100) %>%
   mutate(term = (r - r_exp)^2 / r_exp)
 print(exp_tbl %>% mutate(across(where(is.numeric), ~ round(.x, 4))))

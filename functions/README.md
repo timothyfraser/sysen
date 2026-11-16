@@ -123,6 +123,26 @@ Each name links to the source, if you're curious how it works.
 | [`h`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_reliability.R) | Accumulative Hazard Function |
 | [`afr`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_reliability.R) | Average Failure Rate Function |
 
+### `functions_mle.R`
+
+| Function | Description |
+|----------|-------------|
+| [`plife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Failure Function F(t) for the Exponential, Weibull, Gamma or Lognormal |
+| [`dlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Density f(t) for Any of the Four Life Distributions |
+| [`qlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Quantile: Time by Which a Share p Has Failed |
+| [`rlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Random Failure Times |
+| [`hlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Cumulative Hazard H(t) |
+| [`get_mle`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Fit One Life Distribution by Maximum Likelihood (crosstab or failure times; censored or complete) |
+| [`get_expected`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Observed and Expected Failures by Cell, Including the Last Cell for Units Still Running |
+| [`get_chisq`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Chi-Squared Goodness-of-Fit Test (last cell to infinity, cells merged to 5 expected) |
+| [`get_fit`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.R) | Fit and Test All Four Life Distributions at Once, Highest Log-Likelihood First |
+
+### `functions_planning.R`
+
+| Function | Description |
+|----------|-------------|
+| [`plan_test`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_planning.R) | Plan a Life Test: Solve for Units, Test Time, Failures Allowed or a Life Parameter |
+
 ## Python Functions
 
 ### `functions_distributions.py`
@@ -230,3 +250,23 @@ Each name links to the source, if you're curious how it works.
 | Function | Description |
 |----------|-------------|
 | [`crosstab`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_crosstab.py) | Crosstabulate Data into intervals where r >= 5 |
+
+### `functions_mle.py`
+
+| Function | Description |
+|----------|-------------|
+| [`plife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Failure Function F(t) for the Exponential, Weibull, Gamma or Lognormal |
+| [`dlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Density f(t) for Any of the Four Life Distributions |
+| [`qlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Quantile: Time by Which a Share p Has Failed |
+| [`rlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Random Failure Times |
+| [`hlife`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Cumulative Hazard H(t) |
+| [`get_mle`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Fit One Life Distribution by Maximum Likelihood (crosstab or failure times; censored or complete) |
+| [`get_expected`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Observed and Expected Failures by Cell, Including the Last Cell for Units Still Running |
+| [`get_chisq`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Chi-Squared Goodness-of-Fit Test (last cell to infinity, cells merged to 5 expected) |
+| [`get_fit`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_mle.py) | Fit and Test All Four Life Distributions at Once, Highest Log-Likelihood First |
+
+### `functions_planning.py`
+
+| Function | Description |
+|----------|-------------|
+| [`plan_test`](https://github.com/timothyfraser/sysen/tree/main/functions/functions_planning.py) | Plan a Life Test: Solve for Units, Test Time, Failures Allowed or a Life Parameter |

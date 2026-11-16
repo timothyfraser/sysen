@@ -16,6 +16,8 @@ from scipy import stats        # pchisq() / rchisq() in R live in scipy.stats
 # They give us R-style pexp(), ppois(), pnorm(), pweibull().
 sys.path.append("functions")
 from functions_distributions import pexp, ppois, pnorm, pweibull
+# get_chisq() and the helpers it calls live in functions_mle.py
+from functions_mle import get_chisq, _chisq_cells, _pool_cells
 
 # NOTE: `lambda` is a reserved word in Python (it makes tiny anonymous
 # functions), so we can't name a variable `lambda`. We write `lambda_` instead.
@@ -43,108 +45,38 @@ def cut_interval(t, length):
     return pd.cut(t, bins=breaks, right=True, include_lowest=True)
 
 
-def get_chisq(t=None, binwidth=5, data=None, n_total=None, f=None, np_=1, **kwargs):
-    """
-    Function to Get Chi-Squared!
-    Tim Fraser
-
-    If observed vector...
-      t         a vector of times to failure
-      binwidth  size of intervals (eg. 5 hours) (Only if t is provided)
-    If cross-tabulated data...
-      data      a data.frame with the vectors `lower`, `upper`, and `r_obs`
-    Common Parameters:
-      n_total   total number of units.
-      f         specific failure function, such as `f = f(t, lambda_)`
-      np_       total number of parameters in your function (eg. if exponential, 1 (lambda))
-      **kwargs  fill in here any named parameters you need, like `lambda_ = 2.4`
-                or `rate = 2.3` or `mean = 0, sd = 2`
-    """
-
-    # If vector `t` is NOT None
-    # Do the raw data route
-    if t is not None:
-
-        # Make a data frame called 'tab'
-        tab = pd.DataFrame({"t": t})
-        # Part 1.1: Split into bins
-        tab["interval"] = cut_interval(tab["t"], length=binwidth)
-        # Part 1.2: Tally up observed failures 'r_obs' by bin
-        # (observed=False keeps empty bins, like .drop = FALSE in R)
-        tab = (tab.groupby("interval", observed=False)
-               .size().reset_index(name="r_obs"))
-        # Let's repeat our process from before!
-        tab["bin"] = np.arange(1, len(tab) + 1)
-        tab["lower"] = (tab["bin"] - 1) * binwidth
-        tab["upper"] = tab["bin"] * binwidth
-        tab["midpoint"] = (tab["lower"] + tab["upper"]) / 2
-
-    # Otherwise, if data.frame `data` is NOT None
-    # Do the cross-tabulated data route
-    elif data is not None:
-        tab = data.copy()
-        tab["bin"] = np.arange(1, len(tab) + 1)
-        tab["midpoint"] = (tab["lower"] + tab["upper"]) / 2
-
-    # Part 2. Calculate probabilities by interval
-    tab["p_upper"] = f(tab["upper"], **kwargs)  # supplied parameters
-    tab["p_lower"] = f(tab["lower"], **kwargs)  # supplied parameters
-    tab["p_fail"] = tab["p_upper"] - tab["p_lower"]
-    tab["n_total"] = n_total
-    tab["r_exp"] = tab["n_total"] * tab["p_fail"]
-
-    # Part 3-4: Calculate Chi-Squared statistic and p-value
-    chisq = ((tab["r_obs"] - tab["r_exp"]) ** 2 / tab["r_exp"]).sum()
-    nbin = len(tab)
-    df = nbin - np_ - 1
-    output = pd.DataFrame({
-        "chisq": [chisq],
-        "nbin": [nbin],
-        "np": [np_],
-        "df": [df],
-        "p_value": [1 - stats.chi2.cdf(chisq, df=df)]
-    })
-
-    return output
-
 lambda_ = 1 / masks["fabric"].mean()
 
-# get_chisq() hands back only the TEST result: chisq, nbin, np, df, p_value.
-# To plot observed against expected we need the binned table itself, which is
-# the same Step 1 + Step 2 crosstab the chapter walks through by hand.
-dat = pd.DataFrame({"t": masks["fabric"]})
-dat["interval"] = cut_interval(dat["t"], length=750)
-dat = dat.groupby("interval", observed=False).size().reset_index(name="r_obs")
-dat["bin"] = np.arange(1, len(dat) + 1)
-dat["lower"] = (dat["bin"] - 1) * 750
-dat["upper"] = dat["bin"] * 750
-dat["p_upper"] = f(dat["upper"], lambda_=lambda_)
-dat["p_lower"] = f(dat["lower"], lambda_=lambda_)
-dat["p_fail"] = dat["p_upper"] - dat["p_lower"]
-dat["n_total"] = 50
-dat["r_exp"] = dat["n_total"] * dat["p_fail"]
-dat = dat[["interval", "r_obs", "p_fail", "n_total", "r_exp"]]
+# get_chisq() hands back only the TEST result: chisq, nbin, np, df, p_value, min_exp.
+# To plot observed against expected we need the table of cells itself:
+# Step 1 (crosstab), Step 2-3 (expected counts, plus a last cell to infinity
+# for the units that had not failed), Step 4 (merge cells until each expects at least 5).
+tab = pd.DataFrame({"t": t})
+tab["interval"] = cut_interval(tab["t"], length=binwidth)
+tab = tab.groupby("interval", observed=False).size().reset_index(name="r_obs")
+tab["bin"] = np.arange(1, len(tab) + 1)
+tab["lower"] = (tab["bin"] - 1) * binwidth
+tab["upper"] = tab["bin"] * binwidth
 
-
+dat = _pool_cells(_chisq_cells(tab, n_total=n_total, f=f, lambda_=lambda_))
+dat["cell"] = dat["lower"].astype(str) + "-" + dat["upper"].astype(str)
+dat["cell"] = pd.Categorical(dat["cell"], categories=dat["cell"], ordered=True)
 
 (ggplot() +
-  geom_col(data=dat, mapping=aes(x="interval", y="r_obs")) +
-  geom_point(data=dat, mapping=aes(x="interval", y="r_obs")) +
-  geom_col(data=dat, mapping=aes(x="interval", y="r_exp"),
+  geom_col(data=dat, mapping=aes(x="cell", y="r_obs")) +
+  geom_point(data=dat, mapping=aes(x="cell", y="r_obs")) +
+  geom_col(data=dat, mapping=aes(x="cell", y="r_exp"),
            alpha=0.5, fill="darksalmon") +
-  geom_point(data=dat, mapping=aes(x="interval", y="r_exp"),
-             alpha=0.5, fill="darksalmon"))
+  geom_point(data=dat, mapping=aes(x="cell", y="r_exp"),
+             alpha=0.5, fill="darksalmon") +
+  labs(x="cell", y="units"))
 
-
+# Step 5: Chi-squared statistic from the merged cells
 print(pd.DataFrame({"chisq": [((dat["r_obs"] - dat["r_exp"]) ** 2 / dat["r_exp"]).sum()]}))
 
-
-def f(t, lambda_):
-    return 1 - np.exp(-t * lambda_)
-lambda_ = 1 / masks["fabric"].mean()
+# The same test in one call
 print(get_chisq(t=masks["fabric"], binwidth=750,
-                n_total=50, f=f, np_=1, lambda_=lambda_))
-
+                n_total=50, f=f, np=1, lambda_=lambda_))
 
 
 # chisq
@@ -189,11 +121,11 @@ dat = pd.DataFrame({
     "r_obs": [50, 43, 20, 10, 5]
 })
 
-print(get_chisq(data=dat, n_total=50, f=f, np_=1, lambda_=0.01))
-print(get_chisq(data=dat, n_total=50, f=pexp, np_=1, rate=0.01))
+print(get_chisq(data=dat, n_total=128, f=f, np=1, lambda_=0.01))
+print(get_chisq(data=dat, n_total=128, f=pexp, np=1, rate=0.01))
 # (our Python ppois() calls its mean `mu`, where R's calls it `lambda`)
-print(get_chisq(data=dat, n_total=50, f=ppois, np_=1, mu=masks["fabric"].mean()))
-print(get_chisq(data=dat, n_total=50, f=pnorm, np_=2,
+print(get_chisq(data=dat, n_total=128, f=ppois, np=1, mu=masks["fabric"].mean()))
+print(get_chisq(data=dat, n_total=128, f=pnorm, np=2,
                 mean=masks["fabric"].mean(), sd=masks["fabric"].std()))
-print(get_chisq(data=dat, n_total=50, f=pweibull, np_=2,
+print(get_chisq(data=dat, n_total=128, f=pweibull, np=2,
                 shape=0.01, scale=masks["fabric"].mean()))

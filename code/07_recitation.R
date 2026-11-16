@@ -10,19 +10,8 @@ library(mosaicCalc)
 
 masks <- read_csv("workshops/masks.csv")
 
-#' @name get_chisq
-#' @title Function to Get Chi-Squared!
-#' @name Tim Fraser
-#' If observed vector...
-#' @param t a vector of times to failure
-#' @param binwidth size of intervals (eg. 5 hours) (Only if t is provided)
-#' If cross-tabulated data...
-#' @param data a data.frame with the vectors `lower`, `upper`, and `r_obs`
-#' Common Parameters:
-#' @param n_total total number of units.
-#' @param f specific failure function, such as `f = f(t, lambda)`
-#' @param np total number of parameters in your function (eg. if exponential, 1 (lambda))
-#' @param ... fill in here any named parameters you need, like `lambda = 2.4` or `rate = 2.3` or `mean = 0, sd = 2`
+# get_chisq() and the helpers it calls live in this file
+source("functions/functions_mle.R")
 
 # TESTING VALUES
 t = masks$fabric
@@ -30,97 +19,41 @@ n_total = 50
 binwidth = 750
 f = function(t, lambda){1 - exp(-t*lambda) }
 np = 1
+lambda = 1 / mean(masks$fabric)
 
-  
-get_chisq = function(t = NULL, binwidth = 5, data = NULL, 
-                     n_total, f, np = 1, ...){
-  
-  # If vector `t` is NOT NULL
-  # Do the raw data route
-  if(!is.null(t)){
-    
-    # Make a tibble called 'tab'
-    tab = tibble(t = t) %>%
-      # Part 1.1: Split into bins
-      mutate(interval = cut_interval(t, length = binwidth)) %>%
-      # Part 1.2: Tally up observed failures 'r_obs' by bin
-      group_by(interval, .drop = FALSE) %>%
-      summarize(r_obs = n()) %>%
-      # Let's repeat our process from before!
-      mutate(
-        bin = 1:n(),
-        lower = (bin - 1) * binwidth, 
-        upper = bin * binwidth,
-        midpoint = (lower + upper) / 2) 
-    
-    # Otherwise, if data.frame `data` is NOT NULL
-    # Do the cross-tabulated data route
-  }else if(!is.null(data)){
-    tab = data %>%
-      mutate(bin = 1:n(),
-             midpoint = (lower + upper) / 2)
-  }
-  
-  # Part 2. Calculate probabilities by interval
-  output = tab %>% 
-    mutate(
-      p_upper = f(upper, ...), # supplied parameters
-      p_lower = f(lower, ...), # supplied parameters
-      p_fail = p_upper - p_lower,
-      n_total = n_total,
-      r_exp = n_total * p_fail) %>%
-    # Part 3-4: Calculate Chi-Squared statistic and p-value
-    summarize(
-      chisq = sum((r_obs - r_exp)^2 / r_exp),
-      nbin = n(),
-      np = np,
-      df = nbin - np - 1,
-      p_value = 1 - pchisq(q = chisq, df = df) )
-  
-  return(output)
-}
-
-lambda  = 1 / masks$fabric %>% mean()
-
-# get_chisq() hands back only the TEST result: chisq, nbin, np, df, p_value.
-# To plot observed against expected we need the binned table itself, which is
-# the same Step 1 + Step 2 crosstab the chapter walks through by hand.
-dat = tibble(t = masks$fabric) %>%
-  mutate(interval = cut_interval(t, length = 750)) %>%
+# get_chisq() hands back only the TEST result: chisq, nbin, np, df, p_value, min_exp.
+# To plot observed against expected we need the table of cells itself:
+# Step 1 (crosstab), Step 2-3 (expected counts, plus a last cell to infinity
+# for the units that had not failed), Step 4 (merge cells until each expects at least 5).
+tab = tibble(t = t) %>%
+  mutate(interval = cut_interval(t, length = binwidth)) %>%
   group_by(interval, .drop = FALSE) %>%
   summarize(r_obs = n()) %>%
-  mutate(
-    bin = 1:n(),
-    lower = (bin - 1) * 750,
-    upper = bin * 750,
-    p_upper = f(upper, lambda = lambda),
-    p_lower = f(lower, lambda = lambda),
-    p_fail = p_upper - p_lower,
-    n_total = 50,
-    r_exp = n_total * p_fail) %>%
-  select(interval, r_obs, p_fail, n_total, r_exp)
+  mutate(bin = 1:n(),
+         lower = (bin - 1) * binwidth,
+         upper = bin * binwidth)
 
-
+dat = tab %>%
+  .chisq_cells(n_total = n_total, f = f, lambda = lambda) %>%
+  .pool_cells() %>%
+  mutate(cell = paste0(lower, "-", upper))
 
 ggplot() +
-  geom_col(data = dat, mapping = aes(x = interval, y = r_obs)) +
-  geom_point(data = dat, mapping = aes(x = interval, y = r_obs)) +
-  geom_col(data = dat, mapping = aes(x = interval, y = r_exp), 
+  geom_col(data = dat, mapping = aes(x = reorder(cell, lower), y = r_obs)) +
+  geom_point(data = dat, mapping = aes(x = reorder(cell, lower), y = r_obs)) +
+  geom_col(data = dat, mapping = aes(x = reorder(cell, lower), y = r_exp), 
            alpha = 0.5, fill = "darksalmon") +
-  geom_point(data = dat, mapping = aes(x = interval, y = r_exp), 
-             alpha = 0.5, fill = "darksalmon")
+  geom_point(data = dat, mapping = aes(x = reorder(cell, lower), y = r_exp), 
+             alpha = 0.5, fill = "darksalmon") +
+  labs(x = "cell", y = "units")
 
-
+# Step 5: Chi-squared statistic from the merged cells
 dat %>%
   summarize(chisq = sum((r_obs - r_exp)^2 / r_exp))
-  
 
-f = function(t, lambda){1 - exp(-t*lambda) }
-lambda = 1 / masks$fabric %>% mean()
+# The same test in one call
 get_chisq(t = masks$fabric, binwidth = 750, 
           n_total = 50, f = f, np = 1, lambda = lambda)
-
-
 
 # chisq
 # n_total - total number of observation
@@ -162,12 +95,12 @@ dat = tibble(
   r_obs = c(50, 43, 20, 10, 5)
 )
 
-get_chisq(data = dat, n_total = 50, f = f, np = 1, lambda = 0.01)
-get_chisq(data = dat, n_total = 50, f = pexp, np = 1, rate = 0.01)
-get_chisq(data = dat, n_total = 50, f = ppois, np = 1, lambda = mean(masks$fabric))
-get_chisq(data = dat, n_total = 50, f = pnorm, np = 2, 
+get_chisq(data = dat, n_total = 128, f = f, np = 1, lambda = 0.01)
+get_chisq(data = dat, n_total = 128, f = pexp, np = 1, rate = 0.01)
+get_chisq(data = dat, n_total = 128, f = ppois, np = 1, lambda = mean(masks$fabric))
+get_chisq(data = dat, n_total = 128, f = pnorm, np = 2, 
           mean = mean(masks$fabric), sd = sd(masks$fabric))
-get_chisq(data = dat, n_total = 50, f = pweibull, np = 2, 
+get_chisq(data = dat, n_total = 128, f = pweibull, np = 2, 
           shape = 0.01, scale = mean(masks$fabric))
 
 

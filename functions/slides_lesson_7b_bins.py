@@ -31,7 +31,7 @@ lam = b100["r"].sum() / t_sum
 print("cross-tab: r =", b100["r"].sum(), " t_sum =", t_sum, " lambda-hat =", round(lam, 5))
 
 # 4. Expected counts and chi-squared
-edges = np.array([0, 100, 200, 300, 400, 500])
+edges = np.array([0, 100, 200, 300, 400, np.inf])  # last interval is open-ended: F(inf) = 1
 cdf = 1 - np.exp(-lam * edges)
 p_exp = np.diff(cdf)
 r_exp = p_exp * 100
