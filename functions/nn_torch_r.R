@@ -2,7 +2,7 @@
 # The R code of the "Locally with torch" tab in the Neural Networks in R chapter,
 # block by block in page order: a reading copy of exactly what the chapter shows.
 #
-# Run by the course on 2026-10-17 (R 4.5.2, torch 0.17.0, CPU): 728 / 144 / 158 rows,
+# Run by the course (R 4.5.2, torch 0.17.0, CPU): 728 / 144 / 158 rows,
 # 4,801 parameters, best epoch 103, stopped at 123, test RMSE 5.09 MPa vs 10.2 and 6.85.
 #
 # Run it from a folder that holds workshops/concrete.csv.

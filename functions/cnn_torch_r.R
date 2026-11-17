@@ -1,7 +1,7 @@
 # cnn_torch_r.R
 # A small CNN in torch that spots cracked concrete in 64 x 64 greyscale panels.
 #
-# Run by the course on 2026-10-17 (R 4.5.2, torch 0.17.0, CPU): validation escape rate 0.6% (3 of 500), test 0 escapes.
+# Run by the course (R 4.5.2, torch 0.17.0, CPU): validation escape rate 0.6% (3 of 500), test 0 escapes.
 #
 # Run it from the folder where you want a workshops/ folder to appear:
 #   install.packages(c("torch", "coro", "png", "dplyr", "tibble"))
