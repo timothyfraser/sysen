@@ -7,6 +7,7 @@ library(dplyr)
 library(tidyr)
 library(mosaicCalc)
 library(ggplot2)
+library(purrr)
 
 out = "docs-v3/images/slides/lesson-9"
 red = "#B31B1B"
@@ -174,3 +175,59 @@ g4 = ggplot(weibull_cdf, aes(x = t, y = cdf, color = m)) +
   theme_classic(base_size = 20) +
   theme(legend.position = "right")
 ggsave(file.path(out, "gen_weibull_cdf.png"), g4, width = 7.5, height = 5, dpi = 150)
+
+# --- Four life distributions, all with mean life 100 hr: f(t) on one axis --
+# One figure drawn three times; each file highlights one curve in red.
+mean_life = 100
+lambda_exp = 1 / mean_life                      # exponential rate
+k_gam = 3; lambda_gam = k_gam / mean_life       # gamma: shape, rate
+m_wei = 2; c_wei = mean_life / gamma(1 + 1 / m_wei)   # Weibull: shape, characteristic life
+sigma_ln = 0.7; t50_ln = mean_life * exp(-sigma_ln^2 / 2)  # lognormal: sigma, median T50
+
+# Each distribution's density, so the plot and the check use the same f(t)
+dens = list(
+  exponential = function(t) dexp(t, rate = lambda_exp),
+  gamma       = function(t) dgamma(t, shape = k_gam, rate = lambda_gam),
+  Weibull     = function(t) dweibull(t, shape = m_wei, scale = c_wei),
+  lognormal   = function(t) dlnorm(t, meanlog = log(t50_ln), sdlog = sigma_ln)
+)
+
+# Check: mean = integral of t f(t) dt, by numerical integration
+print(tibble(curve = names(dens),
+             mean_hr = sapply(dens, function(f) integrate(function(t) t * f(t), 0, Inf)$value)) %>%
+        mutate(mean_hr = round(mean_hr, 1)))
+print(c(lambda = lambda_exp, k = k_gam, rate = lambda_gam, m = m_wei, c = c_wei,
+        sigma = sigma_ln, T50 = t50_ln))
+
+pdf_curves = tibble(t = seq(0.5, 300, by = 0.5)) %>%
+  mutate(exponential = dens$exponential(t), gamma = dens$gamma(t),
+         Weibull = dens$Weibull(t), lognormal = dens$lognormal(t)) %>%
+  pivot_longer(-t, names_to = "curve", values_to = "f")
+
+# Label positions picked by hand: next to each curve, clear of the others
+pdf_labels = tribble(~curve, ~t, ~y,
+                     "exponential", 4, 0.0112,
+                     "gamma", 165, 0.0058,
+                     "Weibull", 100, 0.0090,
+                     "lognormal", 34, 0.0102)
+
+# One function: draw all four, highlight the curve named in `pick`
+plot_pdf_compare = function(pick) {
+  d = pdf_curves %>% mutate(hit = curve == pick)
+  lab = pdf_labels %>% mutate(hit = curve == pick)
+  g = ggplot(d, aes(x = t, y = f, group = curve)) +
+    geom_line(data = filter(d, !hit), color = "#9A9A9A", linewidth = 1.0) +
+    geom_line(data = filter(d, hit), color = red, linewidth = 2.2) +
+    geom_text(data = lab, aes(y = y, label = curve, color = hit, fontface = ifelse(hit, "bold", "plain")),
+              hjust = 0, size = 5.5, show.legend = FALSE) +
+    scale_color_manual(values = c(`TRUE` = red, `FALSE` = "#7A7A7A")) +
+    scale_x_continuous(limits = c(0, 300), expand = c(0, 0)) +
+    scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+    labs(x = "Time (hours)", y = "f(t)", caption = "All four have a mean life of 100 hours.") +
+    theme_classic(base_size = 18) +
+    theme(plot.caption = element_text(hjust = 0.5, size = rel(0.85), color = "#555555"),
+          plot.caption.position = "plot", plot.margin = margin(4, 16, 2, 2))
+  ggsave(file.path(out, paste0("gen_pdf_compare_", tolower(pick), ".png")), g,
+         width = 6.4, height = 3.7, dpi = 150)
+}
+walk(c("gamma", "Weibull", "lognormal"), plot_pdf_compare)

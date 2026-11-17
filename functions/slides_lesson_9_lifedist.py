@@ -169,3 +169,53 @@ g4 = (ggplot(wc, aes(x="t", y="cdf", color="m")) +
       theme_classic(base_size=20) +
       theme(legend_position="right"))
 g4.save(f"{out}/gen_weibull_cdf_py.png", width=7.5, height=5, dpi=150, verbose=False)
+
+# Four life distributions, all with mean life 100 hr: f(t) on one axis
+# One figure drawn three times; each file highlights one curve in red.
+mean_life = 100
+lam_exp = 1 / mean_life                                  # exponential rate
+k_gam = 3; lam_gam = k_gam / mean_life                   # gamma: shape, rate
+m_wei = 2; c_wei = mean_life / gamma_func(1 + 1 / m_wei)  # Weibull: shape, characteristic life
+sigma_ln = 0.7; t50_ln = mean_life * np.exp(-sigma_ln ** 2 / 2)  # lognormal: sigma, median T50
+
+# Each distribution's density, so the plot and the check use the same f(t)
+dens = {
+    "exponential": lambda t: stats.expon.pdf(t, scale=1 / lam_exp),
+    "gamma": lambda t: stats.gamma.pdf(t, a=k_gam, scale=1 / lam_gam),
+    "Weibull": lambda t: stats.weibull_min.pdf(t, c=m_wei, scale=c_wei),
+    "lognormal": lambda t: stats.lognorm.pdf(t, s=sigma_ln, scale=t50_ln),
+}
+
+# Check: mean = integral of t f(t) dt, by numerical integration
+print({"lambda": lam_exp, "k": k_gam, "rate": lam_gam, "m": m_wei, "c": round(c_wei, 2),
+       "sigma": sigma_ln, "T50": round(t50_ln, 2)})
+print({name: round(quad(lambda t: t * f(t), 0, np.inf)[0], 1) for name, f in dens.items()})
+
+tt = np.arange(0.5, 300.001, 0.5)
+pdf_curves = pd.concat([pd.DataFrame({"t": tt, "curve": name, "f": f(tt)}) for name, f in dens.items()])
+
+# Label positions picked by hand: next to each curve, clear of the others
+pdf_labels = pd.DataFrame({"curve": ["exponential", "gamma", "Weibull", "lognormal"],
+                           "t": [4, 165, 100, 34], "y": [0.0112, 0.0058, 0.0090, 0.0102]})
+
+def plot_pdf_compare(pick):
+    """Draw all four curves, highlight the one named in `pick`."""
+    d = pdf_curves.assign(hit=pdf_curves.curve == pick)
+    lab = pdf_labels.assign(hit=pdf_labels.curve == pick)
+    g = (ggplot(d, aes(x="t", y="f", group="curve")) +
+         geom_line(data=d[~d.hit], color="#9A9A9A", size=1.0) +
+         geom_line(data=d[d.hit], color=red, size=2.2) +
+         geom_text(data=lab[~lab.hit], mapping=aes(x="t", y="y", label="curve"),
+                   color="#7A7A7A", ha="left", size=14, inherit_aes=False) +
+         geom_text(data=lab[lab.hit], mapping=aes(x="t", y="y", label="curve"),
+                   color=red, ha="left", size=14, fontweight="bold", inherit_aes=False) +
+         scale_x_continuous(limits=(0, 300), expand=(0, 0)) +
+         scale_y_continuous(expand=(0, 0, 0.05, 0)) +
+         labs(x="Time (hours)", y="f(t)", caption="All four have a mean life of 100 hours.") +
+         theme_classic(base_size=18) +
+         theme(plot_caption=element_text(ha="center", size=15, color="#555555"),
+               plot_margin=0.03))
+    g.save(f"{out}/gen_pdf_compare_{pick.lower()}_py.png", width=6.4, height=3.7, dpi=150, verbose=False)
+
+for pick in ["gamma", "Weibull", "lognormal"]:
+    plot_pdf_compare(pick)
