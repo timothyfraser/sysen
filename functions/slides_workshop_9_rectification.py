@@ -2,6 +2,7 @@
 # Feeds: Workshop 13 slide "Linear Rectification: what it does".
 # Run from the sigma repo root:  python functions/slides_workshop_9_rectification.py
 # Writes docs-v3/images/slides/workshop-9/gen_rectify_curve_py.png, gen_rectify_line_py.png
+# and the wide, untitled pair gen_rectify_curve_wide_py.png, gen_rectify_line_wide_py.png
 import numpy as np
 import pandas as pd
 from plotnine import *
@@ -36,3 +37,7 @@ g2 = (ggplot(cap, aes("X", "Y")) + geom_abline(intercept=b_hat, slope=m_hat, col
       + labs(title="After: a straight line in ln t", x="X = ln t", y="Y = ln(-ln(1 - F))")
       + theme_classic(base_size=26) + theme(plot_title=element_text(weight="bold", size=24)))
 g2.save(out + "gen_rectify_line_py.png", width=7, height=5.6, dpi=100, verbose=False)
+
+# 3. Wide, untitled versions for the Linear Rectification slide
+(g1 + labs(title="", y="F(t)")).save(out + "gen_rectify_curve_wide_py.png", width=10, height=3.55, dpi=100, verbose=False)
+(g2 + labs(title="", y="Y")).save(out + "gen_rectify_line_wide_py.png", width=10, height=3.55, dpi=100, verbose=False)

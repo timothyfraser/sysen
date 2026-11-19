@@ -5,6 +5,8 @@
 # Weibull rectification: F(t) curves in t; ln(-ln(1 - F)) is a line in ln t.
 # Run from the sigma repo root:  Rscript functions/slides_workshop_9_rectification.R
 # Writes docs-v3/images/slides/workshop-9/gen_rectify_curve.png, gen_rectify_line.png
+# and the wide, untitled pair gen_rectify_curve_wide.png, gen_rectify_line_wide.png
+# (the Linear Rectification slide stacks those two; its captions carry the titles)
 
 library(dplyr)
 library(ggplot2)
@@ -47,3 +49,10 @@ g2 = ggplot(cap, aes(x = X, y = Y)) +
   theme_classic(base_size = 26) +
   theme(plot.title = element_text(face = "bold"))
 ggsave(paste0(out, "gen_rectify_line.png"), g2, width = 7, height = 5.6, dpi = 150)
+
+# 3. Wide, untitled versions for the Linear Rectification slide (the slide
+#    defines Y and F, so the y labels are short) -----------------------------
+ggsave(paste0(out, "gen_rectify_curve_wide.png"), g1 + labs(title = NULL, y = "F(t)"),
+       width = 10, height = 3.55, dpi = 150)
+ggsave(paste0(out, "gen_rectify_line_wide.png"), g2 + labs(title = NULL, y = "Y"),
+       width = 10, height = 3.55, dpi = 150)
