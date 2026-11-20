@@ -69,6 +69,8 @@ function(n = 3){
 #* @response 200 A list
 #* @serializer json
 function(n = 30){
+
+  n = as.integer(n)
   
   # Change share link to download link
   url = "https://docs.google.com/spreadsheets/d/15yBf5tapFSq-n6668GQ_fa3LQNafJUtxxJdjPhbaT3c/export?format=csv"
