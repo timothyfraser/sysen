@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Build the two inline-ready diagrams for the Recitation 12 (Monitoring &
+"""Build the four inline-ready diagrams for the Recitation 12 (Monitoring &
 Control Systems) deck and paste them into the deck between marker comments.
 
 Run from the sigma root:   python3 functions/slides_workshop_8_art.py
 
-Writes docs-v3/images/slides/workshop-8/{components,rest_api}.svg and replaces the
-block between  <!-- ws8-components:begin --> ... <!-- ws8-components:end -->  and
-<!-- ws8-rest:begin --> ... <!-- ws8-rest:end -->  in
+Writes docs-v3/images/slides/workshop-8/{components,rest_api,endpoint_map,model_line}.svg and
+replaces the block between  <!-- ws8-components:begin --> ... <!-- ws8-components:end -->,
+<!-- ws8-rest:begin --> ... <!-- ws8-rest:end -->  and
+<!-- ws8-endpoints:begin --> ... <!-- ws8-endpoints:end -->  and
+<!-- ws8-model:begin --> ... <!-- ws8-model:end -->  in
 docs-v3/slides/20_workshop_slides.html.
 
 Every SVG is written to be pasted INLINE: no XML prolog, <title> first, ids
@@ -212,6 +214,94 @@ def rest():
     return "\n".join(o)
 
 
+def mono_box(x, y, w, h, fill, lines, size=26):
+    out = [f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="8" fill="{fill}" '
+           f'stroke="{INK}" stroke-width="2.5"/>']
+    n = len(lines)
+    y0 = y + h / 2 - (n - 1) * size * 0.6 + size * 0.35
+    for i, ln in enumerate(lines):
+        out.append(txt(x + w / 2, round(y0 + i * size * 1.2, 1), ln, size,
+                       extra=' font-family="monospace"'))
+    return "".join(out)
+
+
+def endpoints():
+    """Endpoint map for the lunch-order plumber API (sysen code/apps/api/app3.R).
+
+    Only what the public code exposes: GET /retrieve-data/ (param n, csv table)
+    and GET /retrieve-stats/ (param n, json summary). No team parameter and no
+    chart endpoint exist there, so neither is drawn.
+    """
+    p = "ws8e"
+    W, H = 1090, 440
+    o = [f'<svg class="fig" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" '
+         f'aria-labelledby="{p}-t {p}-d" font-family="{FONT}">',
+         f'<title id="{p}-t">Endpoint map of the lunch-order API</title>',
+         f'<desc id="{p}-d">One input, the number of most recent orders, feeds two endpoints. '
+         f'GET /retrieve-data/?n=5 feeds a table of the 5 most recent actions. '
+         f'GET /retrieve-stats/?n=30 feeds the summary statistics.</desc>',
+         defs(p)]
+    for x, s in [(140, "Inputs"), (550, "Endpoints"), (950, "Dashboard outputs")]:
+        o.append(txt(x, 40, s, 28, MUTED, weight="700"))
+    # arrows first, nodes on top
+    o.append(arrow(p, [(260, 215), (315, 215), (315, 135), (362, 135)]))
+    o.append(arrow(p, [(260, 265), (315, 265), (315, 345), (362, 345)]))
+    o.append(arrow(p, [(730, 135), (822, 135)]))
+    o.append(arrow(p, [(730, 345), (822, 345)]))
+    o.append(node(f"{p}-n", "Input: n",
+                  "How many of the most recent orders to use.|"
+                  "The only parameter the API takes. The user sets it on the screen.",
+                  box(20, 180, 240, 120, BLUE, ["n most recent", "orders"])))
+    o.append(node(f"{p}-data", "GET /retrieve-data/",
+                  "Returns the last n rows of the order log.|"
+                  "Parameter n, default 3. Replies with a CSV table.",
+                  mono_box(370, 80, 360, 110, TAN, ["GET /retrieve-data/", "?n=5"])))
+    o.append(node(f"{p}-stats", "GET /retrieve-stats/",
+                  "Summarizes the last n orders.|"
+                  "Parameter n, default 30. Replies with JSON: customers, served, average time.",
+                  mono_box(370, 290, 360, 110, TAN, ["GET /retrieve-stats/", "?n=30"])))
+    o.append(node(f"{p}-table", "Output: recent actions (table)",
+                  "A table of the 5 most recent actions.|"
+                  "Fed only by /retrieve-data/.",
+                  box(830, 80, 240, 110, YELLOW, ["5 most recent", "actions (table)"], 26)))
+    o.append(node(f"{p}-num", "Output: summary statistics (numbers)",
+                  "Customers, customers served, average time to completion.|"
+                  "Fed only by /retrieve-stats/.",
+                  box(830, 290, 240, 110, YELLOW, ["Summary", "statistics", "(numbers)"], 26)))
+    o.append("</svg>")
+    return "\n".join(o)
+
+
+def model():
+    """Exercise 2's model line as a three-box map, in the endpoint-map style.
+
+    One input (team), one endpoint, one output. Hypothetical example API.
+    """
+    p = "ws8m"
+    W, H = 1090, 230
+    o = [f'<svg class="fig" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" '
+         f'aria-labelledby="{p}-t {p}-d" font-family="{FONT}">',
+         f'<title id="{p}-t">Model line for Exercise 2</title>',
+         f'<desc id="{p}-d">The input team feeds the endpoint GET /late-orders?team=front, '
+         f'which feeds the dashboard output Late orders today, a number.</desc>',
+         defs(p)]
+    for x, s in [(110, "Input"), (495, "Endpoint"), (930, "Dashboard output")]:
+        o.append(txt(x, 40, s, 30, MUTED, weight="700"))
+    o.append(arrow(p, [(200, 145), (262, 145)]))
+    o.append(arrow(p, [(730, 145), (782, 145)]))
+    o.append(node(f"{p}-team", "Input: team",
+                  "Which team's orders to count.|The user picks it on the screen.",
+                  box(20, 85, 180, 120, BLUE, ["team"], 36)))
+    o.append(node(f"{p}-ep", "GET /late-orders",
+                  "Counts today's late orders for one team.|Parameter team, e.g. front.",
+                  mono_box(270, 85, 460, 120, TAN, ["GET /late-orders", "?team=front"], 34)))
+    o.append(node(f"{p}-out", "Output: late orders today (number)",
+                  "One number on the dashboard.|Fed only by /late-orders.",
+                  box(790, 85, 280, 120, YELLOW, ["Late orders today", "(number)"], 30)))
+    o.append("</svg>")
+    return "\n".join(o)
+
+
 def inject(src, key, svg):
     a, b = f"<!-- {key}:begin -->", f"<!-- {key}:end -->"
     i, j = src.find(a), src.find(b)
@@ -221,14 +311,21 @@ def inject(src, key, svg):
 
 
 def main():
-    c, r = components(), rest()
+    c, r, e, m = components(), rest(), endpoints(), model()
     (OUT / "components.svg").write_text(c, encoding="utf-8")
     (OUT / "rest_api.svg").write_text(r, encoding="utf-8")
-    src = SLIDE.read_text(encoding="utf-8")
-    src = inject(src, "ws8-components", c)
+    (OUT / "endpoint_map.svg").write_text(e, encoding="utf-8")
+    (OUT / "model_line.svg").write_text(m, encoding="utf-8")
+    # Targeted replace between markers only; other agents may be editing the
+    # rest of the deck, so write back only when a marker block changed.
+    before = SLIDE.read_text(encoding="utf-8")
+    src = inject(before, "ws8-components", c)
     src = inject(src, "ws8-rest", r)
-    SLIDE.write_text(src, encoding="utf-8")
-    print("OK slides_workshop_8_art: components.svg, rest_api.svg written and injected")
+    src = inject(src, "ws8-endpoints", e)
+    src = inject(src, "ws8-model", m)
+    if src != before:
+        SLIDE.write_text(src, encoding="utf-8")
+    print("OK slides_workshop_8_art: components.svg, rest_api.svg, endpoint_map.svg, model_line.svg written and injected")
 
 
 if __name__ == "__main__":
